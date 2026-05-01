@@ -1,0 +1,1393 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>Lei-bi Maps / 本地边界库稳定版</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+  <!-- Mapbox -->
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.js"></script>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.css" rel="stylesheet">
+
+  <!-- Turf：用来判断定位点是否在某个边界里 -->
+  <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      font-family: Arial, Helvetica, sans-serif;
+      overflow: hidden;
+    }
+
+    #map {
+      position: absolute;
+      inset: 0;
+    }
+
+    .top-search {
+      position: absolute;
+      top: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(92vw, 540px);
+      height: 58px;
+      background: rgba(255,255,255,0.98);
+      border-radius: 30px;
+      box-shadow: 0 3px 14px rgba(0,0,0,0.22);
+      display: flex;
+      align-items: center;
+      padding: 0 10px 0 18px;
+      box-sizing: border-box;
+      z-index: 30;
+      gap: 10px;
+    }
+
+    .search-icon {
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .top-search input {
+      flex: 1;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-size: 17px;
+      color: #111;
+    }
+
+    .camera-btn {
+      width: 42px;
+      height: 42px;
+      border: none;
+      border-radius: 50%;
+      background: #eef7f7;
+      cursor: pointer;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .similar-pill {
+      position: absolute;
+      top: 94px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 25;
+      border: none;
+      background: rgba(255,255,255,0.96);
+      color: #007f86;
+      font-size: 17px;
+      font-weight: 700;
+      border-radius: 999px;
+      padding: 13px 28px;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.20);
+      cursor: pointer;
+    }
+
+    .layer-btn {
+      position: absolute;
+      top: 102px;
+      right: 24px;
+      z-index: 25;
+      width: 54px;
+      height: 54px;
+      border: none;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.98);
+      box-shadow: 0 3px 12px rgba(0,0,0,0.22);
+      font-size: 28px;
+      line-height: 1;
+      color: #222;
+      cursor: pointer;
+    }
+
+    .info-panel {
+      position: absolute;
+      left: 50%;
+      bottom: 0;
+      transform: translateX(-50%);
+      width: min(100vw, 620px);
+      max-height: 52vh;
+      overflow-y: auto;
+      background: rgba(255,255,255,0.99);
+      border-radius: 28px 28px 0 0;
+      box-shadow: 0 -6px 24px rgba(0,0,0,0.22);
+      z-index: 28;
+      display: none;
+    }
+
+    .bottom-handle {
+      width: 52px;
+      height: 5px;
+      background: #d2d2d2;
+      border-radius: 999px;
+      margin: 10px auto 8px;
+    }
+
+    .close-panel {
+      position: absolute;
+      top: 20px;
+      right: 22px;
+      width: 42px;
+      height: 42px;
+      border: none;
+      border-radius: 50%;
+      background: #f1f3f4;
+      color: #222;
+      cursor: pointer;
+      font-size: 26px;
+      line-height: 1;
+      z-index: 2;
+    }
+
+    .info-content {
+      padding: 24px 24px 30px;
+    }
+
+    .info-content h1 {
+      margin: 0;
+      padding-right: 58px;
+      font-size: 30px;
+      line-height: 1.1;
+      font-weight: 500;
+      color: #111;
+    }
+
+    .muted {
+      color: #666;
+      font-size: 14px;
+      margin-top: 8px;
+      margin-bottom: 10px;
+    }
+
+    .rating-line {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin: 8px 0 14px;
+    }
+
+    .rating-big {
+      font-size: 22px;
+      font-weight: 700;
+      color: #0b7f7a;
+    }
+
+    .rating-sub {
+      font-size: 13px;
+      color: #666;
+    }
+
+    .map-action-btns {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding: 4px 0 16px;
+    }
+
+    .map-action-btns button {
+      border: none;
+      border-radius: 999px;
+      padding: 11px 18px;
+      background: #d8f3f6;
+      color: #006d74;
+      font-size: 15px;
+      font-weight: 700;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .map-action-btns button:first-child {
+      background: #007f86;
+      color: white;
+    }
+
+    .tag-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 2px 0 14px;
+    }
+
+    .tag {
+      background: #edf7f0;
+      color: #176453;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 12px;
+    }
+
+    .section-title {
+      font-size: 15px;
+      font-weight: 700;
+      margin: 18px 0 10px;
+      color: #222;
+    }
+
+    .score-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 10px 0;
+      border-bottom: 1px solid #eeeeee;
+      font-size: 14px;
+    }
+
+    .review {
+      background: #f5f5f5;
+      padding: 12px;
+      border-radius: 14px;
+      margin-top: 10px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .mini-legend {
+      position: absolute;
+      right: 16px;
+      bottom: 18px;
+      width: 300px;
+      background: rgba(255,255,255,0.94);
+      border-radius: 18px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+      padding: 12px 14px;
+      box-sizing: border-box;
+      z-index: 18;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .mini-legend strong {
+      display: block;
+      margin-bottom: 6px;
+      color: #155f4f;
+    }
+
+    .modal {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.38);
+      z-index: 40;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      box-sizing: border-box;
+    }
+
+    .modal-card {
+      width: 100%;
+      max-width: 480px;
+      background: white;
+      border-radius: 24px;
+      padding: 20px;
+      box-sizing: border-box;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.22);
+    }
+
+    .modal-card h2 {
+      margin: 0 0 10px;
+      color: #155f4f;
+    }
+
+    .modal-card p {
+      font-size: 14px;
+      color: #4b4b4b;
+      line-height: 1.5;
+    }
+
+    .upload-btn,
+    .identify-btn,
+    .ghost-btn {
+      width: 100%;
+      border: none;
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-size: 15px;
+      cursor: pointer;
+      margin-top: 10px;
+      box-sizing: border-box;
+    }
+
+    .upload-btn {
+      background: #eaf6f1;
+      color: #155f4f;
+      font-weight: 700;
+      display: block;
+      text-align: center;
+    }
+
+    .identify-btn {
+      background: #157a63;
+      color: white;
+      font-weight: 700;
+    }
+
+    .ghost-btn {
+      background: #f2f2f2;
+      color: #333;
+    }
+
+    .preview-box {
+      margin-top: 12px;
+      width: 100%;
+      height: 190px;
+      border-radius: 16px;
+      background: #f6f6f6;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #888;
+      font-size: 14px;
+    }
+
+    .preview-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .result-box {
+      margin-top: 14px;
+      padding: 12px;
+      border-radius: 14px;
+      background: #f7faf8;
+      font-size: 14px;
+      line-height: 1.55;
+      color: #24332f;
+      display: none;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+
+    .field-label {
+      font-size: 13px;
+      margin-top: 12px;
+      margin-bottom: 6px;
+      color: #555;
+      font-weight: 700;
+    }
+
+    select {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid #ddd;
+      font-size: 14px;
+      background: white;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+    .plant-record-card {
+  position: relative;
+  background: #f5f5f5;
+  padding: 14px 44px 14px 14px;
+  border-radius: 14px;
+  margin-top: 10px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.delete-plant-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 50%;
+  background: #e6e6e6;
+  color: #333;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.delete-plant-btn:hover {
+  background: #d8d8d8;
+}
+
+
+    @media (max-width: 700px) {
+      .top-search {
+        top: 48px;
+        width: calc(100vw - 28px);
+      }
+
+      .similar-pill {
+        top: 120px;
+      }
+
+      .layer-btn {
+        top: 126px;
+        right: 18px;
+      }
+
+      .info-panel {
+        width: 100vw;
+        max-height: 54vh;
+      }
+
+      .mini-legend {
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="map"></div>
+
+  <div class="top-search">
+    <div class="search-icon">🔍</div>
+    <input id="searchInput" type="text" placeholder="搜索已点亮地点 / Search unlocked places...">
+    <button id="cameraBtn" class="camera-btn" title="植物识别">📷</button>
+  </div>
+
+  <button class="similar-pill">查看相似地点</button>
+  <button class="layer-btn">◇</button>
+
+  <div id="infoPanel" class="info-panel">
+    <div class="bottom-handle"></div>
+    <button class="close-panel" onclick="closePanel()">×</button>
+
+    <div class="info-content">
+      <h1 id="panelName">Xiang-bao Gong-yuan</h1>
+      <div id="panelOriginal" class="muted">Formerly known as: Elephant Park</div>
+
+      <div class="rating-line">
+        <span id="panelRating" class="rating-big">4.8 ★</span>
+        <span class="rating-sub">殖民植物评分</span>
+      </div>
+
+      <div class="map-action-btns">
+      <button>路线</button>
+      <button>出发</button>
+      <button id="plantListBtn">植物一览</button>
+      <button>已保存</button>
+    </div>
+
+      <div id="panelTags" class="tag-wrap"></div>
+
+      <div class="section-title">Colonial Botanical Scores</div>
+
+      <div class="score-row">
+        <strong>Chinese Plant Density</strong>
+        <span id="panelChinese">--%</span>
+      </div>
+
+      <div class="score-row">
+        <strong>Asian Botanical Presence</strong>
+        <span id="panelAsian">--%</span>
+      </div>
+
+      <div class="score-row">
+        <strong>Boundary Source</strong>
+        <span id="panelSource">Local library</span>
+      </div>
+
+      <div class="score-row">
+        <strong>Unlock Method</strong>
+        <span>Plant scan + location</span>
+      </div>
+
+      <div class="section-title">Reviews</div>
+      <div id="panelReviews"></div>
+    </div>
+  </div>
+
+  <div class="mini-legend">
+    <strong>Lei-bi Maps / Stable Boundary Library</strong>
+    绿色描边 = 已点亮边界。<br>
+    灰色区域 = 尚未通过植物拍摄点亮。<br>
+    当前版本使用本地边界库，不再实时请求 OSM，所以更稳定。
+  </div>
+
+  <div id="cameraModal" class="modal">
+    <div class="modal-card">
+      <h2>植物识别 / Plant Scan</h2>
+      <p>
+        当前版本是稳定原型：上传或拍摄植物照片后，系统会根据测试地点或定位，匹配本地边界库并点亮区域。
+      </p>
+
+      <label class="upload-btn" for="plantImageInput">打开相机 / 上传植物照片</label>
+      <input id="plantImageInput" type="file" accept="image/*" capture="environment">
+
+      <div id="previewBox" class="preview-box">尚未选择图片</div>
+
+      <div class="field-label">测试地点</div>
+      <select id="manualLocationSelect">
+        <option value="">使用真实定位</option>
+        <option value="elephant-park">测试：Elephant Park</option>
+        <option value="baldwin-point">测试：Baldwin Point</option>
+        <option value="goldsmiths">测试：Goldsmiths</option>
+      </select>
+
+      <button id="identifyBtn" class="identify-btn">识别植物并点亮区域</button>
+      <button id="closeCameraBtn" class="ghost-btn">关闭</button>
+
+      <div id="resultBox" class="result-box"></div>
+    </div>
+  </div>
+  <div id="plantListModal" class="modal">
+  <div class="modal-card">
+    <h2 id="plantListTitle">该区域植物 / Plants in this area</h2>
+    <p>
+      这里显示的是通过拍照识别并记录到该区域的植物。每一次识别，都会成为点亮这个区域的植物证据。
+    </p>
+
+    <div id="plantListBox" class="result-box" style="display: block; max-height: 300px;">
+      暂无植物记录。
+    </div>
+
+    <button id="closePlantListBtn" class="ghost-btn">关闭</button>
+  </div>
+</div>
+
+  <script>
+  mapboxgl.accessToken = 'pk.eyJ1IjoiZ2VuaWVsaW4iLCJhIjoiY21vbGp6dWp5MGV5YTJxcjV3cTMzZDRydCJ9.x7vN32PGbVq8IJUXPUhK4g';
+
+  const API_BASE_URL = "http://localhost:3000";
+
+  function getOrCreateUserId() {
+    let userId = localStorage.getItem("leibiUserId");
+
+    if (!userId) {
+      userId = `user-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      localStorage.setItem("leibiUserId", userId);
+    }
+
+    return userId;
+  }
+
+  const CURRENT_USER_ID = getOrCreateUserId();
+
+  const boundaryLibrary = [
+    {
+      id: "elephant-park",
+      name: "Elephant Park",
+      fakeName: "Xiang-bao Gong-yuan",
+      source: "Local boundary library / future OS Open Greenspace import",
+      type: "park / public landscape",
+      rating: 4.8,
+      chinesePlantPercent: 68,
+      asianPlantPercent: 74,
+      tags: ["Unlocked zone", "Park boundary", "Plant-scan activated"],
+      comments: [
+        "This area is activated as a named botanical territory.",
+        "The boundary is stored locally to keep the prototype stable.",
+        "Future versions could import this boundary from OS Open Greenspace or other GIS datasets."
+      ],
+      testPoint: [-0.0982, 51.4941],
+      polygon: [
+        [-0.09829773648985451, 51.493967185232236],
+        [-0.09880585671572817, 51.49303262487021],
+        [-0.0980144769880269, 51.49198498322269],
+        [-0.09399611195664193, 51.49287954631336],
+        [-0.09421124431017347, 51.49407545885296],
+        [-0.09823729264019221, 51.49480734185116],
+        [-0.09829773648985451, 51.493967185232236]
+      ]
+    },
+    {
+      id: "baldwin-point",
+      name: "Baldwin Point",
+      fakeName: "Bao-de-wen Dian",
+      source: "Local boundary library / manually cleaned",
+      type: "residential block",
+      rating: 4.2,
+      chinesePlantPercent: 41,
+      asianPlantPercent: 56,
+      tags: ["Residential block", "Local survey area", "Plant-scan activated"],
+      comments: [
+        "A smaller residential unit becomes visible through plant observation.",
+        "This is not a neutral housing block; it is treated as a mappable botanical territory.",
+        "The act of photographing a plant activates the boundary."
+      ],
+      testPoint: [-0.0974, 51.4921],
+      polygon: [
+        [-0.09636380324153038, 51.49152347755748],
+        [-0.09667378660745385, 51.492150739721865],
+        [-0.09526917448010863, 51.492488492697106],
+        [-0.09430047646145567, 51.49271768079083],
+        [-0.09401955403569673, 51.492753868279294],
+        [-0.0936030138880426, 51.49259102435539],
+        [-0.09342864824398589, 51.49241611727018],
+        [-0.09388143118624726, 51.49228663289651],
+        [-0.09383668400894862, 51.49218447766185],
+        [-0.09462721748278113, 51.492017314056824],
+        [-0.09627540519849731, 51.49140437559416],
+        [-0.09636380324153038, 51.49152347755748]
+      ]
+    },
+    {
+      id: "goldsmiths",
+      name: "Goldsmiths, University of London",
+      fakeName: "Jin-shi-mi-si",
+      source: "Local boundary library / future GIS import",
+      type: "campus",
+      rating: 4.4,
+      chinesePlantPercent: 43,
+      asianPlantPercent: 59,
+      tags: ["Campus", "Future unlocked site", "Educational territory"],
+      comments: [
+        "A campus can become a bounded site of botanical recording.",
+        "The system treats institutional land as a unit of visibility.",
+        "This area could be unlocked through a plant scan on site."
+      ],
+      testPoint: [-0.0354, 51.4743],
+      polygon: [
+        [-0.03720, 51.47510],
+        [-0.03415, 51.47512],
+        [-0.03375, 51.47375],
+        [-0.03645, 51.47325],
+        [-0.03735, 51.47420],
+        [-0.03720, 51.47510]
+      ]
+    }
+  ];
+
+  let unlockedIds = [];
+  let pendingClaims = [];
+  let selectedImageFile = null;
+  let currentOpenedBoundaryId = null;
+
+  const map = new mapboxgl.Map({
+    container: "map",
+    style: "mapbox://styles/mapbox/standard",
+    center: [-0.0982, 51.4937],
+    zoom: 16.3,
+    pitch: 0,
+    bearing: 0,
+    config: {
+      basemap: {
+        lightPreset: "day",
+        showPlaceLabels: false,
+        showPointOfInterestLabels: false,
+        showRoadLabels: true,
+        showTransitLabels: false
+      }
+    }
+  });
+
+  map.addControl(new mapboxgl.NavigationControl(), "top-right");
+
+  function boundaryToFeature(boundary) {
+    return {
+      type: "Feature",
+      properties: {
+        id: boundary.id,
+        name: boundary.name,
+        fakeName: boundary.fakeName,
+        source: boundary.source,
+        type: boundary.type
+      },
+      geometry: {
+        type: "Polygon",
+        coordinates: [boundary.polygon]
+      }
+    };
+  }
+
+  function getBoundaryById(id) {
+    return boundaryLibrary.find(boundary => boundary.id === id);
+  }
+
+  function getPendingClaimById(id) {
+    return pendingClaims.find(claim => claim.id === id);
+  }
+
+  function getUnlockedBoundaries() {
+    return boundaryLibrary.filter(boundary => unlockedIds.includes(boundary.id));
+  }
+
+  function buildUnlockedGeoJSON() {
+    return {
+      type: "FeatureCollection",
+      features: getUnlockedBoundaries().map(boundaryToFeature)
+    };
+  }
+
+  function buildMaskGeoJSON() {
+    const outerRing = [
+      [-0.35, 51.56],
+      [0.10, 51.56],
+      [0.10, 51.44],
+      [-0.35, 51.44],
+      [-0.35, 51.56]
+    ];
+
+    const holes = getUnlockedBoundaries().map(boundary => {
+      return [...boundary.polygon].slice().reverse();
+    });
+
+    return {
+      type: "FeatureCollection",
+      features: [
+        {
+          type: "Feature",
+          properties: {},
+          geometry: {
+            type: "Polygon",
+            coordinates: [outerRing, ...holes]
+          }
+        }
+      ]
+    };
+  }
+
+  function buildPendingGeoJSON() {
+    return {
+      type: "FeatureCollection",
+      features: pendingClaims.map(claim => {
+        const circle = turf.circle(
+          [claim.lng, claim.lat],
+          (claim.radius_m || 80) / 1000,
+          {
+            steps: 48,
+            units: "kilometers"
+          }
+        );
+
+        circle.properties = {
+          id: claim.id,
+          status: "pending"
+        };
+
+        return circle;
+      })
+    };
+  }
+
+  function updateMapSources() {
+    if (map.getSource("unlocked-boundaries")) {
+      map.getSource("unlocked-boundaries").setData(buildUnlockedGeoJSON());
+    }
+
+    if (map.getSource("mask-source")) {
+      map.getSource("mask-source").setData(buildMaskGeoJSON());
+    }
+
+    if (map.getSource("pending-claims")) {
+      map.getSource("pending-claims").setData(buildPendingGeoJSON());
+    }
+  }
+
+  function findBoundaryByLocation(lng, lat) {
+    const point = turf.point([lng, lat]);
+
+    return boundaryLibrary.find(boundary => {
+      const polygon = turf.polygon([boundary.polygon]);
+      return turf.booleanPointInPolygon(point, polygon);
+    });
+  }
+
+  function fitToBoundary(boundary) {
+    const feature = boundaryToFeature(boundary);
+    const bbox = turf.bbox(feature);
+
+    map.fitBounds(
+      [[bbox[0], bbox[1]], [bbox[2], bbox[3]]],
+      {
+        padding: {
+          top: 150,
+          right: 60,
+          bottom: 260,
+          left: 60
+        },
+        duration: 900
+      }
+    );
+  }
+
+  async function fetchUnlockedIds() {
+    const response = await fetch(`${API_BASE_URL}/unlocked-boundaries`);
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "获取已点亮区域失败");
+    }
+
+    return data;
+  }
+
+  async function fetchPendingClaims() {
+    const response = await fetch(`${API_BASE_URL}/pending-claims`);
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "获取 pending claims 失败");
+    }
+
+    return data;
+  }
+
+  async function unlockBoundary(boundaryId) {
+    const response = await fetch(`${API_BASE_URL}/unlocked-boundaries`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ boundaryId })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "点亮区域失败");
+    }
+
+    if (!unlockedIds.includes(boundaryId)) {
+      unlockedIds.push(boundaryId);
+    }
+
+    updateMapSources();
+  }
+
+  async function createPendingClaim(lng, lat) {
+    const response = await fetch(`${API_BASE_URL}/pending-claims`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        lng,
+        lat,
+        userId: CURRENT_USER_ID
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "创建 pending claim 失败");
+    }
+
+    pendingClaims.push(data);
+    updateMapSources();
+
+    return data;
+  }
+
+  async function getPlantRecords(boundaryId) {
+    const response = await fetch(`${API_BASE_URL}/plant-records/${boundaryId}`);
+    return await response.json();
+  }
+
+  async function addPlantRecord(boundaryId, plantResult) {
+    const plant = {
+      commonName: plantResult.commonName || "Unknown plant",
+      scientificName: plantResult.scientificName || "Unknown species",
+      genus: plantResult.genus || "Unknown",
+      family: plantResult.family || "Unknown",
+      score: plantResult.score || 0,
+      imageUrl: plantResult.imageUrl || ""
+    };
+
+    const response = await fetch(`${API_BASE_URL}/plant-records`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        boundaryId,
+        plant,
+        userId: CURRENT_USER_ID
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error("植物记录保存失败");
+    }
+
+    return await response.json();
+  }
+
+  async function deletePlantRecord(boundaryId, recordId) {
+    const confirmDelete = confirm("确定要删除这条植物记录吗？");
+
+    if (!confirmDelete) {
+      return;
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}/plant-records/${boundaryId}/${recordId}?userId=${CURRENT_USER_ID}`,
+      { method: "DELETE" }
+    );
+
+    if (!response.ok) {
+      alert("只能删除你自己上传的植物记录。");
+      return;
+    }
+
+    openPlantList();
+  }
+
+  async function identifyPlantWithBackend(file) {
+    const formData = new FormData();
+    formData.append("image", file);
+
+    const response = await fetch(`${API_BASE_URL}/identify-plant`, {
+      method: "POST",
+      body: formData
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.detail || data.error || "植物识别失败");
+    }
+
+    return data;
+  }
+
+  function openPanelFromBoundary(boundary) {
+    currentOpenedBoundaryId = boundary.id;
+    document.getElementById("infoPanel").style.display = "block";
+
+    document.getElementById("panelName").textContent = boundary.fakeName;
+    document.getElementById("panelOriginal").textContent =
+      "Formerly known as: " + boundary.name + " / " + boundary.source;
+
+    document.getElementById("panelRating").textContent = `${boundary.rating} ★`;
+    document.getElementById("panelChinese").textContent = boundary.chinesePlantPercent + "%";
+    document.getElementById("panelAsian").textContent = boundary.asianPlantPercent + "%";
+    document.getElementById("panelSource").textContent = boundary.source;
+
+    const tagsBox = document.getElementById("panelTags");
+    tagsBox.innerHTML = "";
+
+    boundary.tags.forEach(tag => {
+      tagsBox.innerHTML += `<span class="tag">${tag}</span>`;
+    });
+
+    const reviewsBox = document.getElementById("panelReviews");
+    reviewsBox.innerHTML = "";
+
+    boundary.comments.forEach(comment => {
+      reviewsBox.innerHTML += `<div class="review">“${comment}”</div>`;
+    });
+  }
+
+  function openPanelFromPendingClaim(claim) {
+    currentOpenedBoundaryId = claim.id;
+    document.getElementById("infoPanel").style.display = "block";
+
+    document.getElementById("panelName").textContent = "Pending Botanical Claim";
+    document.getElementById("panelOriginal").textContent =
+      "Boundary pending review / 临时植物领地";
+    document.getElementById("panelRating").textContent = "Pending";
+    document.getElementById("panelChinese").textContent = "--%";
+    document.getElementById("panelAsian").textContent = "--%";
+    document.getElementById("panelSource").textContent = "Pending claim";
+
+    document.getElementById("panelTags").innerHTML = `
+      <span class="tag">Pending</span>
+      <span class="tag">Needs boundary review</span>
+    `;
+
+    document.getElementById("panelReviews").innerHTML = `
+      <div class="review">“This area has been temporarily activated by a plant scan, but its official boundary has not been verified yet.”</div>
+    `;
+  }
+
+  function closePanel() {
+    document.getElementById("infoPanel").style.display = "none";
+  }
+
+  window.closePanel = closePanel;
+  window.deletePlantRecord = deletePlantRecord;
+
+  function getCurrentPositionPromise() {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error("当前浏览器不支持定位"));
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        position => resolve({
+          lng: position.coords.longitude,
+          lat: position.coords.latitude
+        }),
+        error => reject(error),
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    });
+  }
+
+  async function getManualOrRealLocation() {
+    const select = document.getElementById("manualLocationSelect");
+    const value = select.value;
+
+    if (value) {
+      const boundary = getBoundaryById(value);
+
+      return {
+        lng: boundary.testPoint[0],
+        lat: boundary.testPoint[1],
+        boundaryId: boundary.id
+      };
+    }
+
+    return await getCurrentPositionPromise();
+  }
+
+  async function openPlantList() {
+    if (!currentOpenedBoundaryId) {
+      alert("请先点击或搜索一个已点亮区域。");
+      return;
+    }
+
+    const boundary = getBoundaryById(currentOpenedBoundaryId);
+    const claim = getPendingClaimById(currentOpenedBoundaryId);
+    const records = await getPlantRecords(currentOpenedBoundaryId);
+
+    if (boundary) {
+      plantListTitle.textContent = `${boundary.fakeName} 的植物一览`;
+    } else if (claim) {
+      plantListTitle.textContent = `Pending Botanical Claim 的植物一览`;
+    } else {
+      plantListTitle.textContent = `未知区域的植物一览`;
+    }
+
+    if (records.length === 0) {
+      plantListBox.innerHTML = `
+        <strong>暂无植物记录。</strong><br>
+        请点击搜索框右侧的相机按钮，上传或拍摄一张植物照片。
+      `;
+    } else {
+      plantListBox.innerHTML = records.map((plant, index) => {
+        const canDelete = plant.userId === CURRENT_USER_ID;
+
+        return `
+          <div class="plant-record-card">
+            ${canDelete ? `
+              <button
+                class="delete-plant-btn"
+                onclick="deletePlantRecord('${currentOpenedBoundaryId}', '${plant.id}')"
+              >
+                ×
+              </button>
+            ` : ""}
+
+            ${plant.imageUrl ? `
+              <img
+                src="${plant.imageUrl}"
+                style="width:100%; height:140px; object-fit:cover; border-radius:12px; margin-bottom:10px;"
+              >
+            ` : ""}
+
+            <strong>${index + 1}. ${plant.commonName}</strong><br>
+            学名：<i>${plant.scientificName}</i><br>
+            属：${plant.genus}<br>
+            科：${plant.family}<br>
+            置信度：${Math.round(plant.score * 100)}%<br>
+            记录时间：${plant.time}<br>
+            ${canDelete
+              ? `<span style="color:#777;">你上传的，可删除</span>`
+              : `<span style="color:#777;">其他用户上传</span>`
+            }
+          </div>
+        `;
+      }).join("");
+    }
+
+    plantListModal.style.display = "flex";
+  }
+
+  const searchInput = document.getElementById("searchInput");
+  const cameraBtn = document.getElementById("cameraBtn");
+  const cameraModal = document.getElementById("cameraModal");
+  const closeCameraBtn = document.getElementById("closeCameraBtn");
+  const plantImageInput = document.getElementById("plantImageInput");
+  const previewBox = document.getElementById("previewBox");
+  const identifyBtn = document.getElementById("identifyBtn");
+  const resultBox = document.getElementById("resultBox");
+  const plantListBtn = document.getElementById("plantListBtn");
+  const plantListModal = document.getElementById("plantListModal");
+  const plantListBox = document.getElementById("plantListBox");
+  const plantListTitle = document.getElementById("plantListTitle");
+  const closePlantListBtn = document.getElementById("closePlantListBtn");
+
+  map.on("load", async () => {
+    try {
+      unlockedIds = await fetchUnlockedIds();
+      pendingClaims = await fetchPendingClaims();
+    } catch (error) {
+      console.error(error);
+      unlockedIds = [];
+      pendingClaims = [];
+    }
+
+    map.addSource("mask-source", {
+      type: "geojson",
+      data: buildMaskGeoJSON()
+    });
+
+    map.addLayer({
+      id: "mask-fill",
+      type: "fill",
+      source: "mask-source",
+      paint: {
+        "fill-color": "#d8d8d8",
+        "fill-opacity": 0.70
+      }
+    });
+
+    map.addSource("unlocked-boundaries", {
+      type: "geojson",
+      data: buildUnlockedGeoJSON()
+    });
+
+    map.addLayer({
+      id: "unlocked-fill",
+      type: "fill",
+      source: "unlocked-boundaries",
+      paint: {
+        "fill-color": "#6fd99a",
+        "fill-opacity": 0.25
+      }
+    });
+
+    map.addLayer({
+      id: "unlocked-line-glow",
+      type: "line",
+      source: "unlocked-boundaries",
+      layout: {
+        "line-join": "round",
+        "line-cap": "round"
+      },
+      paint: {
+        "line-color": "#8ad65b",
+        "line-width": 11,
+        "line-opacity": 0.34,
+        "line-blur": 2
+      }
+    });
+
+    map.addLayer({
+      id: "unlocked-line",
+      type: "line",
+      source: "unlocked-boundaries",
+      layout: {
+        "line-join": "round",
+        "line-cap": "round"
+      },
+      paint: {
+        "line-color": "#45ad36",
+        "line-width": 5.5,
+        "line-opacity": 0.98
+      }
+    });
+
+    map.addSource("pending-claims", {
+      type: "geojson",
+      data: buildPendingGeoJSON()
+    });
+
+    map.addLayer({
+      id: "pending-fill",
+      type: "fill",
+      source: "pending-claims",
+      paint: {
+        "fill-color": "#b6e88f",
+        "fill-opacity": 0.20
+      }
+    });
+
+    map.addLayer({
+      id: "pending-line",
+      type: "line",
+      source: "pending-claims",
+      layout: {
+        "line-join": "round",
+        "line-cap": "round"
+      },
+      paint: {
+        "line-color": "#77b255",
+        "line-width": 4,
+        "line-dasharray": [2, 2]
+      }
+    });
+
+    map.on("click", "unlocked-fill", (event) => {
+      const feature = event.features[0];
+      const boundary = getBoundaryById(feature.properties.id);
+
+      if (boundary) {
+        openPanelFromBoundary(boundary);
+      }
+    });
+
+    map.on("click", "pending-fill", (event) => {
+      const claim = getPendingClaimById(event.features[0].properties.id);
+
+      if (claim) {
+        openPanelFromPendingClaim(claim);
+      }
+    });
+
+    map.on("mouseenter", "unlocked-fill", () => {
+      map.getCanvas().style.cursor = "pointer";
+    });
+
+    map.on("mouseleave", "unlocked-fill", () => {
+      map.getCanvas().style.cursor = "";
+    });
+
+    map.on("mouseenter", "pending-fill", () => {
+      map.getCanvas().style.cursor = "pointer";
+    });
+
+    map.on("mouseleave", "pending-fill", () => {
+      map.getCanvas().style.cursor = "";
+    });
+  });
+
+  map.on("error", (error) => {
+    console.error("Mapbox error:", error);
+  });
+
+  searchInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      const query = searchInput.value.toLowerCase().trim();
+
+      const found = getUnlockedBoundaries().find(boundary => {
+        return boundary.name.toLowerCase().includes(query)
+          || boundary.fakeName.toLowerCase().includes(query)
+          || boundary.id.toLowerCase().includes(query);
+      });
+
+      if (!found) {
+        alert("当前还没有点亮这个边界。请先用相机识别植物来解锁它。");
+        return;
+      }
+
+      fitToBoundary(found);
+      openPanelFromBoundary(found);
+    }
+  });
+
+  plantListBtn.addEventListener("click", openPlantList);
+
+  closePlantListBtn.addEventListener("click", () => {
+    plantListModal.style.display = "none";
+  });
+
+  cameraBtn.addEventListener("click", () => {
+    cameraModal.style.display = "flex";
+  });
+
+  closeCameraBtn.addEventListener("click", () => {
+    cameraModal.style.display = "none";
+    resultBox.style.display = "none";
+  });
+
+  plantImageInput.addEventListener("change", (event) => {
+    const file = event.target.files[0];
+    selectedImageFile = file || null;
+
+    if (!file) {
+      previewBox.innerHTML = "尚未选择图片";
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = function(loadEvent) {
+      previewBox.innerHTML = `<img src="${loadEvent.target.result}" alt="plant preview">`;
+    };
+
+    reader.readAsDataURL(file);
+    resultBox.style.display = "none";
+  });
+
+  identifyBtn.addEventListener("click", async () => {
+    if (!selectedImageFile) {
+      alert("请先拍摄或上传一张植物照片。");
+      return;
+    }
+
+    resultBox.style.display = "block";
+    resultBox.innerHTML = "正在识别植物，并匹配边界库...";
+
+    try {
+      const plantResult = await identifyPlantWithBackend(selectedImageFile);
+      const location = await getManualOrRealLocation();
+      const { lng, lat } = location;
+
+      map.flyTo({
+        center: [lng, lat],
+        zoom: 16.8,
+        duration: 900
+      });
+
+      const matchedBoundary = findBoundaryByLocation(lng, lat);
+
+      if (!matchedBoundary) {
+        const pendingClaim = await createPendingClaim(lng, lat);
+
+        await addPlantRecord(pendingClaim.id, plantResult);
+
+        currentOpenedBoundaryId = pendingClaim.id;
+        openPanelFromPendingClaim(pendingClaim);
+
+        resultBox.innerHTML = `
+          <strong>植物识别成功，已创建待确认植物领地。</strong><br>
+          识别结果：<b>${plantResult.commonName}</b><br>
+          学名：<i>${plantResult.scientificName}</i><br>
+          属：${plantResult.genus || "Unknown"}<br>
+          科：${plantResult.family || "Unknown"}<br>
+          置信度：${Math.round(plantResult.score * 100)}%<br><br>
+
+          当前地点没有已知边界，所以系统创建了一个 pending claim。<br>
+          这个区域会以绿色虚线显示，所有用户都能看到。<br>
+          管理员之后可以把它修正成正式边界。
+        `;
+
+        return;
+      }
+
+      await unlockBoundary(matchedBoundary.id);
+      fitToBoundary(matchedBoundary);
+      openPanelFromBoundary(matchedBoundary);
+      await addPlantRecord(matchedBoundary.id, plantResult);
+
+      resultBox.innerHTML = `
+        <strong>植物识别成功，区域已点亮。</strong><br>
+        识别结果：<b>${plantResult.commonName}</b><br>
+        学名：<i>${plantResult.scientificName}</i><br>
+        属：${plantResult.genus || "Unknown"}<br>
+        科：${plantResult.family || "Unknown"}<br>
+        置信度：${Math.round(plantResult.score * 100)}%<br><br>
+
+        匹配区域：<b>${matchedBoundary.name}</b><br>
+        盗版命名：<b>${matchedBoundary.fakeName}</b><br>
+        边界来源：${matchedBoundary.source}<br><br>
+
+        这条植物记录已作为点亮该区域的证据。
+      `;
+    } catch (error) {
+      console.error(error);
+
+      resultBox.innerHTML = `
+        <strong>识别失败。</strong><br>
+        ${error.message || error}<br><br>
+
+        检查：<br>
+        1. Terminal 里 <code>node server.js</code> 有没有正在运行；<br>
+        2. 页面有没有用 Go Live 打开；<br>
+        3. .env 里有没有 PLANTNET_API_KEY；<br>
+        4. 上传的图片是不是 JPG / PNG；<br>
+        5. 网络是否正常。
+      `;
+    }
+  });
+</script>
