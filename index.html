@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
-  <title>Lei-bi Maps / 本地边界库稳定版</title>
+  <title>开荒-Cultivating Claims / 本地边界库稳定版</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
   <!-- Mapbox -->
@@ -11,7 +11,7 @@
 
   <!-- Turf：用来判断定位点是否在某个边界里 -->
   <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
-
+ <script src="https://cdn.jsdelivr.net/npm/exifr/dist/lite.umd.js"></script>
   <style>
     html, body {
       margin: 0;
@@ -503,7 +503,7 @@
   </div>
 
   <div class="mini-legend">
-    <strong>Lei-bi Maps / Stable Boundary Library</strong>
+    <strong>开荒-Cultivating Claims / Stable Boundary Library</strong>
     绿色描边 = 已点亮边界。<br>
     灰色区域 = 尚未通过植物拍摄点亮。<br>
     当前版本使用本地边界库，不再实时请求 OSM，所以更稳定。
@@ -513,7 +513,7 @@
     <div class="modal-card">
       <h2>植物识别 / Plant Scan</h2>
       <p>
-        当前版本是稳定原型：上传或拍摄植物照片后，系统会根据测试地点或定位，匹配本地边界库并点亮区域。
+      上传或拍摄植物照片后，系统会优先读取照片拍摄位置；如果照片没有 GPS 信息，你可以使用当前位置或手动选择地点来生成植物认领区域。
       </p>
 
       <label class="upload-btn" for="plantImageInput">打开相机 / 上传植物照片</label>
@@ -521,13 +521,31 @@
 
       <div id="previewBox" class="preview-box">尚未选择图片</div>
 
-      <div class="field-label">测试地点</div>
-      <select id="manualLocationSelect">
-        <option value="">使用真实定位</option>
-        <option value="elephant-park">测试：Elephant Park</option>
-        <option value="baldwin-point">测试：Baldwin Point</option>
-        <option value="goldsmiths">测试：Goldsmiths</option>
-      </select>
+      <div class="field-label">植物拍摄地点 / Plant location</div>
+
+<div id="photoGpsBox" class="result-box" style="display:block; max-height:none;">
+  上传照片后，系统会优先尝试读取照片里的 GPS 拍摄位置。
+</div>
+
+<div id="locationChoiceBox" style="display:none; margin-top:10px;">
+  <label style="display:block; margin:8px 0;">
+    <input type="radio" name="locationMode" value="current" checked>
+    使用当前位置
+  </label>
+
+  <label style="display:block; margin:8px 0;">
+    <input type="radio" name="locationMode" value="manual">
+    手动在地图上选择地点
+  </label>
+
+  <button id="pickLocationBtn" class="ghost-btn" type="button">
+    在地图上点选植物地点
+  </button>
+
+  <div id="manualLocationHint" class="muted">
+    尚未手动选择地点。
+  </div>
+</div>
 
       <button id="identifyBtn" class="identify-btn">识别植物并点亮区域</button>
       <button id="closeCameraBtn" class="ghost-btn">关闭</button>
@@ -553,7 +571,7 @@
   <script>
   mapboxgl.accessToken = 'pk.eyJ1IjoiZ2VuaWVsaW4iLCJhIjoiY21vbGp6dWp5MGV5YTJxcjV3cTMzZDRydCJ9.x7vN32PGbVq8IJUXPUhK4g';
 
-const API_BASE_URL = "https://leibi-maps-server.onrender.com";
+const API_BASE_URL = "https://开荒-Cultivating Claims-server.onrender.com";
 
   function getOrCreateUserId() {
     let userId = localStorage.getItem("leibiUserId");
@@ -654,9 +672,14 @@ const API_BASE_URL = "https://leibi-maps-server.onrender.com";
   ];
 
   let unlockedIds = [];
-  let pendingClaims = [];
-  let selectedImageFile = null;
-  let currentOpenedBoundaryId = null;
+let pendingClaims = [];
+
+let selectedImageFile = null;
+let currentOpenedBoundaryId = null;
+
+let photoGpsLocation = null;
+let manualPickedLocation = null;
+let manualPickMarker = null;
 
   const map = new mapboxgl.Map({
     container: "map",
@@ -946,6 +969,54 @@ const API_BASE_URL = "https://leibi-maps-server.onrender.com";
 
     return data;
   }
+  async function readPhotoGpsLocation(file) {
+  try {
+    const gps = await exifr.gps(file);
+
+    if (!gps || !gps.latitude || !gps.longitude) {
+      return null;
+    }
+
+    return {
+      lng: gps.longitude,
+      lat: gps.latitude,
+      source: "photo-gps"
+    };
+  } catch (error) {
+    console.warn("No readable GPS in photo:", error);
+    return null;
+  }
+}
+
+async function getConfirmedPlantLocation() {
+  if (photoGpsLocation) {
+    return photoGpsLocation;
+  }
+
+  const selectedMode = document.querySelector('input[name="locationMode"]:checked')?.value || "current";
+
+  if (selectedMode === "current") {
+    const currentLocation = await getCurrentPositionPromise();
+
+    return {
+      ...currentLocation,
+      source: "current-location"
+    };
+  }
+
+  if (selectedMode === "manual") {
+    if (!manualPickedLocation) {
+      throw new Error("你选择了手动地点，但还没有在地图上点选位置。");
+    }
+
+    return {
+      ...manualPickedLocation,
+      source: "manual-map-pick"
+    };
+  }
+
+  throw new Error("没有可用的植物地点。");
+}
 
   function openPanelFromBoundary(boundary) {
     currentOpenedBoundaryId = boundary.id;
@@ -1115,6 +1186,10 @@ const API_BASE_URL = "https://leibi-maps-server.onrender.com";
   const plantListBox = document.getElementById("plantListBox");
   const plantListTitle = document.getElementById("plantListTitle");
   const closePlantListBtn = document.getElementById("closePlantListBtn");
+  const photoGpsBox = document.getElementById("photoGpsBox");
+  const locationChoiceBox = document.getElementById("locationChoiceBox");
+  const pickLocationBtn = document.getElementById("pickLocationBtn");
+  const manualLocationHint = document.getElementById("manualLocationHint");
 
   map.on("load", async () => {
     try {
@@ -1290,24 +1365,93 @@ const API_BASE_URL = "https://leibi-maps-server.onrender.com";
     resultBox.style.display = "none";
   });
 
-  plantImageInput.addEventListener("change", (event) => {
-    const file = event.target.files[0];
-    selectedImageFile = file || null;
+  plantImageInput.addEventListener("change", async (event) => {
+    pickLocationBtn.addEventListener("click", () => {
+  cameraModal.style.display = "none";
 
-    if (!file) {
-      previewBox.innerHTML = "尚未选择图片";
-      return;
-    }
+  alert("请在地图上点击植物实际拍摄地点。");
 
-    const reader = new FileReader();
-
-    reader.onload = function(loadEvent) {
-      previewBox.innerHTML = `<img src="${loadEvent.target.result}" alt="plant preview">`;
+  map.once("click", (event) => {
+    manualPickedLocation = {
+      lng: event.lngLat.lng,
+      lat: event.lngLat.lat
     };
 
-    reader.readAsDataURL(file);
-    resultBox.style.display = "none";
+    if (manualPickMarker) {
+      manualPickMarker.remove();
+    }
+
+    manualPickMarker = new mapboxgl.Marker({
+      color: "#157a63"
+    })
+      .setLngLat([manualPickedLocation.lng, manualPickedLocation.lat])
+      .addTo(map);
+
+    manualLocationHint.textContent =
+      `已选择地点：${manualPickedLocation.lat.toFixed(6)}, ${manualPickedLocation.lng.toFixed(6)}`;
+
+    cameraModal.style.display = "flex";
   });
+});
+
+
+  const file = event.target.files[0];
+  selectedImageFile = file || null;
+
+  photoGpsLocation = null;
+  manualPickedLocation = null;
+
+  if (manualPickMarker) {
+    manualPickMarker.remove();
+    manualPickMarker = null;
+  }
+
+  manualLocationHint.textContent = "尚未手动选择地点。";
+
+  if (!file) {
+    previewBox.innerHTML = "尚未选择图片";
+    photoGpsBox.innerHTML = "上传照片后，系统会优先尝试读取照片里的 GPS 拍摄位置。";
+    locationChoiceBox.style.display = "none";
+    return;
+  }
+
+  const reader = new FileReader();
+
+  reader.onload = function(loadEvent) {
+    previewBox.innerHTML = `<img src="${loadEvent.target.result}" alt="plant preview">`;
+  };
+
+  reader.readAsDataURL(file);
+  resultBox.style.display = "none";
+
+  photoGpsBox.innerHTML = "正在读取照片 GPS 信息...";
+
+  const gpsLocation = await readPhotoGpsLocation(file);
+
+  if (gpsLocation) {
+    photoGpsLocation = gpsLocation;
+    locationChoiceBox.style.display = "none";
+
+    photoGpsBox.innerHTML = `
+  <strong>已定位植物所在地。</strong><br>
+  已点亮植物所在地
+`;
+
+    map.flyTo({
+      center: [gpsLocation.lng, gpsLocation.lat],
+      zoom: 16.8,
+      duration: 900
+    });
+  } else {
+    photoGpsLocation = null;
+    locationChoiceBox.style.display = "block";
+
+    photoGpsBox.innerHTML = `
+      <strong>这张照片没有可读取的 GPS 信息。</strong><br>
+      请选择植物地点来源：使用当前位置，或手动在地图上选择地点。
+    `;
+  }
+});
 
   identifyBtn.addEventListener("click", async () => {
     if (!selectedImageFile) {
@@ -1320,7 +1464,7 @@ const API_BASE_URL = "https://leibi-maps-server.onrender.com";
 
     try {
       const plantResult = await identifyPlantWithBackend(selectedImageFile);
-      const location = await getManualOrRealLocation();
+     const location = await getConfirmedPlantLocation();
       const { lng, lat } = location;
 
       map.flyTo({
