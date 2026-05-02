@@ -222,6 +222,73 @@ async function uploadPlantPhotoToSupabase(file) {
 
   return data.publicUrl;
 }
+app.get("/google-places", async (req, res) => {
+  try {
+    const query = req.query.q;
+
+    if (!query) {
+      return res.status(400).json({ error: "Missing search query" });
+    }
+
+    const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+
+    if (!apiKey) {
+      return res.status(500).json({
+        error: "Missing GOOGLE_PLACES_API_KEY in .env"
+      });
+    }
+
+    const response = await fetch("https://places.googleapis.com/v1/places:searchText", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": apiKey,
+        "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.location,places.types"
+      },
+      body: JSON.stringify({
+        textQuery: query,
+        languageCode: "zh-CN",
+        locationBias: {
+          circle: {
+            center: {
+              latitude: 51.5072,
+              longitude: -0.1276
+            },
+            radius: 50000
+          }
+        }
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return res.status(response.status).json({
+        error: "Google Places API error",
+        detail: data
+      });
+    }
+
+    const places = (data.places || []).map(place => ({
+      id: place.id,
+      name: place.displayName?.text || "Unnamed place",
+      address: place.formattedAddress || "",
+      lng: place.location?.longitude,
+      lat: place.location?.latitude,
+      types: place.types || [],
+      source: "google"
+    })).filter(place => place.lng && place.lat);
+
+    res.json(places);
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      error: "Server error",
+      detail: error.message
+    });
+  }
+});
 
 app.post("/identify-plant", upload.single("image"), async (req, res) => {
   try {
