@@ -915,22 +915,40 @@ function isBoundaryUnlocked(boundaryId) {
 }
 
 async function searchPlaces(query) {
-  const url =
-    `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json` +
-    `?access_token=${mapboxgl.accessToken}` +
-    `&country=gb` +
-    `&proximity=-0.0982,51.4937` +
-    `&language=zh,en` +
-    `&limit=6`;
+  const response = await fetch(
+    `${API_BASE_URL}/google-places?q=${encodeURIComponent(query)}`
+  );
 
-  const response = await fetch(url);
-  const data = await response.json();
+  const googleResults = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.message || "地点搜索失败");
+    throw new Error(googleResults.error || "Google Places 搜索失败");
   }
 
-  return data.features || [];
+  return googleResults.map(place => ({
+    kind: "google",
+    id: place.id,
+    name: place.name,
+    address: place.address,
+    lng: place.lng,
+    lat: place.lat,
+    types: place.types || []
+  }));
+}
+
+function getPlaceTypeLabel(place) {
+  const types = place.types || [];
+
+  if (types.includes("university")) return "大学 / University";
+  if (types.includes("school")) return "学校 / School";
+  if (types.includes("botanical_garden")) return "植物园 / Botanical garden";
+  if (types.includes("park")) return "公园 / Park";
+  if (types.includes("tourist_attraction")) return "景点 / Attraction";
+  if (types.includes("train_station") || types.includes("subway_station")) return "车站 / Station";
+  if (types.includes("restaurant") || types.includes("cafe")) return "餐饮 / Food";
+  if (types.includes("street_address") || types.includes("route")) return "地址或道路 / Address";
+
+  return "Google 地点 / Google place";
 }
 
 function showSearchResults(results) {
@@ -940,7 +958,7 @@ function showSearchResults(results) {
     searchResults.innerHTML = `
       <div class="search-result-item">
         <div class="search-result-name">没有找到相关地点</div>
-        <div class="search-result-address">换一个关键词试试。</div>
+        <div class="search-result-address">换一个关键词试试，比如地点名、学校名、邮编或街道名。</div>
       </div>
     `;
     searchResults.style.display = "block";
@@ -950,51 +968,20 @@ function showSearchResults(results) {
   searchResults.innerHTML = results.map((place, index) => {
     return `
       <div class="search-result-item" onclick="selectSearchResult(${index})">
-        <div class="search-result-name">${escapeHtml(place.text || place.place_name)}</div>
-        <div class="search-result-address">${escapeHtml(place.place_name)}</div>
+        <div class="search-result-name">
+          📍 ${escapeHtml(place.name)}
+        </div>
+        <div class="search-result-address">
+          ${escapeHtml(getPlaceTypeLabel(place))}
+        </div>
+        <div class="search-result-address">
+          ${escapeHtml(place.address || "")}
+        </div>
       </div>
     `;
   }).join("");
 
   searchResults.style.display = "block";
-}
-
-function hideSearchResults() {
-  searchResults.style.display = "none";
-}
-
-function setActionButtonsForUnlocked() {
-  routeBtn.classList.remove("is-disabled");
-  routeBtn.disabled = false;
-
-  unlockPlaceBtn.classList.add("is-disabled");
-  unlockPlaceBtn.disabled = true;
-  unlockPlaceBtn.textContent = "已点亮";
-
-  plantListBtn.classList.remove("is-disabled");
-  plantListBtn.disabled = false;
-
-  savePlaceBtn.classList.remove("is-disabled");
-  savePlaceBtn.disabled = false;
-
-  lockedRouteHint.style.display = "none";
-}
-
-function setActionButtonsForLocked() {
-  routeBtn.classList.add("is-disabled");
-  routeBtn.disabled = true;
-
-  unlockPlaceBtn.classList.remove("is-disabled");
-  unlockPlaceBtn.disabled = false;
-  unlockPlaceBtn.textContent = "点亮";
-
-  plantListBtn.classList.add("is-disabled");
-  plantListBtn.disabled = true;
-
-  savePlaceBtn.classList.add("is-disabled");
-  savePlaceBtn.disabled = true;
-
-  lockedRouteHint.style.display = "block";
 }
 
 function openLockedPlacePanel(place, matchedBoundary) {
@@ -1100,13 +1087,14 @@ async function unlockSelectedSearchPlace() {
 function selectSearchResult(index) {
   const place = latestSearchResults[index];
 
-  if (!place || !place.center) {
+  if (!place || place.lng === undefined || place.lat === undefined) {
     return;
   }
 
   hideSearchResults();
 
-  const [lng, lat] = place.center;
+  const lng = place.lng;
+  const lat = place.lat;
 
   map.flyTo({
     center: [lng, lat],
@@ -1126,10 +1114,28 @@ function selectSearchResult(index) {
 
   const matchedBoundary = findBoundaryByLocation(lng, lat);
 
+  selectedSearchPlace = {
+    place: {
+      text: place.name,
+      place_name: place.address,
+      center: [lng, lat]
+    },
+    lng,
+    lat,
+    matchedBoundary
+  };
+
   if (matchedBoundary && isBoundaryUnlocked(matchedBoundary.id)) {
     openPanelFromBoundary(matchedBoundary);
   } else {
-    openLockedPlacePanel(place, matchedBoundary || null);
+    openLockedPlacePanel(
+      {
+        text: place.name,
+        place_name: place.address,
+        center: [lng, lat]
+      },
+      matchedBoundary || null
+    );
   }
 }
 
