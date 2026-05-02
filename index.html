@@ -58,6 +58,64 @@
       font-size: 17px;
       color: #111;
     }
+    .search-results {
+  position: absolute;
+  top: 88px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(92vw, 540px);
+  max-height: 330px;
+  overflow-y: auto;
+  background: rgba(255,255,255,0.98);
+  border-radius: 22px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.22);
+  z-index: 35;
+  display: none;
+  padding: 8px;
+  box-sizing: border-box;
+}
+
+.search-result-item {
+  padding: 12px 14px;
+  border-radius: 14px;
+  cursor: pointer;
+  border-bottom: 1px solid #eeeeee;
+}
+
+.search-result-item:last-child {
+  border-bottom: none;
+}
+
+.search-result-item:hover {
+  background: #eef7f7;
+}
+
+.search-result-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #111;
+}
+
+.search-result-address {
+  font-size: 13px;
+  color: #666;
+  margin-top: 4px;
+  line-height: 1.35;
+}
+
+.map-action-btns button.is-disabled {
+  background: #eeeeee !important;
+  color: #9a9a9a !important;
+  cursor: not-allowed;
+}
+
+.locked-route-hint {
+  display: none;
+  margin: -4px 0 14px;
+  color: #777;
+  font-size: 13px;
+  line-height: 1.45;
+}
 
     .camera-btn {
       width: 42px;
@@ -415,6 +473,11 @@
 
 
     @media (max-width: 700px) {
+
+      .search-results {
+  top: 112px;
+  width: calc(100vw - 28px);
+}
       .top-search {
         top: 48px;
         width: calc(100vw - 28px);
@@ -438,6 +501,7 @@
         display: none;
       }
     }
+    
   </style>
 </head>
 
@@ -446,9 +510,10 @@
 
   <div class="top-search">
     <div class="search-icon">🔍</div>
-    <input id="searchInput" type="text" placeholder="搜索已点亮地点 / Search unlocked places...">
+    <input id="searchInput" type="text" placeholder="搜索地点或区域 / Search places or areas...">
     <button id="cameraBtn" class="camera-btn" title="植物识别">📷</button>
   </div>
+  <div id="searchResults" class="search-results"></div>
 
   <button class="similar-pill">查看相似地点</button>
   <button class="layer-btn">◇</button>
@@ -467,11 +532,15 @@
       </div>
 
       <div class="map-action-btns">
-      <button>路线</button>
-      <button>出发</button>
-      <button id="plantListBtn">植物一览</button>
-      <button>已保存</button>
-    </div>
+       <button id="routeBtn">路线</button>
+       <button id="unlockPlaceBtn">点亮</button>
+       <button id="plantListBtn">植物一览</button>
+       <button id="savePlaceBtn">保存</button>
+      </div>
+
+<div id="lockedRouteHint" class="locked-route-hint">
+  该区域尚未点亮，点亮后可解锁路线。
+</div>
 
       <div id="panelTags" class="tag-wrap"></div>
 
@@ -571,7 +640,7 @@
   <script>
   mapboxgl.accessToken = 'pk.eyJ1IjoiZ2VuaWVsaW4iLCJhIjoiY21vbGp6dWp5MGV5YTJxcjV3cTMzZDRydCJ9.x7vN32PGbVq8IJUXPUhK4g';
 
-const API_BASE_URL = "https://开荒-Cultivating Claims-server.onrender.com";
+const API_BASE_URL = "https://leibi-maps-server.onrender.com";
 
   function getOrCreateUserId() {
     let userId = localStorage.getItem("leibiUserId");
@@ -672,14 +741,15 @@ const API_BASE_URL = "https://开荒-Cultivating Claims-server.onrender.com";
   ];
 
   let unlockedIds = [];
-let pendingClaims = [];
+  let pendingClaims = [];
 
-let selectedImageFile = null;
-let currentOpenedBoundaryId = null;
+  let selectedImageFile = null;
+  let currentOpenedBoundaryId = null;
 
-let photoGpsLocation = null;
-let manualPickedLocation = null;
-let manualPickMarker = null;
+  let latestSearchResults = [];
+  let selectedSearchPlace = null;
+  let selectedPlaceMarker = null;
+  let searchTimer = null;
 
   const map = new mapboxgl.Map({
     container: "map",
@@ -828,7 +898,239 @@ let manualPickMarker = null;
       }
     );
   }
+function escapeHtml(value) {
+  return String(value || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
 
+function isBoundaryUnlocked(boundaryId) {
+  return unlockedIds.includes(boundaryId);
+}
+
+async function searchPlaces(query) {
+  const url =
+    `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json` +
+    `?access_token=${mapboxgl.accessToken}` +
+    `&country=gb` +
+    `&proximity=-0.0982,51.4937` +
+    `&language=zh,en` +
+    `&limit=6`;
+
+  const response = await fetch(url);
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "地点搜索失败");
+  }
+
+  return data.features || [];
+}
+
+function showSearchResults(results) {
+  latestSearchResults = results;
+
+  if (!results.length) {
+    searchResults.innerHTML = `
+      <div class="search-result-item">
+        <div class="search-result-name">没有找到相关地点</div>
+        <div class="search-result-address">换一个关键词试试。</div>
+      </div>
+    `;
+    searchResults.style.display = "block";
+    return;
+  }
+
+  searchResults.innerHTML = results.map((place, index) => {
+    return `
+      <div class="search-result-item" onclick="selectSearchResult(${index})">
+        <div class="search-result-name">${escapeHtml(place.text || place.place_name)}</div>
+        <div class="search-result-address">${escapeHtml(place.place_name)}</div>
+      </div>
+    `;
+  }).join("");
+
+  searchResults.style.display = "block";
+}
+
+function hideSearchResults() {
+  searchResults.style.display = "none";
+}
+
+function setActionButtonsForUnlocked() {
+  routeBtn.classList.remove("is-disabled");
+  routeBtn.disabled = false;
+
+  unlockPlaceBtn.classList.add("is-disabled");
+  unlockPlaceBtn.disabled = true;
+  unlockPlaceBtn.textContent = "已点亮";
+
+  plantListBtn.classList.remove("is-disabled");
+  plantListBtn.disabled = false;
+
+  savePlaceBtn.classList.remove("is-disabled");
+  savePlaceBtn.disabled = false;
+
+  lockedRouteHint.style.display = "none";
+}
+
+function setActionButtonsForLocked() {
+  routeBtn.classList.add("is-disabled");
+  routeBtn.disabled = true;
+
+  unlockPlaceBtn.classList.remove("is-disabled");
+  unlockPlaceBtn.disabled = false;
+  unlockPlaceBtn.textContent = "点亮";
+
+  plantListBtn.classList.add("is-disabled");
+  plantListBtn.disabled = true;
+
+  savePlaceBtn.classList.add("is-disabled");
+  savePlaceBtn.disabled = true;
+
+  lockedRouteHint.style.display = "block";
+}
+
+function openLockedPlacePanel(place, matchedBoundary) {
+  const [lng, lat] = place.center;
+
+  selectedSearchPlace = {
+    place,
+    lng,
+    lat,
+    matchedBoundary
+  };
+
+  currentOpenedBoundaryId = null;
+
+  document.getElementById("infoPanel").style.display = "block";
+
+  document.getElementById("panelName").textContent =
+    place.text || "Unclaimed place";
+
+  document.getElementById("panelOriginal").textContent =
+    "尚未点亮区域 / Unclaimed botanical area";
+
+  document.getElementById("panelRating").textContent = "Locked";
+  document.getElementById("panelChinese").textContent = "--%";
+  document.getElementById("panelAsian").textContent = "--%";
+  document.getElementById("panelSource").textContent =
+    matchedBoundary ? matchedBoundary.source : "Search result / pending claim";
+
+  document.getElementById("panelTags").innerHTML = `
+    <span class="tag">Unclaimed</span>
+    <span class="tag">Needs unlocking</span>
+  `;
+
+  document.getElementById("panelReviews").innerHTML = `
+    <div class="review">
+      该区域尚未点亮。点亮后可查看植物记录、保存此地，并解锁路线功能。
+    </div>
+  `;
+
+  setActionButtonsForLocked();
+}
+
+function openPendingClaimPanel(claim) {
+  currentOpenedBoundaryId = claim.id;
+
+  document.getElementById("infoPanel").style.display = "block";
+  document.getElementById("panelName").textContent = "Pending Botanical Claim";
+  document.getElementById("panelOriginal").textContent =
+    "Boundary pending review / 临时植物领地";
+
+  document.getElementById("panelRating").textContent = "Pending";
+  document.getElementById("panelChinese").textContent = "--%";
+  document.getElementById("panelAsian").textContent = "--%";
+  document.getElementById("panelSource").textContent = "Pending claim";
+
+  document.getElementById("panelTags").innerHTML = `
+    <span class="tag">Pending</span>
+    <span class="tag">Needs boundary review</span>
+  `;
+
+  document.getElementById("panelReviews").innerHTML = `
+    <div class="review">
+      点亮成功，已解锁此地。该区域暂时作为 pending claim 显示，之后可由管理员修正正式边界。
+    </div>
+  `;
+
+  setActionButtonsForUnlocked();
+}
+
+async function unlockSelectedSearchPlace() {
+  if (!selectedSearchPlace) {
+    alert("请先搜索并选择一个地点。");
+    return;
+  }
+
+  const { lng, lat, matchedBoundary } = selectedSearchPlace;
+
+  try {
+    if (matchedBoundary) {
+      await unlockBoundary(matchedBoundary.id);
+      fitToBoundary(matchedBoundary);
+      openPanelFromBoundary(matchedBoundary);
+      alert("点亮成功，已解锁此地。");
+      return;
+    }
+
+    const pendingClaim = await createPendingClaim(lng, lat);
+
+    map.flyTo({
+      center: [lng, lat],
+      zoom: 16.8,
+      duration: 900
+    });
+
+    openPendingClaimPanel(pendingClaim);
+    alert("点亮成功，已解锁此地。");
+  } catch (error) {
+    console.error(error);
+    alert(error.message || "点亮失败");
+  }
+}
+
+function selectSearchResult(index) {
+  const place = latestSearchResults[index];
+
+  if (!place || !place.center) {
+    return;
+  }
+
+  hideSearchResults();
+
+  const [lng, lat] = place.center;
+
+  map.flyTo({
+    center: [lng, lat],
+    zoom: 16.2,
+    duration: 900
+  });
+
+  if (selectedPlaceMarker) {
+    selectedPlaceMarker.remove();
+  }
+
+  selectedPlaceMarker = new mapboxgl.Marker({
+    color: "#d6452f"
+  })
+    .setLngLat([lng, lat])
+    .addTo(map);
+
+  const matchedBoundary = findBoundaryByLocation(lng, lat);
+
+  if (matchedBoundary && isBoundaryUnlocked(matchedBoundary.id)) {
+    openPanelFromBoundary(matchedBoundary);
+  } else {
+    openLockedPlacePanel(place, matchedBoundary || null);
+  }
+}
+
+window.selectSearchResult = selectSearchResult;
   async function fetchUnlockedIds() {
     const response = await fetch(`${API_BASE_URL}/unlocked-boundaries`);
     const data = await response.json();
@@ -1044,6 +1346,7 @@ async function getConfirmedPlantLocation() {
     boundary.comments.forEach(comment => {
       reviewsBox.innerHTML += `<div class="review">“${comment}”</div>`;
     });
+    setActionButtonsForUnlocked();
   }
 
   function openPanelFromPendingClaim(claim) {
@@ -1174,6 +1477,7 @@ async function getConfirmedPlantLocation() {
   }
 
   const searchInput = document.getElementById("searchInput");
+  const searchResults = document.getElementById("searchResults");
   const cameraBtn = document.getElementById("cameraBtn");
   const cameraModal = document.getElementById("cameraModal");
   const closeCameraBtn = document.getElementById("closeCameraBtn");
@@ -1181,7 +1485,12 @@ async function getConfirmedPlantLocation() {
   const previewBox = document.getElementById("previewBox");
   const identifyBtn = document.getElementById("identifyBtn");
   const resultBox = document.getElementById("resultBox");
+  const routeBtn = document.getElementById("routeBtn");
+  const unlockPlaceBtn = document.getElementById("unlockPlaceBtn");
   const plantListBtn = document.getElementById("plantListBtn");
+  const savePlaceBtn = document.getElementById("savePlaceBtn");
+  const lockedRouteHint = document.getElementById("lockedRouteHint");
+
   const plantListModal = document.getElementById("plantListModal");
   const plantListBox = document.getElementById("plantListBox");
   const plantListTitle = document.getElementById("plantListTitle");
@@ -1330,27 +1639,84 @@ async function getConfirmedPlantLocation() {
     console.error("Mapbox error:", error);
   });
 
-  searchInput.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") {
-      const query = searchInput.value.toLowerCase().trim();
+  searchInput.addEventListener("input", () => {
+  const query = searchInput.value.trim();
 
-      const found = getUnlockedBoundaries().find(boundary => {
-        return boundary.name.toLowerCase().includes(query)
-          || boundary.fakeName.toLowerCase().includes(query)
-          || boundary.id.toLowerCase().includes(query);
-      });
+  clearTimeout(searchTimer);
 
-      if (!found) {
-        alert("当前还没有点亮这个边界。请先用相机识别植物来解锁它。");
-        return;
-      }
+  if (query.length < 2) {
+    hideSearchResults();
+    return;
+  }
 
-      fitToBoundary(found);
-      openPanelFromBoundary(found);
+  searchTimer = setTimeout(async () => {
+    try {
+      const results = await searchPlaces(query);
+      showSearchResults(results);
+    } catch (error) {
+      console.error(error);
+      searchResults.innerHTML = `
+        <div class="search-result-item">
+          <div class="search-result-name">搜索失败</div>
+          <div class="search-result-address">${escapeHtml(error.message || error)}</div>
+        </div>
+      `;
+      searchResults.style.display = "block";
     }
-  });
+  }, 350);
+});
+
+searchInput.addEventListener("keydown", async (event) => {
+  if (event.key !== "Enter") {
+    return;
+  }
+
+  const query = searchInput.value.trim();
+
+  if (!query) {
+    return;
+  }
+
+  try {
+    let results = latestSearchResults;
+
+    if (!results.length) {
+      results = await searchPlaces(query);
+      latestSearchResults = results;
+    }
+
+    if (!results.length) {
+      alert("没有找到相关地点。");
+      return;
+    }
+
+    selectSearchResult(0);
+  } catch (error) {
+    console.error(error);
+    alert(error.message || "搜索失败");
+  }
+});
 
   plantListBtn.addEventListener("click", openPlantList);
+  unlockPlaceBtn.addEventListener("click", unlockSelectedSearchPlace);
+
+routeBtn.addEventListener("click", () => {
+  if (routeBtn.disabled) {
+    alert("该区域尚未点亮，点亮后可解锁路线。");
+    return;
+  }
+
+  alert("路线功能下一步接入。");
+});
+
+savePlaceBtn.addEventListener("click", () => {
+  if (savePlaceBtn.disabled) {
+    alert("该区域尚未点亮，点亮后可保存此地。");
+    return;
+  }
+
+  alert("保存功能下一步接入。");
+});
 
   closePlantListBtn.addEventListener("click", () => {
     plantListModal.style.display = "none";
