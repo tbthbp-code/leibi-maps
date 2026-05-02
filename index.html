@@ -1772,12 +1772,16 @@ savePlaceBtn.addEventListener("click", () => {
     manualPickMarker = null;
   }
 
+  if (manualLocationHint) {
   manualLocationHint.textContent = "尚未手动选择地点。";
+}
 
   if (!file) {
     previewBox.innerHTML = "尚未选择图片";
     photoGpsBox.innerHTML = "上传照片后，系统会优先尝试读取照片里的 GPS 拍摄位置。";
-    locationChoiceBox.style.display = "none";
+    if (locationChoiceBox) {
+  locationChoiceBox.style.display = "none";
+}
     return;
   }
 
