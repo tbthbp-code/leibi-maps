@@ -116,6 +116,66 @@
   font-size: 13px;
   line-height: 1.45;
 }
+     .route-panel {
+  display: none;
+  margin: 8px 0 14px;
+  padding: 12px;
+  border-radius: 16px;
+  background: #f4faf7;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.route-modes {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  overflow-x: auto;
+}
+
+.route-mode-btn {
+  border: none;
+  border-radius: 999px;
+  padding: 8px 12px;
+  background: #e8eeee;
+  color: #31524a;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.route-mode-btn.active {
+  background: #157a63;
+  color: white;
+}
+
+.route-mode-btn:disabled {
+  background: #eeeeee;
+  color: #aaa;
+  cursor: not-allowed;
+}
+
+.user-heading-marker {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #1a73e8;
+  box-shadow: 0 0 0 8px rgba(26, 115, 232, 0.16);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-heading-marker::before {
+  content: "";
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 18px solid white;
+  transform: translateY(-3px);
+}
 
     .camera-btn {
       width: 42px;
@@ -553,6 +613,16 @@
 <div id="lockedRouteHint" class="locked-route-hint">
   该区域尚未点亮，点亮后可解锁路线。
 </div>
+     <div id="routePanel" class="route-panel">
+  <strong id="routeSummary">路线加载中...</strong>
+
+<div class="route-modes">
+    <button class="route-mode-btn active" data-mode="WALK">步行</button>
+    <button class="route-mode-btn" data-mode="BICYCLE">骑行</button>
+    <button class="route-mode-btn" data-mode="DRIVE">自驾</button>
+    <button class="route-mode-btn" data-mode="TRANSIT">公交</button>
+  </div>
+</div>
 
       <div id="panelTags" class="tag-wrap"></div>
 
@@ -765,6 +835,10 @@ const API_BASE_URL = "https://leibi-maps-server.onrender.com";
   let selectedSearchPlace = null;
   let selectedPlaceMarker = null;
   let searchTimer = null;
+  let currentRouteDestination = null;
+  let currentRouteMode = "WALK";
+  let userLocationMarker = null;
+  let userWatchId = null;
 
   const map = new mapboxgl.Map({
     container: "map",
@@ -1015,6 +1089,7 @@ function setActionButtonsForLocked() {
   savePlaceBtn.disabled = true;
 
   lockedRouteHint.style.display = "block";
+  routePanel.style.display = "none";
 }
 
 function setActionButtonsForUnlocked() {
@@ -1032,10 +1107,18 @@ function setActionButtonsForUnlocked() {
   savePlaceBtn.disabled = false;
 
   lockedRouteHint.style.display = "none";
+  routePanel.style.display = "none";
+
 }
 
 function openLockedPlacePanel(place, matchedBoundary) {
   const [lng, lat] = place.center;
+
+  currentRouteDestination = {
+  lng,
+  lat,
+  name: place.text || "Selected place"
+};
 
   selectedSearchPlace = {
     place,
@@ -1104,6 +1187,11 @@ if (isChoosingPlantLocation) {
 
 function openPendingClaimPanel(claim) {
   currentOpenedBoundaryId = claim.id;
+  currentRouteDestination = {
+  lng: claim.lng,
+  lat: claim.lat,
+  name: "Pending Botanical Claim"
+};
 
   document.getElementById("infoPanel").style.display = "block";
   document.getElementById("panelName").textContent = "Pending Botanical Claim";
@@ -1487,6 +1575,234 @@ async function getConfirmedPlantLocation() {
   if (selectedMode === "current") {
     const currentLocation = await getCurrentPositionPromise();
 
+    function decodeGooglePolyline(encoded) {
+  let index = 0;
+  const coordinates = [];
+  let lat = 0;
+  let lng = 0;
+
+  while (index < encoded.length) {
+    let b;
+    let shift = 0;
+    let result = 0;
+
+    do {
+      b = encoded.charCodeAt(index++) - 63;
+      result |= (b & 0x1f) << shift;
+      shift += 5;
+    } while (b >= 0x20);
+
+    const deltaLat = result & 1 ? ~(result >> 1) : result >> 1;
+    lat += deltaLat;
+
+    shift = 0;
+    result = 0;
+
+    do {
+      b = encoded.charCodeAt(index++) - 63;
+      result |= (b & 0x1f) << shift;
+      shift += 5;
+    } while (b >= 0x20);
+
+    const deltaLng = result & 1 ? ~(result >> 1) : result >> 1;
+    lng += deltaLng;
+
+    coordinates.push([lng / 1e5, lat / 1e5]);
+  }
+
+  return coordinates;
+}
+function formatRouteDistance(meters) {
+  if (!meters && meters !== 0) {
+    return "--";
+  }
+
+  if (meters >= 1000) {
+    return `${(meters / 1000).toFixed(1)} km`;
+  }
+
+  return `${Math.round(meters)} m`;
+}
+
+function formatRouteDuration(durationString) {
+  if (!durationString) {
+    return "--";
+  }
+
+  const seconds = Number(String(durationString).replace("s", ""));
+  const minutes = Math.round(seconds / 60);
+
+  if (minutes < 60) {
+    return `${minutes} 分钟`;
+  }
+
+  const hours = Math.floor(minutes / 60);
+  const restMinutes = minutes % 60;
+
+  if (restMinutes === 0) {
+    return `${hours} 小时`;
+  }
+
+  return `${hours} 小时 ${restMinutes} 分钟`;
+}
+
+function updateUserLocationMarker(lng, lat, heading = 0) {
+  if (!userLocationMarker) {
+    const markerElement = document.createElement("div");
+    markerElement.className = "user-heading-marker";
+
+    userLocationMarker = new mapboxgl.Marker({
+      element: markerElement,
+      rotationAlignment: "map",
+      pitchAlignment: "map"
+    })
+      .setLngLat([lng, lat])
+      .addTo(map);
+  }
+
+  userLocationMarker.setLngLat([lng, lat]);
+
+  const markerElement = userLocationMarker.getElement();
+  markerElement.style.transform = `${markerElement.style.transform} rotate(${heading || 0}deg)`;
+}
+
+function startWatchingUserLocation() {
+  if (!navigator.geolocation) {
+    alert("当前浏览器不支持定位。");
+    return;
+  }
+
+  if (userWatchId) {
+    navigator.geolocation.clearWatch(userWatchId);
+  }
+
+  userWatchId = navigator.geolocation.watchPosition(
+    position => {
+      const lng = position.coords.longitude;
+      const lat = position.coords.latitude;
+      const heading = position.coords.heading || 0;
+
+      updateUserLocationMarker(lng, lat, heading);
+    },
+    error => {
+      console.warn("实时定位失败：", error);
+    },
+    {
+      enableHighAccuracy: true,
+      maximumAge: 1000,
+      timeout: 10000
+    }
+  );
+}
+
+async function fetchGoogleRoute(origin, destination, mode) {
+  const url =
+    `${API_BASE_URL}/google-route?` +
+    `fromLat=${encodeURIComponent(origin.lat)}` +
+    `&fromLng=${encodeURIComponent(origin.lng)}` +
+    `&toLat=${encodeURIComponent(destination.lat)}` +
+    `&toLng=${encodeURIComponent(destination.lng)}` +
+    `&mode=${encodeURIComponent(mode)}`;
+
+  const response = await fetch(url);
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || "路线获取失败");
+  }
+
+  return data;
+}
+
+function drawGoogleRoute(encodedPolyline) {
+  const coordinates = decodeGooglePolyline(encodedPolyline);
+
+  const routeGeoJSON = {
+    type: "Feature",
+    properties: {},
+    geometry: {
+      type: "LineString",
+      coordinates
+    }
+  };
+
+  if (map.getSource("active-google-route")) {
+    map.getSource("active-google-route").setData(routeGeoJSON);
+  } else {
+    map.addSource("active-google-route", {
+      type: "geojson",
+      data: routeGeoJSON
+    });
+
+    map.addLayer({
+      id: "active-google-route-line",
+      type: "line",
+      source: "active-google-route",
+      layout: {
+        "line-join": "round",
+        "line-cap": "round"
+      },
+      paint: {
+        "line-color": "#157a63",
+        "line-width": 6,
+        "line-opacity": 0.95
+      }
+    });
+  }
+
+  const bbox = turf.bbox(routeGeoJSON);
+
+  map.fitBounds(
+    [[bbox[0], bbox[1]], [bbox[2], bbox[3]]],
+    {
+      padding: {
+        top: 140,
+        right: 60,
+        bottom: 300,
+        left: 60
+      },
+      duration: 900
+    }
+  );
+}
+
+async function showGoogleRoute(mode = currentRouteMode) {
+  if (routeBtn.disabled) {
+    alert("该区域尚未点亮，点亮后可解锁路线。");
+    return;
+  }
+
+  if (!currentRouteDestination) {
+    alert("没有可导航的目的地。");
+    return;
+  }
+
+  try {
+    routePanel.style.display = "block";
+    routeSummary.textContent = "正在获取当前位置和路线...";
+
+    const origin = await getCurrentPositionPromise();
+
+    startWatchingUserLocation();
+    updateUserLocationMarker(origin.lng, origin.lat, 0);
+
+    const routeData = await fetchGoogleRoute(origin, currentRouteDestination, mode);
+
+    if (!routeData.encodedPolyline) {
+      throw new Error("路线数据缺少 encodedPolyline");
+    }
+
+    drawGoogleRoute(routeData.encodedPolyline);
+
+    routeSummary.textContent =
+      `${currentRouteDestination.name} · ${formatRouteDuration(routeData.duration)} · ${formatRouteDistance(routeData.distanceMeters)}`;
+  } catch (error) {
+    console.error(error);
+    routePanel.style.display = "block";
+    routeSummary.textContent = error.message || "路线获取失败。";
+  }
+}
+window.showGoogleRoute = showGoogleRoute;
     return {
       ...currentLocation,
       source: "current-location"
@@ -1510,6 +1826,12 @@ async function getConfirmedPlantLocation() {
   function openPanelFromBoundary(boundary) {
     currentOpenedBoundaryId = boundary.id;
     document.getElementById("infoPanel").style.display = "block";
+
+    currentRouteDestination = {
+     lng: boundary.testPoint[0],
+     lat: boundary.testPoint[1],
+     name: boundary.name
+};
 
     document.getElementById("panelName").textContent = boundary.fakeName;
     document.getElementById("panelOriginal").textContent =
@@ -1679,6 +2001,9 @@ async function getConfirmedPlantLocation() {
   const plantListBtn = document.getElementById("plantListBtn");
   const savePlaceBtn = document.getElementById("savePlaceBtn");
   const lockedRouteHint = document.getElementById("lockedRouteHint");
+  const routePanel = document.getElementById("routePanel");
+  const routeSummary = document.getElementById("routeSummary");
+  const routeModeBtns = document.querySelectorAll(".route-mode-btn");
 
   const plantListModal = document.getElementById("plantListModal");
   const plantListBox = document.getElementById("plantListBox");
@@ -1912,8 +2237,20 @@ routeBtn.addEventListener("click", () => {
     return;
   }
 
-  alert("路线功能下一步接入。");
+  window.showGoogleRoute(currentRouteMode);
 });
+
+routeModeBtns.forEach(button => {
+  button.addEventListener("click", () => {
+    routeModeBtns.forEach(btn => btn.classList.remove("active"));
+    button.classList.add("active");
+
+    currentRouteMode = button.dataset.mode;
+    window.showGoogleRoute(currentRouteMode);
+  });
+});
+
+  
 
 savePlaceBtn.addEventListener("click", () => {
   if (savePlaceBtn.disabled) {

@@ -198,32 +198,44 @@ app.get("/pending-claims", async (req, res) => {
 });
 
 app.post("/pending-claims", async (req, res) => {
-  const { lng, lat, userId } = req.body;
-
-  if (typeof lng !== "number" || typeof lat !== "number") {
-    return res.status(400).json({ error: "Missing lng or lat" });
-  }
-
-  const id = `pending-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-
-  const { data, error } = await supabase
-    .from("pending_claims")
-    .insert({
-      id,
+  try {
+    const {
       lng,
       lat,
-      radius_m: 80,
-      status: "pending",
-      user_id: userId || "anonymous"
-    })
-    .select()
-    .single();
+      userId,
+      placeName,
+      placeAddress,
+      placeId,
+      placeType
+    } = req.body;
 
-  if (error) {
-    return res.status(500).json({ error: error.message });
+    const id = `pending-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+    const { data, error } = await supabase
+      .from("pending_claims")
+      .insert({
+        id,
+        lng,
+        lat,
+        radius_m: 80,
+        status: "pending",
+        user_id: userId,
+        place_name: placeName || "Unnamed botanical claim",
+        place_address: placeAddress || "",
+        place_id: placeId || "",
+        place_type: placeType || "google_place"
+      })
+      .select()
+      .single();
+
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
-
-  res.json(data);
 });
 
 // ---------- 植物记录 ----------
