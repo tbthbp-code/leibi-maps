@@ -718,6 +718,27 @@
       line-height: 1.5;
     }
 
+    .heading-btn {
+      position: absolute;
+      right: 24px;
+      top: 166px;
+      z-index: 25;
+      border: none;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.98);
+      color: #1a73e8;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.22);
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+.heading-btn.is-on {
+  background: #1a73e8;
+  color: white;
+}
+
 
     @media (max-width: 700px) {
       .search-results {
@@ -768,6 +789,7 @@
 
   <button class="similar-pill">查看相似地点</button>
   <button class="layer-btn">◇</button>
+  <button id="headingBtn" class="heading-btn">开启方向</button>
 
   <div id="infoPanel" class="info-panel">
     <div class="bottom-handle"></div>
@@ -874,8 +896,11 @@
         上传或拍摄植物照片后，系统会优先读取照片拍摄位置；如果照片没有 GPS 信息，你可以使用当前位置或手动选择地点来生成植物认领区域。
       </p>
 
-      <label class="upload-btn" for="plantImageInput">打开相机 / 上传植物照片</label>
-      <input id="plantImageInput" type="file" accept="image/*" capture="environment">
+      <label class="upload-btn" for="plantCameraInput">拍摄植物照片</label>
+      <input id="plantCameraInput" type="file" accept="image/*" capture="environment">
+
+      <label class="upload-btn" for="plantGalleryInput">从相册选择照片</label>
+      <input id="plantGalleryInput" type="file" accept="image/*">
 
       <div id="previewBox" class="preview-box">尚未选择图片</div>
 
@@ -2684,7 +2709,8 @@ const routeData = await fetchGoogleRoute(
     const cameraBtn = document.getElementById("cameraBtn");
     const cameraModal = document.getElementById("cameraModal");
     const closeCameraBtn = document.getElementById("closeCameraBtn");
-    const plantImageInput = document.getElementById("plantImageInput");
+    const plantCameraInput = document.getElementById("plantCameraInput");
+    const plantGalleryInput = document.getElementById("plantGalleryInput");
     const previewBox = document.getElementById("previewBox");
     const identifyBtn = document.getElementById("identifyBtn");
     const resultBox = document.getElementById("resultBox");
@@ -2696,6 +2722,7 @@ const routeData = await fetchGoogleRoute(
     const routePanel = document.getElementById("routePanel");
     const routeSummary = document.getElementById("routeSummary");
     const routeModeBtns = document.querySelectorAll(".route-mode-btn");
+    const headingBtn = document.getElementById("headingBtn");
 
     const plantListModal = document.getElementById("plantListModal");
     const plantListBox = document.getElementById("plantListBox");
@@ -2848,7 +2875,7 @@ const routeData = await fetchGoogleRoute(
       });
 
       startWatchingUserLocation();
-      startWatchingDeviceHeading();
+      
     });
 
     map.on("error", (error) => {
@@ -2970,6 +2997,12 @@ const routeData = await fetchGoogleRoute(
       window.showGoogleRoute(currentRouteMode);
     });
 
+    headingBtn.addEventListener("click", () => {
+      startWatchingDeviceHeading();
+      headingBtn.classList.add("is-on");
+      headingBtn.textContent = "方向已开";
+    });
+
     routeModeBtns.forEach(button => {
       button.addEventListener("click", () => {
         routeModeBtns.forEach(btn => btn.classList.remove("active"));
@@ -3012,7 +3045,8 @@ const routeData = await fetchGoogleRoute(
       selectedImageFile = null;
       photoGpsLocation = null;
       manualPickedLocation = null;
-      plantImageInput.value = "";
+      plantCameraInput.value = "";
+      plantGalleryInput.value = "";
       searchInput.value = "";
       searchInput.placeholder = "搜索地点或区域 / Search places or areas...";
       hideSearchResults();
@@ -3031,7 +3065,7 @@ const routeData = await fetchGoogleRoute(
       closeCameraBtn.textContent = "关闭";
     });
 
-    plantImageInput.addEventListener("change", async (event) => {
+    async function handlePlantImageChange(event) {
       const file = event.target.files[0];
       selectedImageFile = file || null;
 
@@ -3094,7 +3128,10 @@ const routeData = await fetchGoogleRoute(
           请选择植物地点来源：使用当前位置，或手动在地图上选择地点。
         `;
       }
-    });
+    }
+
+    plantCameraInput.addEventListener("change", handlePlantImageChange);
+    plantGalleryInput.addEventListener("change", handlePlantImageChange);
 
     identifyBtn.addEventListener("click", async () => {
       if (!selectedImageFile) {
