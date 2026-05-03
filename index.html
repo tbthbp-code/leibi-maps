@@ -2341,33 +2341,33 @@
     }
 
     function startWatchingUserLocation() {
-      if (!navigator.geolocation) {
-        alert("当前浏览器不支持定位。");
-        return;
-      }
+  if (!navigator.geolocation) {
+    console.warn("当前浏览器不支持定位。");
+    return;
+  }
 
-      if (userWatchId) {
-        navigator.geolocation.clearWatch(userWatchId);
-      }
+  if (userWatchId) {
+    navigator.geolocation.clearWatch(userWatchId);
+  }
 
-      userWatchId = navigator.geolocation.watchPosition(
-        position => {
-          const lng = position.coords.longitude;
-          const lat = position.coords.latitude;
-          const heading = position.coords.heading || 0;
+  userWatchId = navigator.geolocation.watchPosition(
+    position => {
+      const lng = position.coords.longitude;
+      const lat = position.coords.latitude;
+      const heading = position.coords.heading || 0;
 
-          updateUserLocationMarker(lng, lat, heading);
-        },
-        error => {
-          console.warn("实时定位失败：", error);
-        },
-        {
-          enableHighAccuracy: true,
-          maximumAge: 1000,
-          timeout: 10000
-        }
-      );
+      updateUserLocationMarker(lng, lat, heading);
+    },
+    error => {
+      console.warn("实时定位失败：", error);
+    },
+    {
+      enableHighAccuracy: false,
+      maximumAge: 60000,
+      timeout: 5000
     }
+  );
+}
 
     async function fetchGoogleRoute(origin, destination, mode) {
       const url =
@@ -2793,6 +2793,8 @@ const routeData = await fetchGoogleRoute(
       map.on("mouseleave", "pending-fill", () => {
         map.getCanvas().style.cursor = "";
       });
+
+      startWatchingUserLocation();
     });
 
     map.on("error", (error) => {
