@@ -11,7 +11,8 @@
 
   <!-- Turf：用来判断定位点是否在某个边界里 -->
   <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
- <script src="https://cdn.jsdelivr.net/npm/exifr/dist/lite.umd.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/exifr/dist/lite.umd.js"></script>
+
   <style>
     html, body {
       margin: 0;
@@ -58,124 +59,126 @@
       font-size: 17px;
       color: #111;
     }
+
     .search-results {
-  position: absolute;
-  top: 88px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(92vw, 540px);
-  max-height: 330px;
-  overflow-y: auto;
-  background: rgba(255,255,255,0.98);
-  border-radius: 22px;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.22);
-  z-index: 35;
-  display: none;
-  padding: 8px;
-  box-sizing: border-box;
-}
+      position: absolute;
+      top: 88px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(92vw, 540px);
+      max-height: 330px;
+      overflow-y: auto;
+      background: rgba(255,255,255,0.98);
+      border-radius: 22px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.22);
+      z-index: 35;
+      display: none;
+      padding: 8px;
+      box-sizing: border-box;
+    }
 
-.search-result-item {
-  padding: 12px 14px;
-  border-radius: 14px;
-  cursor: pointer;
-  border-bottom: 1px solid #eeeeee;
-}
+    .search-result-item {
+      padding: 12px 14px;
+      border-radius: 14px;
+      cursor: pointer;
+      border-bottom: 1px solid #eeeeee;
+    }
 
-.search-result-item:last-child {
-  border-bottom: none;
-}
+    .search-result-item:last-child {
+      border-bottom: none;
+    }
 
-.search-result-item:hover {
-  background: #eef7f7;
-}
+    .search-result-item:hover {
+      background: #eef7f7;
+    }
 
-.search-result-name {
-  font-size: 15px;
-  font-weight: 700;
-  color: #111;
-}
+    .search-result-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: #111;
+    }
 
-.search-result-address {
-  font-size: 13px;
-  color: #666;
-  margin-top: 4px;
-  line-height: 1.35;
-}
+    .search-result-address {
+      font-size: 13px;
+      color: #666;
+      margin-top: 4px;
+      line-height: 1.35;
+    }
 
-.map-action-btns button.is-disabled {
-  background: #eeeeee !important;
-  color: #9a9a9a !important;
-  cursor: not-allowed;
-}
+    .map-action-btns button.is-disabled {
+      background: #eeeeee !important;
+      color: #9a9a9a !important;
+      cursor: not-allowed;
+    }
 
-.locked-route-hint {
-  display: none;
-  margin: -4px 0 14px;
-  color: #777;
-  font-size: 13px;
-  line-height: 1.45;
-}
-     .route-panel {
-  display: none;
-  margin: 8px 0 14px;
-  padding: 12px;
-  border-radius: 16px;
-  background: #f4faf7;
-  font-size: 14px;
-  line-height: 1.45;
-}
+    .locked-route-hint {
+      display: none;
+      margin: -4px 0 14px;
+      color: #777;
+      font-size: 13px;
+      line-height: 1.45;
+    }
 
-.route-modes {
-  display: flex;
-  gap: 8px;
-  margin-top: 10px;
-  overflow-x: auto;
-}
+    .route-panel {
+      display: none;
+      margin: 8px 0 14px;
+      padding: 12px;
+      border-radius: 16px;
+      background: #f4faf7;
+      font-size: 14px;
+      line-height: 1.45;
+    }
 
-.route-mode-btn {
-  border: none;
-  border-radius: 999px;
-  padding: 8px 12px;
-  background: #e8eeee;
-  color: #31524a;
-  font-size: 13px;
-  font-weight: 700;
-  white-space: nowrap;
-  cursor: pointer;
-}
+    .route-modes {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+      overflow-x: auto;
+    }
 
-.route-mode-btn.active {
-  background: #157a63;
-  color: white;
-}
+    .route-mode-btn {
+      border: none;
+      border-radius: 999px;
+      padding: 8px 12px;
+      background: #e8eeee;
+      color: #31524a;
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+      cursor: pointer;
+    }
 
-.route-mode-btn:disabled {
-  background: #eeeeee;
-  color: #aaa;
-  cursor: not-allowed;
-}
+    .route-mode-btn.active {
+      background: #157a63;
+      color: white;
+    }
 
-.user-heading-marker {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: #1a73e8;
-  box-shadow: 0 0 0 8px rgba(26, 115, 232, 0.16);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+    .route-mode-btn:disabled {
+      background: #eeeeee;
+      color: #aaa;
+      cursor: not-allowed;
+    }
 
-.user-heading-marker::before {
-  content: "";
-  width: 0;
-  height: 0;
-  border-left: 8px solid transparent;
-  border-right: 8px solid transparent;
-  border-bottom: 18px solid white;
-  transform: translateY(-3px);
-}
+    .user-heading-marker {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: #1a73e8;
+      box-shadow: 0 0 0 8px rgba(26, 115, 232, 0.16);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .user-heading-marker::before {
+      content: "";
+      width: 0;
+      height: 0;
+      border-left: 8px solid transparent;
+      border-right: 8px solid transparent;
+      border-bottom: 18px solid white;
+      transform: translateY(-3px);
+    }
 
     .camera-btn {
       width: 42px;
@@ -448,18 +451,18 @@
       background: #f2f2f2;
       color: #333;
     }
+
     .ghost-btn.done-btn {
+      background: #157a63;
+      color: white;
+      font-weight: 700;
+    }
 
-  background: #157a63;
-  color: white;
-  font-weight: 700;
-}
-
-.identify-btn:disabled {
-  background: #b9c9c3;
-  color: white;
-  cursor: not-allowed;
-}
+    .identify-btn:disabled {
+      background: #b9c9c3;
+      color: white;
+      cursor: not-allowed;
+    }
 
     .preview-box {
       margin-top: 12px;
@@ -514,42 +517,214 @@
     input[type="file"] {
       display: none;
     }
+
     .plant-record-card {
-  position: relative;
-  background: #f5f5f5;
-  padding: 14px 44px 14px 14px;
-  border-radius: 14px;
-  margin-top: 10px;
-  font-size: 14px;
-  line-height: 1.5;
-}
+      position: relative;
+      background: #f5f5f5;
+      padding: 14px 44px 14px 14px;
+      border-radius: 14px;
+      margin-top: 10px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
 
-.delete-plant-btn {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 26px;
-  height: 26px;
-  border: none;
-  border-radius: 50%;
-  background: #e6e6e6;
-  color: #333;
-  font-size: 18px;
-  line-height: 1;
-  cursor: pointer;
-}
+    .delete-plant-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 26px;
+      height: 26px;
+      border: none;
+      border-radius: 50%;
+      background: #e6e6e6;
+      color: #333;
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+    }
 
-.delete-plant-btn:hover {
-  background: #d8d8d8;
-}
+    .delete-plant-btn:hover {
+      background: #d8d8d8;
+    }
+
+    .bottom-tabs {
+      position: absolute;
+      left: 50%;
+      bottom: 14px;
+      transform: translateX(-50%);
+      width: min(92vw, 520px);
+      height: 74px;
+      background: rgba(255,255,255,0.96);
+      border-radius: 30px;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.20);
+      z-index: 26;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding: 7px 10px;
+      box-sizing: border-box;
+      backdrop-filter: blur(10px);
+    }
+
+    .bottom-tab {
+      border: none;
+      background: transparent;
+      color: #4d5d5a;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      min-width: 88px;
+      cursor: pointer;
+    }
+
+    .bottom-tab-icon {
+      min-width: 62px;
+      height: 32px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .bottom-tab.active .bottom-tab-icon {
+      background: #cceff3;
+      color: #006d74;
+    }
+
+    .sheet-modal {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.30);
+      z-index: 45;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .sheet-card {
+      width: min(100vw, 620px);
+      max-height: 72vh;
+      overflow-y: auto;
+      background: white;
+      border-radius: 28px 28px 0 0;
+      box-shadow: 0 -10px 36px rgba(0,0,0,0.22);
+      padding: 18px 20px 26px;
+      box-sizing: border-box;
+    }
+
+    .sheet-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .sheet-header h2 {
+      margin: 0;
+      color: #155f4f;
+      font-size: 24px;
+    }
+
+    .sheet-close {
+      border: none;
+      background: #f1f3f4;
+      color: #222;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 22px;
+    }
+
+    .saved-card,
+    .contribution-card,
+    .place-review-card {
+      background: #f6faf8;
+      border-radius: 16px;
+      padding: 13px;
+      margin-top: 10px;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .saved-card button,
+    .review-submit-btn {
+      border: none;
+      border-radius: 999px;
+      background: #157a63;
+      color: white;
+      padding: 8px 13px;
+      margin-top: 9px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .review-summary {
+      background: #f6faf8;
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .review-score-big {
+      font-size: 30px;
+      font-weight: 800;
+      color: #0b7f7a;
+      margin-right: 8px;
+    }
+
+    .review-form {
+      background: #f7f7f7;
+      border-radius: 16px;
+      padding: 12px;
+      margin-top: 12px;
+    }
+
+    .review-form label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      color: #444;
+      margin: 8px 0 6px;
+    }
+
+    .review-form select,
+    .review-form textarea {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      padding: 10px;
+      font-size: 14px;
+      font-family: inherit;
+      background: white;
+    }
+
+    .review-form textarea {
+      min-height: 76px;
+      resize: vertical;
+    }
+
+    .empty-state {
+      color: #777;
+      background: #f6f6f6;
+      padding: 14px;
+      border-radius: 16px;
+      line-height: 1.5;
+    }
 
 
     @media (max-width: 700px) {
-
       .search-results {
-  top: 112px;
-  width: calc(100vw - 28px);
-}
+        top: 112px;
+        width: calc(100vw - 28px);
+      }
+
       .top-search {
         top: 48px;
         width: calc(100vw - 28px);
@@ -572,8 +747,12 @@
       .mini-legend {
         display: none;
       }
+
+      .bottom-tabs {
+        bottom: 10px;
+        width: calc(100vw - 28px);
+      }
     }
-    
   </style>
 </head>
 
@@ -604,25 +783,26 @@
       </div>
 
       <div class="map-action-btns">
-       <button id="routeBtn">路线</button>
-       <button id="unlockPlaceBtn">点亮</button>
-       <button id="plantListBtn">植物一览</button>
-       <button id="savePlaceBtn">保存</button>
+        <button id="routeBtn">路线</button>
+        <button id="unlockPlaceBtn">点亮</button>
+        <button id="plantListBtn">植物一览</button>
+        <button id="savePlaceBtn">保存</button>
       </div>
 
-<div id="lockedRouteHint" class="locked-route-hint">
-  该区域尚未点亮，点亮后可解锁路线。
-</div>
-     <div id="routePanel" class="route-panel">
-  <strong id="routeSummary">路线加载中...</strong>
+      <div id="lockedRouteHint" class="locked-route-hint">
+        该区域尚未点亮，点亮后可解锁路线。
+      </div>
 
-<div class="route-modes">
-    <button class="route-mode-btn active" data-mode="WALK">步行</button>
-    <button class="route-mode-btn" data-mode="BICYCLE">骑行</button>
-    <button class="route-mode-btn" data-mode="DRIVE">自驾</button>
-    <button class="route-mode-btn" data-mode="TRANSIT">公交</button>
-  </div>
-</div>
+      <div id="routePanel" class="route-panel">
+        <strong id="routeSummary">路线加载中...</strong>
+
+        <div class="route-modes">
+          <button class="route-mode-btn active" data-mode="WALK">步行</button>
+          <button class="route-mode-btn" data-mode="BICYCLE">骑行</button>
+          <button class="route-mode-btn" data-mode="DRIVE">自驾</button>
+          <button class="route-mode-btn" data-mode="TRANSIT">公交</button>
+        </div>
+      </div>
 
       <div id="panelTags" class="tag-wrap"></div>
 
@@ -660,11 +840,38 @@
     当前版本使用本地边界库，不再实时请求 OSM，所以更稳定。
   </div>
 
+
+  <div class="bottom-tabs">
+    <button id="exploreTabBtn" class="bottom-tab active" type="button">
+      <span class="bottom-tab-icon">📍</span>
+      <span>探索</span>
+    </button>
+    <button id="meTabBtn" class="bottom-tab" type="button">
+      <span class="bottom-tab-icon">🔖</span>
+      <span>我</span>
+    </button>
+    <button id="contributeTabBtn" class="bottom-tab" type="button">
+      <span class="bottom-tab-icon">＋</span>
+      <span>贡献</span>
+    </button>
+  </div>
+
+  <div id="bottomSheetModal" class="sheet-modal">
+    <div class="sheet-card">
+      <div class="bottom-handle"></div>
+      <div class="sheet-header">
+        <h2 id="bottomSheetTitle">我的地点</h2>
+        <button id="closeBottomSheetBtn" class="sheet-close" type="button">×</button>
+      </div>
+      <div id="bottomSheetContent"></div>
+    </div>
+  </div>
+
   <div id="cameraModal" class="modal">
     <div class="modal-card">
       <h2>植物识别 / Plant Scan</h2>
       <p>
-      上传或拍摄植物照片后，系统会优先读取照片拍摄位置；如果照片没有 GPS 信息，你可以使用当前位置或手动选择地点来生成植物认领区域。
+        上传或拍摄植物照片后，系统会优先读取照片拍摄位置；如果照片没有 GPS 信息，你可以使用当前位置或手动选择地点来生成植物认领区域。
       </p>
 
       <label class="upload-btn" for="plantImageInput">打开相机 / 上传植物照片</label>
@@ -674,29 +881,29 @@
 
       <div class="field-label">植物拍摄地点 / Plant location</div>
 
-<div id="photoGpsBox" class="result-box" style="display:block; max-height:none;">
-  上传照片后，系统会优先尝试读取照片里的 GPS 拍摄位置。
-</div>
+      <div id="photoGpsBox" class="result-box" style="display:block; max-height:none;">
+        上传照片后，系统会优先尝试读取照片里的 GPS 拍摄位置。
+      </div>
 
-<div id="locationChoiceBox" style="display:none; margin-top:10px;">
-  <label style="display:block; margin:8px 0;">
-    <input type="radio" name="locationMode" value="current" checked>
-    使用当前位置
-  </label>
+      <div id="locationChoiceBox" style="display:none; margin-top:10px;">
+        <label style="display:block; margin:8px 0;">
+          <input type="radio" name="locationMode" value="current" checked>
+          使用当前位置
+        </label>
 
-  <label style="display:block; margin:8px 0;">
-    <input type="radio" name="locationMode" value="manual">
-    手动在地图上选择地点
-  </label>
+        <label style="display:block; margin:8px 0;">
+          <input type="radio" name="locationMode" value="manual">
+          手动在地图上选择地点
+        </label>
 
-  <button id="pickLocationBtn" class="ghost-btn" type="button">
-  搜索植物拍摄地点
-  </button>
+        <button id="pickLocationBtn" class="ghost-btn" type="button">
+          搜索植物拍摄地点
+        </button>
 
-  <div id="manualLocationHint" class="muted">
-    尚未手动选择地点。
-  </div>
-</div>
+        <div id="manualLocationHint" class="muted">
+          尚未手动选择地点。
+        </div>
+      </div>
 
       <button id="identifyBtn" class="identify-btn">识别植物并点亮区域</button>
       <button id="closeCameraBtn" class="ghost-btn">关闭</button>
@@ -704,1753 +911,2272 @@
       <div id="resultBox" class="result-box"></div>
     </div>
   </div>
+
   <div id="plantListModal" class="modal">
-  <div class="modal-card">
-    <h2 id="plantListTitle">该区域植物 / Plants in this area</h2>
-    <p>
-      这里显示的是通过拍照识别并记录到该区域的植物。每一次识别，都会成为点亮这个区域的植物证据。
-    </p>
+    <div class="modal-card">
+      <h2 id="plantListTitle">该区域植物 / Plants in this area</h2>
+      <p>
+        这里显示的是通过拍照识别并记录到该区域的植物。每一次识别，都会成为点亮这个区域的植物证据。
+      </p>
 
-    <div id="plantListBox" class="result-box" style="display: block; max-height: 300px;">
-      暂无植物记录。
+      <div id="plantListBox" class="result-box" style="display: block; max-height: 300px;">
+        暂无植物记录。
+      </div>
+
+      <button id="closePlantListBtn" class="ghost-btn">关闭</button>
     </div>
-
-    <button id="closePlantListBtn" class="ghost-btn">关闭</button>
   </div>
-</div>
 
   <script>
-  mapboxgl.accessToken = 'pk.eyJ1IjoiZ2VuaWVsaW4iLCJhIjoiY21vbGp6dWp5MGV5YTJxcjV3cTMzZDRydCJ9.x7vN32PGbVq8IJUXPUhK4g';
+    mapboxgl.accessToken = 'pk.eyJ1IjoiZ2VuaWVsaW4iLCJhIjoiY21vbGp6dWp5MGV5YTJxcjV3cTMzZDRydCJ9.x7vN32PGbVq8IJUXPUhK4g';
 
-const API_BASE_URL = "https://leibi-maps-server.onrender.com";
+    const API_BASE_URL = "https://leibi-maps-server.onrender.com";
 
-  function getOrCreateUserId() {
-    let userId = localStorage.getItem("leibiUserId");
+    function getOrCreateUserId() {
+      let userId = localStorage.getItem("leibiUserId");
 
-    if (!userId) {
-      userId = `user-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-      localStorage.setItem("leibiUserId", userId);
+      if (!userId) {
+        userId = `user-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        localStorage.setItem("leibiUserId", userId);
+      }
+
+      return userId;
     }
 
-    return userId;
-  }
+    const CURRENT_USER_ID = getOrCreateUserId();
 
-  const CURRENT_USER_ID = getOrCreateUserId();
+    const STORAGE_KEYS = {
+      savedPlaces: "leibiSavedPlaces",
+      reviews: "leibiPlaceReviews",
+      contributions: "leibiContributions"
+    };
 
-  const boundaryLibrary = [
-    {
-      id: "elephant-park",
-      name: "Elephant Park",
-      fakeName: "Xiang-bao Gong-yuan",
-      source: "Local boundary library / future OS Open Greenspace import",
-      type: "park / public landscape",
-      rating: 4.8,
-      chinesePlantPercent: 68,
-      asianPlantPercent: 74,
-      tags: ["Unlocked zone", "Park boundary", "Plant-scan activated"],
-      comments: [
-        "This area is activated as a named botanical territory.",
-        "The boundary is stored locally to keep the prototype stable.",
-        "Future versions could import this boundary from OS Open Greenspace or other GIS datasets."
-      ],
-      testPoint: [-0.0982, 51.4941],
-      polygon: [
-        [-0.09829773648985451, 51.493967185232236],
-        [-0.09880585671572817, 51.49303262487021],
-        [-0.0980144769880269, 51.49198498322269],
-        [-0.09399611195664193, 51.49287954631336],
-        [-0.09421124431017347, 51.49407545885296],
-        [-0.09823729264019221, 51.49480734185116],
-        [-0.09829773648985451, 51.493967185232236]
-      ]
-    },
-    {
-      id: "baldwin-point",
-      name: "Baldwin Point",
-      fakeName: "Bao-de-wen Dian",
-      source: "Local boundary library / manually cleaned",
-      type: "residential block",
-      rating: 4.2,
-      chinesePlantPercent: 41,
-      asianPlantPercent: 56,
-      tags: ["Residential block", "Local survey area", "Plant-scan activated"],
-      comments: [
-        "A smaller residential unit becomes visible through plant observation.",
-        "This is not a neutral housing block; it is treated as a mappable botanical territory.",
-        "The act of photographing a plant activates the boundary."
-      ],
-      testPoint: [-0.0974, 51.4921],
-      polygon: [
-        [-0.09636380324153038, 51.49152347755748],
-        [-0.09667378660745385, 51.492150739721865],
-        [-0.09526917448010863, 51.492488492697106],
-        [-0.09430047646145567, 51.49271768079083],
-        [-0.09401955403569673, 51.492753868279294],
-        [-0.0936030138880426, 51.49259102435539],
-        [-0.09342864824398589, 51.49241611727018],
-        [-0.09388143118624726, 51.49228663289651],
-        [-0.09383668400894862, 51.49218447766185],
-        [-0.09462721748278113, 51.492017314056824],
-        [-0.09627540519849731, 51.49140437559416],
-        [-0.09636380324153038, 51.49152347755748]
-      ]
-    },
-    {
-      id: "goldsmiths",
-      name: "Goldsmiths, University of London",
-      fakeName: "Jin-shi-mi-si",
-      source: "Local boundary library / future GIS import",
-      type: "campus",
-      rating: 4.4,
-      chinesePlantPercent: 43,
-      asianPlantPercent: 59,
-      tags: ["Campus", "Future unlocked site", "Educational territory"],
-      comments: [
-        "A campus can become a bounded site of botanical recording.",
-        "The system treats institutional land as a unit of visibility.",
-        "This area could be unlocked through a plant scan on site."
-      ],
-      testPoint: [-0.0354, 51.4743],
-      polygon: [
-        [-0.03720, 51.47510],
-        [-0.03415, 51.47512],
-        [-0.03375, 51.47375],
-        [-0.03645, 51.47325],
-        [-0.03735, 51.47420],
-        [-0.03720, 51.47510]
-      ]
-    }
-  ];
-
-  let unlockedIds = [];
-  let pendingClaims = [];
-
-  let selectedImageFile = null;
-  let currentOpenedBoundaryId = null;
-  let photoGpsLocation = null;
-  let manualPickedLocation = null;
-  let manualPickMarker = null; 
-
-  let latestSearchResults = [];
-  let selectedSearchPlace = null;
-  let selectedPlaceMarker = null;
-  let searchTimer = null;
-  let currentRouteDestination = null;
-  let currentRouteMode = "WALK";
-  let userLocationMarker = null;
-  let userWatchId = null;
-
-  const map = new mapboxgl.Map({
-    container: "map",
-    style: "mapbox://styles/mapbox/standard",
-    center: [-0.0982, 51.4937],
-    zoom: 16.3,
-    pitch: 0,
-    bearing: 0,
-    config: {
-      basemap: {
-        lightPreset: "day",
-        showPlaceLabels: false,
-        showPointOfInterestLabels: false,
-        showRoadLabels: true,
-        showTransitLabels: false
+    function readLocalList(key) {
+      try {
+        return JSON.parse(localStorage.getItem(key) || "[]");
+      } catch (error) {
+        console.warn("Local storage read failed:", error);
+        return [];
       }
     }
-  });
 
-  map.addControl(new mapboxgl.NavigationControl(), "top-right");
+    function writeLocalList(key, value) {
+      localStorage.setItem(key, JSON.stringify(value));
+    }
 
-  function boundaryToFeature(boundary) {
-    return {
-      type: "Feature",
-      properties: {
-        id: boundary.id,
-        name: boundary.name,
-        fakeName: boundary.fakeName,
-        source: boundary.source,
-        type: boundary.type
+    function getPlaceKey(place) {
+      if (!place) return "unknown";
+      if (place.key) return place.key;
+      if (place.kind && place.id) return `${place.kind}:${place.id}`;
+      if (place.id) return `place:${place.id}`;
+      return `coords:${Number(place.lng || 0).toFixed(5)},${Number(place.lat || 0).toFixed(5)}`;
+    }
+
+    function setCurrentActivePlace(place) {
+      currentActivePlace = {
+        ...place,
+        key: getPlaceKey(place)
+      };
+      updateSaveButtonState();
+    }
+
+    function getSavedPlaces() {
+      return readLocalList(STORAGE_KEYS.savedPlaces);
+    }
+
+    function isCurrentPlaceSaved() {
+      if (!currentActivePlace) return false;
+      return getSavedPlaces().some(place => place.key === currentActivePlace.key);
+    }
+
+    function updateSaveButtonState() {
+      if (typeof savePlaceBtn === "undefined" || !currentActivePlace || savePlaceBtn.disabled) return;
+      savePlaceBtn.textContent = isCurrentPlaceSaved() ? "已保存" : "保存";
+    }
+
+    function toggleSaveCurrentPlace() {
+      if (!currentActivePlace) {
+        alert("请先打开一个已点亮地点。");
+        return;
+      }
+
+      const savedPlaces = getSavedPlaces();
+      const existingIndex = savedPlaces.findIndex(place => place.key === currentActivePlace.key);
+
+      if (existingIndex >= 0) {
+        savedPlaces.splice(existingIndex, 1);
+        writeLocalList(STORAGE_KEYS.savedPlaces, savedPlaces);
+        savePlaceBtn.textContent = "保存";
+        alert("已从保存中移除。");
+        return;
+      }
+
+      savedPlaces.unshift({
+        ...currentActivePlace,
+        savedAt: new Date().toISOString()
+      });
+      writeLocalList(STORAGE_KEYS.savedPlaces, savedPlaces);
+      savePlaceBtn.textContent = "已保存";
+      alert("已保存此地。你可以在底部“我”里面查看。");
+    }
+
+    function addContribution(type, payload) {
+      const contributions = readLocalList(STORAGE_KEYS.contributions);
+      contributions.unshift({
+        id: `${type}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        type,
+        time: new Date().toISOString(),
+        ...payload
+      });
+      writeLocalList(STORAGE_KEYS.contributions, contributions.slice(0, 80));
+    }
+
+    function getReviews() {
+      return readLocalList(STORAGE_KEYS.reviews);
+    }
+
+    function getReviewsForPlace(placeKey) {
+      return getReviews().filter(review => review.placeKey === placeKey);
+    }
+
+    function getAverageRating(reviews) {
+      if (!reviews.length) return null;
+      const total = reviews.reduce((sum, review) => sum + Number(review.rating || 0), 0);
+      return total / reviews.length;
+    }
+
+    function renderReviewsForCurrentPlace(introHtml = "") {
+      const reviewsBox = document.getElementById("panelReviews");
+
+      if (!currentActivePlace) {
+        reviewsBox.innerHTML = introHtml || `<div class="review">暂无可评论地点。</div>`;
+        return;
+      }
+
+      const placeReviews = getReviewsForPlace(currentActivePlace.key);
+      const average = getAverageRating(placeReviews);
+      const averageText = average ? average.toFixed(1) : "--";
+
+      reviewsBox.innerHTML = `
+        ${introHtml}
+        <div class="review-summary">
+          <span class="review-score-big">${averageText}</span>
+          <span>殖民植物用户评分</span><br>
+          <span class="muted">评分标准：这里的殖民植物越多，评分越高。</span><br>
+          <span class="muted">${placeReviews.length ? `${placeReviews.length} 条评论` : "暂无评论，成为第一个评分的人。"}</span>
+        </div>
+
+        <div class="review-form">
+          <label for="reviewRatingInput">你认为这里有多少殖民植物？</label>
+          <select id="reviewRatingInput">
+            <option value="5">5 ★ 非常多，殖民植物痕迹很强</option>
+            <option value="4">4 ★ 较多，植物迁移线索明显</option>
+            <option value="3">3 ★ 中等，需要进一步观察</option>
+            <option value="2">2 ★ 较少，只有零星线索</option>
+            <option value="1">1 ★ 很少，几乎看不到</option>
+          </select>
+
+          <label for="reviewTextInput">评论 / 观察记录</label>
+          <textarea id="reviewTextInput" placeholder="比如：这里哪些植物让你想到殖民、迁移、采集、命名或植物园制度？"></textarea>
+          <button class="review-submit-btn" type="button" onclick="submitCurrentPlaceReview()">发布评论</button>
+        </div>
+
+        ${placeReviews.map(review => `
+          <div class="place-review-card">
+            <strong>${"★".repeat(Number(review.rating || 0))}${"☆".repeat(5 - Number(review.rating || 0))}</strong>
+            <span class="muted"> · ${new Date(review.time).toLocaleString()}</span><br>
+            ${escapeHtml(review.text || "这个用户只留下了评分，没有写评论。")}
+          </div>
+        `).join("")}
+      `;
+    }
+
+    function submitCurrentPlaceReview() {
+      if (!currentActivePlace) {
+        alert("请先打开一个已点亮地点。");
+        return;
+      }
+
+      const ratingInput = document.getElementById("reviewRatingInput");
+      const textInput = document.getElementById("reviewTextInput");
+      const rating = Number(ratingInput?.value || 5);
+      const text = (textInput?.value || "").trim();
+
+      const reviews = getReviews();
+      const newReview = {
+        id: `review-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        placeKey: currentActivePlace.key,
+        placeName: currentActivePlace.name,
+        rating,
+        text,
+        userId: CURRENT_USER_ID,
+        time: new Date().toISOString()
+      };
+
+      reviews.unshift(newReview);
+      writeLocalList(STORAGE_KEYS.reviews, reviews);
+      addContribution("评论", {
+        placeKey: currentActivePlace.key,
+        placeName: currentActivePlace.name,
+        summary: `${rating} 星：${text || "未填写文字评论"}`
+      });
+
+      renderReviewsForCurrentPlace();
+    }
+
+    function setActiveBottomTab(activeButton) {
+      [exploreTabBtn, meTabBtn, contributeTabBtn].forEach(button => {
+        if (button) button.classList.toggle("active", button === activeButton);
+      });
+    }
+
+    function openBottomSheet(title, html) {
+      bottomSheetTitle.textContent = title;
+      bottomSheetContent.innerHTML = html;
+      bottomSheetModal.style.display = "flex";
+    }
+
+    function closeBottomSheet() {
+      bottomSheetModal.style.display = "none";
+    }
+
+    function openSavedPlaceByKey(placeKey) {
+      const savedPlace = getSavedPlaces().find(place => place.key === placeKey);
+      if (!savedPlace) return;
+
+      closeBottomSheet();
+
+      if (savedPlace.kind === "boundary") {
+        const boundary = getBoundaryById(savedPlace.id);
+        if (boundary) {
+          fitToBoundary(boundary);
+          openPanelFromBoundary(boundary);
+          return;
+        }
+      }
+
+      if (savedPlace.kind === "claim") {
+        const claim = getPendingClaimById(savedPlace.id) || savedPlace;
+        map.flyTo({ center: [Number(claim.lng), Number(claim.lat)], zoom: 16.3, duration: 800 });
+        openPendingClaimPanel(claim);
+        return;
+      }
+
+      map.flyTo({ center: [Number(savedPlace.lng), Number(savedPlace.lat)], zoom: 16.3, duration: 800 });
+    }
+
+    function showSavedPlacesPanel() {
+      const savedPlaces = getSavedPlaces();
+      const html = savedPlaces.length ? savedPlaces.map(place => `
+        <div class="saved-card">
+          <strong>${escapeHtml(place.name)}</strong><br>
+          <span class="muted">${escapeHtml(place.address || place.type || "已保存地点")}</span><br>
+          <button type="button" onclick="openSavedPlaceByKey('${escapeHtml(place.key)}')">打开地点</button>
+        </div>
+      `).join("") : `
+        <div class="empty-state">还没有保存地点。点亮一个地点后，详情页里的“保存”按钮就会亮起来。</div>
+      `;
+
+      openBottomSheet("我 · 已保存地点", html);
+    }
+
+    function showContributionsPanel() {
+      const contributions = readLocalList(STORAGE_KEYS.contributions);
+      const html = contributions.length ? contributions.map(item => `
+        <div class="contribution-card">
+          <strong>${escapeHtml(item.type || "贡献")}</strong> · ${escapeHtml(item.placeName || "未知地点")}<br>
+          <span class="muted">${new Date(item.time).toLocaleString()}</span><br>
+          ${escapeHtml(item.summary || "已记录一次贡献。")}
+        </div>
+      `).join("") : `
+        <div class="empty-state">这里会记录你上传的植物图片、发布的评论、点亮过的地图区域。</div>
+      `;
+
+      openBottomSheet("贡献", html);
+    }
+
+    window.submitCurrentPlaceReview = submitCurrentPlaceReview;
+    window.openSavedPlaceByKey = openSavedPlaceByKey;
+
+
+    const boundaryLibrary = [
+      {
+        id: "elephant-park",
+        name: "Elephant Park",
+        fakeName: "Xiang-bao Gong-yuan",
+        source: "Local boundary library / future OS Open Greenspace import",
+        type: "park / public landscape",
+        rating: 4.8,
+        chinesePlantPercent: 68,
+        asianPlantPercent: 74,
+        tags: ["Unlocked zone", "Park boundary", "Plant-scan activated"],
+        comments: [
+          "This area is activated as a named botanical territory.",
+          "The boundary is stored locally to keep the prototype stable.",
+          "Future versions could import this boundary from OS Open Greenspace or other GIS datasets."
+        ],
+        testPoint: [-0.0982, 51.4941],
+        polygon: [
+          [-0.09829773648985451, 51.493967185232236],
+          [-0.09880585671572817, 51.49303262487021],
+          [-0.0980144769880269, 51.49198498322269],
+          [-0.09399611195664193, 51.49287954631336],
+          [-0.09421124431017347, 51.49407545885296],
+          [-0.09823729264019221, 51.49480734185116],
+          [-0.09829773648985451, 51.493967185232236]
+        ]
       },
-      geometry: {
-        type: "Polygon",
-        coordinates: [boundary.polygon]
+      {
+        id: "baldwin-point",
+        name: "Baldwin Point",
+        fakeName: "Baldwin Point",
+        source: "Local boundary library / manually cleaned",
+        type: "residential block",
+        rating: 4.2,
+        chinesePlantPercent: 41,
+        asianPlantPercent: 56,
+        tags: ["Residential block", "Local survey area", "Plant-scan activated"],
+        comments: [
+          "A smaller residential unit becomes visible through plant observation.",
+          "This is not a neutral housing block; it is treated as a mappable botanical territory.",
+          "The act of photographing a plant activates the boundary."
+        ],
+        testPoint: [-0.0974, 51.4921],
+        polygon: [
+          [-0.09636380324153038, 51.49152347755748],
+          [-0.09667378660745385, 51.492150739721865],
+          [-0.09526917448010863, 51.492488492697106],
+          [-0.09430047646145567, 51.49271768079083],
+          [-0.09401955403569673, 51.492753868279294],
+          [-0.0936030138880426, 51.49259102435539],
+          [-0.09342864824398589, 51.49241611727018],
+          [-0.09388143118624726, 51.49228663289651],
+          [-0.09383668400894862, 51.49218447766185],
+          [-0.09462721748278113, 51.492017314056824],
+          [-0.09627540519849731, 51.49140437559416],
+          [-0.09636380324153038, 51.49152347755748]
+        ]
+      },
+      {
+        id: "goldsmiths",
+        name: "Goldsmiths, University of London",
+        fakeName: "Jin-shi-mi-si",
+        source: "Local boundary library / future GIS import",
+        type: "campus",
+        rating: 4.4,
+        chinesePlantPercent: 43,
+        asianPlantPercent: 59,
+        tags: ["Campus", "Future unlocked site", "Educational territory"],
+        comments: [
+          "A campus can become a bounded site of botanical recording.",
+          "The system treats institutional land as a unit of visibility.",
+          "This area could be unlocked through a plant scan on site."
+        ],
+        testPoint: [-0.0354, 51.4743],
+        polygon: [
+          [-0.03720, 51.47510],
+          [-0.03415, 51.47512],
+          [-0.03375, 51.47375],
+          [-0.03645, 51.47325],
+          [-0.03735, 51.47420],
+          [-0.03720, 51.47510]
+        ]
       }
-    };
-  }
-
-  function getBoundaryById(id) {
-    return boundaryLibrary.find(boundary => boundary.id === id);
-  }
-
-  function getPendingClaimById(id) {
-    return pendingClaims.find(claim => claim.id === id);
-  }
-
-  function getUnlockedBoundaries() {
-    return boundaryLibrary.filter(boundary => unlockedIds.includes(boundary.id));
-  }
-
-  function buildUnlockedGeoJSON() {
-    return {
-      type: "FeatureCollection",
-      features: getUnlockedBoundaries().map(boundaryToFeature)
-    };
-  }
-
-  function buildMaskGeoJSON() {
-    const outerRing = [
-      [-0.35, 51.56],
-      [0.10, 51.56],
-      [0.10, 51.44],
-      [-0.35, 51.44],
-      [-0.35, 51.56]
     ];
 
-    const holes = getUnlockedBoundaries().map(boundary => {
-      return [...boundary.polygon].slice().reverse();
+    let unlockedIds = [];
+    let pendingClaims = [];
+
+    let selectedImageFile = null;
+    let currentOpenedBoundaryId = null;
+    let photoGpsLocation = null;
+    let manualPickedLocation = null;
+    let manualPickMarker = null;
+
+    let latestSearchResults = [];
+    let selectedSearchPlace = null;
+    let selectedPlaceMarker = null;
+    let searchTimer = null;
+
+    let currentRouteDestination = null;
+    let currentRouteMode = "WALK";
+    let userLocationMarker = null;
+    let userWatchId = null;
+    let isSelectingPlantLocationBySearch = false;
+    let currentActivePlace = null;
+
+    const map = new mapboxgl.Map({
+      container: "map",
+      style: "mapbox://styles/mapbox/standard",
+      center: [-0.0982, 51.4937],
+      zoom: 16.3,
+      pitch: 0,
+      bearing: 0,
+      config: {
+        basemap: {
+          lightPreset: "day",
+          showPlaceLabels: false,
+          showPointOfInterestLabels: false,
+          showRoadLabels: true,
+          showTransitLabels: false
+        }
+      }
     });
 
-    return {
-      type: "FeatureCollection",
-      features: [
-        {
-          type: "Feature",
-          properties: {},
-          geometry: {
-            type: "Polygon",
-            coordinates: [outerRing, ...holes]
-          }
-        }
-      ]
-    };
-  }
+    map.addControl(new mapboxgl.NavigationControl(), "top-right");
 
-  function buildPendingGeoJSON() {
-    return {
-      type: "FeatureCollection",
-      features: pendingClaims.map(claim => {
-        const circle = turf.circle(
-          [claim.lng, claim.lat],
-          (claim.radius_m || 80) / 1000,
+    function boundaryToFeature(boundary) {
+      return {
+        type: "Feature",
+        properties: {
+          id: boundary.id,
+          name: boundary.name,
+          fakeName: boundary.fakeName,
+          source: boundary.source,
+          type: boundary.type
+        },
+        geometry: {
+          type: "Polygon",
+          coordinates: [boundary.polygon]
+        }
+      };
+    }
+
+    function getBoundaryById(id) {
+      return boundaryLibrary.find(boundary => boundary.id === id);
+    }
+
+    function getPendingClaimById(id) {
+      return pendingClaims.find(claim => claim.id === id);
+    }
+
+    function getUnlockedBoundaries() {
+      return boundaryLibrary.filter(boundary => unlockedIds.includes(boundary.id));
+    }
+
+    function buildUnlockedGeoJSON() {
+      return {
+        type: "FeatureCollection",
+        features: getUnlockedBoundaries().map(boundaryToFeature)
+      };
+    }
+
+    function buildMaskGeoJSON() {
+      const outerRing = [
+        [-0.35, 51.56],
+        [0.10, 51.56],
+        [0.10, 51.44],
+        [-0.35, 51.44],
+        [-0.35, 51.56]
+      ];
+
+      const holes = getUnlockedBoundaries().map(boundary => {
+        return [...boundary.polygon].slice().reverse();
+      });
+
+      return {
+        type: "FeatureCollection",
+        features: [
           {
-            steps: 48,
-            units: "kilometers"
+            type: "Feature",
+            properties: {},
+            geometry: {
+              type: "Polygon",
+              coordinates: [outerRing, ...holes]
+            }
           }
+        ]
+      };
+    }
+
+    function buildPendingGeoJSON() {
+      return {
+        type: "FeatureCollection",
+        features: pendingClaims.map(claim => {
+          const circle = turf.circle(
+            [claim.lng, claim.lat],
+            (claim.radius_m || 80) / 1000,
+            {
+              steps: 48,
+              units: "kilometers"
+            }
+          );
+
+          circle.properties = {
+            id: claim.id,
+            status: "pending"
+          };
+
+          return circle;
+        })
+      };
+    }
+
+    function updateMapSources() {
+      if (map.getSource("unlocked-boundaries")) {
+        map.getSource("unlocked-boundaries").setData(buildUnlockedGeoJSON());
+      }
+
+      if (map.getSource("mask-source")) {
+        map.getSource("mask-source").setData(buildMaskGeoJSON());
+      }
+
+      if (map.getSource("pending-claims")) {
+        map.getSource("pending-claims").setData(buildPendingGeoJSON());
+      }
+    }
+
+    function findBoundaryByLocation(lng, lat) {
+      const point = turf.point([lng, lat]);
+
+      return boundaryLibrary.find(boundary => {
+        const polygon = turf.polygon([boundary.polygon]);
+        return turf.booleanPointInPolygon(point, polygon);
+      });
+    }
+
+
+
+    function findPendingClaimForPlace(place, lng, lat) {
+      const normalizedName = String(place.name || place.text || "").toLowerCase().trim();
+      const normalizedAddress = String(place.address || place.place_name || "").toLowerCase().trim();
+      const placeId = String(place.id || place.place_id || "").trim();
+
+      // 从最新的 claim 往前找。这样用户刚刚点亮的地点，会优先被搜索结果认出来。
+      return [...pendingClaims].reverse().find(claim => {
+        const claimName = String(claim.place_name || claim.placeName || claim.name || "").toLowerCase().trim();
+        const claimAddress = String(claim.place_address || claim.placeAddress || claim.address || "").toLowerCase().trim();
+        const claimPlaceId = String(claim.place_id || claim.placeId || "").trim();
+
+        const samePlaceId = placeId && claimPlaceId && claimPlaceId === placeId;
+        const sameName = normalizedName && claimName && (
+          claimName === normalizedName ||
+          claimName.includes(normalizedName) ||
+          normalizedName.includes(claimName)
+        );
+        const sameAddress = normalizedAddress && claimAddress && (
+          claimAddress.includes(normalizedAddress) ||
+          normalizedAddress.includes(claimAddress)
         );
 
-        circle.properties = {
-          id: claim.id,
-          status: "pending"
-        };
+        const distanceKm = turf.distance(
+          turf.point([lng, lat]),
+          turf.point([Number(claim.lng), Number(claim.lat)]),
+          { units: "kilometers" }
+        );
+        const closeEnough = distanceKm < 0.35;
 
-        return circle;
-      })
-    };
-  }
-
-  function updateMapSources() {
-    if (map.getSource("unlocked-boundaries")) {
-      map.getSource("unlocked-boundaries").setData(buildUnlockedGeoJSON());
+        return samePlaceId || (sameName && closeEnough) || (sameAddress && closeEnough);
+      });
     }
 
-    if (map.getSource("mask-source")) {
-      map.getSource("mask-source").setData(buildMaskGeoJSON());
-    }
-
-    if (map.getSource("pending-claims")) {
-      map.getSource("pending-claims").setData(buildPendingGeoJSON());
-    }
-  }
-
-  function findBoundaryByLocation(lng, lat) {
-    const point = turf.point([lng, lat]);
-
-    return boundaryLibrary.find(boundary => {
-      const polygon = turf.polygon([boundary.polygon]);
-      return turf.booleanPointInPolygon(point, polygon);
-    });
-  }
-
-  function fitToBoundary(boundary) {
-    const feature = boundaryToFeature(boundary);
-    const bbox = turf.bbox(feature);
-
-    map.fitBounds(
-      [[bbox[0], bbox[1]], [bbox[2], bbox[3]]],
-      {
-        padding: {
-          top: 150,
-          right: 60,
-          bottom: 260,
-          left: 60
-        },
-        duration: 900
+    function findRelatedClaimsForClaim(baseClaim) {
+      if (!baseClaim) {
+        return [];
       }
-    );
-  }
-function escapeHtml(value) {
-  return String(value || "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
 
-function isBoundaryUnlocked(boundaryId) {
-  return unlockedIds.includes(boundaryId);
-}
+      const baseName = String(baseClaim.place_name || baseClaim.placeName || baseClaim.name || "").toLowerCase().trim();
+      const baseAddress = String(baseClaim.place_address || baseClaim.placeAddress || baseClaim.address || "").toLowerCase().trim();
+      const basePlaceId = String(baseClaim.place_id || baseClaim.placeId || "").trim();
+      const baseLng = Number(baseClaim.lng);
+      const baseLat = Number(baseClaim.lat);
 
-async function searchPlaces(query) {
-  const response = await fetch(
-    `${API_BASE_URL}/google-places?q=${encodeURIComponent(query)}`
-  );
+      return pendingClaims.filter(claim => {
+        if (!claim || !claim.id) {
+          return false;
+        }
 
-  const googleResults = await response.json();
+        const claimName = String(claim.place_name || claim.placeName || claim.name || "").toLowerCase().trim();
+        const claimAddress = String(claim.place_address || claim.placeAddress || claim.address || "").toLowerCase().trim();
+        const claimPlaceId = String(claim.place_id || claim.placeId || "").trim();
 
-  if (!response.ok) {
-    throw new Error(googleResults.error || "Google Places 搜索失败");
-  }
+        const samePlaceId = basePlaceId && claimPlaceId && basePlaceId === claimPlaceId;
+        const sameName = baseName && claimName && (
+          baseName === claimName ||
+          baseName.includes(claimName) ||
+          claimName.includes(baseName)
+        );
+        const sameAddress = baseAddress && claimAddress && (
+          baseAddress.includes(claimAddress) ||
+          claimAddress.includes(baseAddress)
+        );
 
-  return googleResults.map(place => ({
-    kind: "google",
-    id: place.id,
-    name: place.name,
-    address: place.address,
-    lng: place.lng,
-    lat: place.lat,
-    types: place.types || []
-  }));
-}
+        const distanceKm = turf.distance(
+          turf.point([baseLng, baseLat]),
+          turf.point([Number(claim.lng), Number(claim.lat)]),
+          { units: "kilometers" }
+        );
+        const closeEnough = distanceKm < 0.35;
 
-function getPlaceTypeLabel(place) {
-  const types = place.types || [];
-
-  if (types.includes("university")) return "大学 / University";
-  if (types.includes("school")) return "学校 / School";
-  if (types.includes("botanical_garden")) return "植物园 / Botanical garden";
-  if (types.includes("park")) return "公园 / Park";
-  if (types.includes("tourist_attraction")) return "景点 / Attraction";
-  if (types.includes("train_station") || types.includes("subway_station")) return "车站 / Station";
-  if (types.includes("restaurant") || types.includes("cafe")) return "餐饮 / Food";
-  if (types.includes("street_address") || types.includes("route")) return "地址或道路 / Address";
-
-  return "Google 地点 / Google place";
-}
-
-function showSearchResults(results) {
-  latestSearchResults = results;
-
-  if (!results.length) {
-    searchResults.innerHTML = `
-      <div class="search-result-item">
-        <div class="search-result-name">没有找到相关地点</div>
-        <div class="search-result-address">换一个关键词试试，比如地点名、学校名、邮编或街道名。</div>
-      </div>
-    `;
-    searchResults.style.display = "block";
-    return;
-  }
-
-  searchResults.innerHTML = results.map((place, index) => {
-    return `
-      <div class="search-result-item" onclick="selectSearchResult(${index})">
-        <div class="search-result-name">
-          📍 ${escapeHtml(place.name)}
-        </div>
-        <div class="search-result-address">
-          ${escapeHtml(getPlaceTypeLabel(place))}
-        </div>
-        <div class="search-result-address">
-          ${escapeHtml(place.address || "")}
-        </div>
-      </div>
-    `;
-  }).join("");
-
-  searchResults.style.display = "block";
-}
-
-function hideSearchResults() {
-  searchResults.style.display = "none";
-}
-
-function setActionButtonsForLocked() {
-  routeBtn.classList.add("is-disabled");
-  routeBtn.disabled = true;
-
-  unlockPlaceBtn.classList.remove("is-disabled");
-  unlockPlaceBtn.disabled = false;
-  unlockPlaceBtn.textContent = "点亮";
-
-  plantListBtn.classList.add("is-disabled");
-  plantListBtn.disabled = true;
-
-  savePlaceBtn.classList.add("is-disabled");
-  savePlaceBtn.disabled = true;
-
-  lockedRouteHint.style.display = "block";
-  routePanel.style.display = "none";
-}
-
-function setActionButtonsForUnlocked() {
-  routeBtn.classList.remove("is-disabled");
-  routeBtn.disabled = false;
-
-  unlockPlaceBtn.classList.add("is-disabled");
-  unlockPlaceBtn.disabled = true;
-  unlockPlaceBtn.textContent = "已点亮";
-
-  plantListBtn.classList.remove("is-disabled");
-  plantListBtn.disabled = false;
-
-  savePlaceBtn.classList.remove("is-disabled");
-  savePlaceBtn.disabled = false;
-
-  lockedRouteHint.style.display = "none";
-  routePanel.style.display = "none";
-
-}
-
-function openLockedPlacePanel(place, matchedBoundary) {
-  const [lng, lat] = place.center;
-
-  currentRouteDestination = {
-  lng,
-  lat,
-  name: place.text || "Selected place"
-};
-
-  selectedSearchPlace = {
-    place,
-    lng,
-    lat,
-    matchedBoundary
-  };
-  const isChoosingPlantLocation =
-  selectedImageFile &&
-  locationChoiceBox.style.display !== "none" &&
-  document.querySelector('input[name="locationMode"]:checked')?.value === "manual";
-
-if (isChoosingPlantLocation) {
-  manualPickedLocation = {
-    lng,
-    lat,
-    source: "manual-search-place"
-  };
-
-  if (manualPickMarker) {
-    manualPickMarker.remove();
-  }
-
-  manualPickMarker = new mapboxgl.Marker({
-    color: "#157a63"
-  })
-    .setLngLat([lng, lat])
-    .addTo(map);
-
-  manualLocationHint.textContent = `已选择地点：${place.name}`;
-
-  cameraModal.style.display = "flex";
-
-  return;
-}
-
-  currentOpenedBoundaryId = null;
-
-  document.getElementById("infoPanel").style.display = "block";
-
-  document.getElementById("panelName").textContent =
-    place.text || "Unclaimed place";
-
-  document.getElementById("panelOriginal").textContent =
-    "尚未点亮区域 / Unclaimed botanical area";
-
-  document.getElementById("panelRating").textContent = "Locked";
-  document.getElementById("panelChinese").textContent = "--%";
-  document.getElementById("panelAsian").textContent = "--%";
-  document.getElementById("panelSource").textContent =
-    matchedBoundary ? matchedBoundary.source : "Search result / pending claim";
-
-  document.getElementById("panelTags").innerHTML = `
-    <span class="tag">Unclaimed</span>
-    <span class="tag">Needs unlocking</span>
-  `;
-
-  document.getElementById("panelReviews").innerHTML = `
-    <div class="review">
-      该区域尚未点亮。点亮后可查看植物记录、保存此地，并解锁路线功能。
-    </div>
-  `;
-
-  setActionButtonsForLocked();
-}
-
-function openPendingClaimPanel(claim) {
-  currentOpenedBoundaryId = claim.id;
-  currentRouteDestination = {
-  lng: claim.lng,
-  lat: claim.lat,
-  name: "Pending Botanical Claim"
-};
-
-  document.getElementById("infoPanel").style.display = "block";
-  document.getElementById("panelName").textContent = "Pending Botanical Claim";
-  document.getElementById("panelOriginal").textContent =
-    "Boundary pending review / 临时植物领地";
-
-  document.getElementById("panelRating").textContent = "Pending";
-  document.getElementById("panelChinese").textContent = "--%";
-  document.getElementById("panelAsian").textContent = "--%";
-  document.getElementById("panelSource").textContent = "Pending claim";
-
-  document.getElementById("panelTags").innerHTML = `
-    <span class="tag">Pending</span>
-    <span class="tag">Needs boundary review</span>
-  `;
-
-  document.getElementById("panelReviews").innerHTML = `
-    <div class="review">
-      点亮成功，已解锁此地。该区域暂时作为 pending claim 显示，之后可由管理员修正正式边界。
-    </div>
-  `;
-
-  setActionButtonsForUnlocked();
-}
-
- async function unlockSelectedSearchPlace() {
-  if (!selectedSearchPlace) {
-    alert("请先搜索并选择一个地点。");
-    return;
-  }
-
-  if (!selectedImageFile) {
-    const confirmScan = confirm("请先拍摄此地的植物以点亮该地图。");
-
-    if (!confirmScan) {
-      return;
+        return claim.id === baseClaim.id || samePlaceId || (sameName && closeEnough) || (sameAddress && closeEnough);
+      });
     }
 
-    cameraModal.style.display = "flex";
-    resultBox.style.display = "none";
+    function fitToBoundary(boundary) {
+      const feature = boundaryToFeature(boundary);
+      const bbox = turf.bbox(feature);
 
-    photoGpsLocation = null;
-    manualPickedLocation = {
-      lng: selectedSearchPlace.lng,
-      lat: selectedSearchPlace.lat,
-      source: "selected-search-place"
-    };
-
-    const manualRadio = document.querySelector('input[name="locationMode"][value="manual"]');
-    if (manualRadio) {
-      manualRadio.checked = true;
-    }
-
-    locationChoiceBox.style.display = "block";
-
-   manualLocationHint.textContent =
-  `已选择地点：${selectedSearchPlace?.place?.text || selectedSearchPlace?.place?.name || "已选择地点"}`;
-
-    photoGpsBox.innerHTML = `
-      <strong>已选择要点亮的地点。</strong><br>
-      请上传或拍摄此地的植物照片。识别成功后，系统会自动点亮该区域。
-    `;
-
-    return;
-  }
-
-  const confirmUnlock = confirm("确认点亮？");
-
-  if (!confirmUnlock) {
-    return;
-  }
-
-  try {
-    unlockPlaceBtn.disabled = true;
-    unlockPlaceBtn.textContent = "点亮中...";
-
-    const plantResult = await identifyPlantWithBackend(selectedImageFile);
-    const { lng, lat, matchedBoundary } = selectedSearchPlace;
-
-    if (matchedBoundary) {
-      await unlockBoundary(matchedBoundary.id);
-      await addPlantRecord(matchedBoundary.id, plantResult);
-
-      fitToBoundary(matchedBoundary);
-      openPanelFromBoundary(matchedBoundary);
-
-      alert("已成功点亮该区域。");
-      return;
-    }
-
-    const pendingClaim = await createPendingClaim(lng, lat);
-    await addPlantRecord(pendingClaim.id, plantResult);
-
-    openPendingClaimPanel(pendingClaim);
-
-    alert("已成功点亮该区域。");
-  } catch (error) {
-    console.error(error);
-    alert(error.message || "点亮失败，请再试一次。");
-  } finally {
-    unlockPlaceBtn.disabled = false;
-    unlockPlaceBtn.textContent = "点亮";
-  }
-}
-
-function selectSearchResult(index) {
-  const place = latestSearchResults[index];
-
-  if (!place || place.lng === undefined || place.lat === undefined) {
-    alert("这个地点没有可用坐标。");
-    return;
-  }
-
-  hideSearchResults();
-
-  const lng = Number(place.lng);
-  const lat = Number(place.lat);
-
-  map.flyTo({
-    center: [lng, lat],
-    zoom: 16.2,
-    duration: 900
-  });
-
-  if (selectedPlaceMarker) {
-    selectedPlaceMarker.remove();
-  }
-
-  selectedPlaceMarker = new mapboxgl.Marker({
-    color: "#d6452f"
-  })
-    .setLngLat([lng, lat])
-    .addTo(map);
-
-  const matchedBoundary = findBoundaryByLocation(lng, lat);
-
-  selectedSearchPlace = {
-    place: {
-      text: place.name,
-      place_name: place.address || "",
-      center: [lng, lat]
-    },
-    lng,
-    lat,
-    matchedBoundary
-  };
-
-  const isChoosingPlantLocation =
-    selectedImageFile &&
-    locationChoiceBox.style.display !== "none" &&
-    document.querySelector('input[name="locationMode"]:checked')?.value === "manual";
-
-  if (isChoosingPlantLocation) {
-    manualPickedLocation = {
-      lng,
-      lat,
-      source: "manual-search-place"
-    };
-
-    if (manualPickMarker) {
-      manualPickMarker.remove();
-    }
-
-    manualPickMarker = new mapboxgl.Marker({
-      color: "#157a63"
-    })
-      .setLngLat([lng, lat])
-      .addTo(map);
-
-    manualLocationHint.textContent = `已选择地点：${place.name}`;
-
-    if (matchedBoundary && isBoundaryUnlocked(matchedBoundary.id)) {
-      openPanelFromBoundary(matchedBoundary);
-    } else {
-      openLockedPlacePanel(
+      map.fitBounds(
+        [[bbox[0], bbox[1]], [bbox[2], bbox[3]]],
         {
-          text: place.name,
-          place_name: place.address || "",
-          center: [lng, lat]
-        },
-        matchedBoundary || null
+          padding: {
+            top: 150,
+            right: 60,
+            bottom: 260,
+            left: 60
+          },
+          duration: 900
+        }
       );
     }
 
-    return;
-  }
-
-  if (matchedBoundary && isBoundaryUnlocked(matchedBoundary.id)) {
-    openPanelFromBoundary(matchedBoundary);
-  } else {
-    openLockedPlacePanel(
-      {
-        text: place.name,
-        place_name: place.address || "",
-        center: [lng, lat]
-      },
-      matchedBoundary || null
-    );
-  }
-}
-
-window.selectSearchResult = selectSearchResult;
-window.hideSearchResults = hideSearchResults;
-
-document.addEventListener("click", (event) => {
-  const clickedInsideSearch =
-    event.target.closest(".top-search") ||
-    event.target.closest("#searchResults");
-
-  if (!clickedInsideSearch) {
-    hideSearchResults();
-  }
-});
-
-  async function fetchUnlockedIds() {
-    const response = await fetch(`${API_BASE_URL}/unlocked-boundaries`);
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || "获取已点亮区域失败");
+    function escapeHtml(value) {
+      return String(value || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
     }
 
-    return data;
-  }
-
-  async function fetchPendingClaims() {
-    const response = await fetch(`${API_BASE_URL}/pending-claims`);
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || "获取 pending claims 失败");
+    function isBoundaryUnlocked(boundaryId) {
+      return unlockedIds.includes(boundaryId);
     }
 
-    return data;
-  }
+    async function searchPlaces(query) {
+      const response = await fetch(
+        `${API_BASE_URL}/google-places?q=${encodeURIComponent(query)}`
+      );
 
-  async function unlockBoundary(boundaryId) {
-    const response = await fetch(`${API_BASE_URL}/unlocked-boundaries`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ boundaryId })
-    });
+      const googleResults = await response.json();
 
-    const data = await response.json();
+      if (!response.ok) {
+        throw new Error(googleResults.error || "Google Places 搜索失败");
+      }
 
-    if (!response.ok) {
-      throw new Error(data.error || "点亮区域失败");
+      return googleResults.map(place => ({
+        kind: "google",
+        id: place.id,
+        name: place.name,
+        address: place.address,
+        lng: place.lng,
+        lat: place.lat,
+        types: place.types || []
+      }));
     }
 
-    if (!unlockedIds.includes(boundaryId)) {
-      unlockedIds.push(boundaryId);
+    function getPlaceTypeLabel(place) {
+      const types = place.types || [];
+
+      if (types.includes("university")) return "大学 / University";
+      if (types.includes("school")) return "学校 / School";
+      if (types.includes("botanical_garden")) return "植物园 / Botanical garden";
+      if (types.includes("park")) return "公园 / Park";
+      if (types.includes("tourist_attraction")) return "景点 / Attraction";
+      if (types.includes("train_station") || types.includes("subway_station")) return "车站 / Station";
+      if (types.includes("restaurant") || types.includes("cafe")) return "餐饮 / Food";
+      if (types.includes("street_address") || types.includes("route")) return "地址或道路 / Address";
+
+      return "Google 地点 / Google place";
     }
 
-    updateMapSources();
-  }
+    function showSearchResults(results) {
+      latestSearchResults = results;
 
-  async function createPendingClaim(lng, lat) {
-    const response = await fetch(`${API_BASE_URL}/pending-claims`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
+      if (!results.length) {
+        searchResults.innerHTML = `
+          <div class="search-result-item">
+            <div class="search-result-name">没有找到相关地点</div>
+            <div class="search-result-address">换一个关键词试试，比如地点名、学校名、邮编或街道名。</div>
+          </div>
+        `;
+        searchResults.style.display = "block";
+        return;
+      }
+
+      searchResults.innerHTML = results.map((place, index) => {
+        return `
+          <div class="search-result-item" onclick="selectSearchResult(${index})">
+            <div class="search-result-name">
+              📍 ${escapeHtml(place.name)}
+            </div>
+            <div class="search-result-address">
+              ${escapeHtml(getPlaceTypeLabel(place))}
+            </div>
+            <div class="search-result-address">
+              ${escapeHtml(place.address || "")}
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      searchResults.style.display = "block";
+    }
+
+    function hideSearchResults() {
+      searchResults.style.display = "none";
+    }
+
+    function setActionButtonsForLocked() {
+      routeBtn.classList.add("is-disabled");
+      routeBtn.disabled = true;
+
+      unlockPlaceBtn.classList.remove("is-disabled");
+      unlockPlaceBtn.disabled = false;
+      unlockPlaceBtn.textContent = "点亮";
+
+      plantListBtn.classList.add("is-disabled");
+      plantListBtn.disabled = true;
+
+      savePlaceBtn.classList.add("is-disabled");
+      savePlaceBtn.disabled = true;
+      savePlaceBtn.textContent = "保存";
+
+      lockedRouteHint.style.display = "block";
+      routePanel.style.display = "none";
+    }
+
+    function setActionButtonsForUnlocked() {
+      routeBtn.classList.remove("is-disabled");
+      routeBtn.disabled = false;
+
+      unlockPlaceBtn.classList.add("is-disabled");
+      unlockPlaceBtn.disabled = true;
+      unlockPlaceBtn.textContent = "已点亮";
+
+      plantListBtn.classList.remove("is-disabled");
+      plantListBtn.disabled = false;
+
+      savePlaceBtn.classList.remove("is-disabled");
+      savePlaceBtn.disabled = false;
+      updateSaveButtonState();
+
+      lockedRouteHint.style.display = "none";
+      routePanel.style.display = "none";
+    }
+
+    function openLockedPlacePanel(place, matchedBoundary) {
+      const [lng, lat] = place.center;
+
+      currentRouteDestination = {
         lng,
         lat,
-        userId: CURRENT_USER_ID
+        name: place.text || "Selected place"
+      };
+
+      selectedSearchPlace = {
+        place,
+        lng,
+        lat,
+        matchedBoundary
+      };
+
+      if (isSelectingPlantLocationBySearch) {
+        manualPickedLocation = {
+          lng,
+          lat,
+          source: "manual-search-place"
+        };
+
+        if (manualPickMarker) {
+          manualPickMarker.remove();
+        }
+
+        manualPickMarker = new mapboxgl.Marker({
+          color: "#157a63"
+        })
+          .setLngLat([lng, lat])
+          .addTo(map);
+
+        manualLocationHint.textContent = `已选择地点：${place.text || place.name || "已选择地点"}`;
+
+        cameraModal.style.display = "flex";
+
+        return;
+      }
+
+      currentOpenedBoundaryId = null;
+      setCurrentActivePlace({
+        kind: "locked",
+        id: place.id || `place-${lng}-${lat}`,
+        name: place.text || place.name || "Unclaimed place",
+        address: place.place_name || place.address || "尚未点亮区域",
+        type: "locked",
+        lng,
+        lat
+      });
+
+      document.getElementById("infoPanel").style.display = "block";
+
+      document.getElementById("panelName").textContent =
+        place.text || "Unclaimed place";
+
+      document.getElementById("panelOriginal").textContent =
+        "尚未点亮区域 / Unclaimed botanical area";
+
+      document.getElementById("panelRating").textContent = "Locked";
+      document.getElementById("panelChinese").textContent = "--%";
+      document.getElementById("panelAsian").textContent = "--%";
+      document.getElementById("panelSource").textContent =
+        matchedBoundary ? matchedBoundary.source : "Search result / pending claim";
+
+      document.getElementById("panelTags").innerHTML = `
+        <span class="tag">Unclaimed</span>
+        <span class="tag">Needs unlocking</span>
+      `;
+
+      document.getElementById("panelReviews").innerHTML = `
+        <div class="review">
+          该区域尚未点亮。点亮后可查看植物记录、保存此地，并解锁路线功能。
+        </div>
+      `;
+
+      setActionButtonsForLocked();
+    }
+
+    function getClaimDisplayInfo(claim) {
+      const claimName =
+        claim.place_name ||
+        claim.placeName ||
+        claim.name ||
+        "Unnamed botanical claim";
+
+      const claimAddress =
+        claim.place_address ||
+        claim.placeAddress ||
+        claim.address ||
+        "Google place claim / 临时植物领地";
+
+      const claimType =
+        claim.place_type ||
+        claim.placeType ||
+        "Google Places claim";
+
+      return { claimName, claimAddress, claimType };
+    }
+
+    function openPendingClaimPanel(claim) {
+      currentOpenedBoundaryId = claim.id;
+
+      const { claimName, claimAddress, claimType } = getClaimDisplayInfo(claim);
+      setCurrentActivePlace({
+        kind: "claim",
+        id: claim.id,
+        name: claimName,
+        address: claimAddress,
+        type: claimType,
+        lng: claim.lng,
+        lat: claim.lat
+      });
+
+      currentRouteDestination = {
+        lng: claim.lng,
+        lat: claim.lat,
+        name: claimName
+      };
+
+      document.getElementById("infoPanel").style.display = "block";
+      document.getElementById("panelName").textContent = claimName;
+      document.getElementById("panelOriginal").textContent = claimAddress;
+
+      document.getElementById("panelRating").textContent = "Activated";
+      document.getElementById("panelChinese").textContent = "--%";
+      document.getElementById("panelAsian").textContent = "--%";
+      document.getElementById("panelSource").textContent = claimType;
+
+      document.getElementById("panelTags").innerHTML = `
+        <span class="tag">Activated place</span>
+        <span class="tag">Google Places claim</span>
+      `;
+
+      renderReviewsForCurrentPlace(`
+        <div class="review">
+          该地点已通过植物识别被点亮。它目前使用 Google Places 的地点信息和临时范围显示，之后可以继续补充更精确的边界。
+        </div>
+      `);
+
+      setActionButtonsForUnlocked();
+    }
+
+    async function unlockSelectedSearchPlace() {
+      if (!selectedSearchPlace) {
+        alert("请先搜索并选择一个地点。");
+        return;
+      }
+
+      if (!selectedImageFile) {
+        const confirmScan = confirm("请先拍摄此地的植物以点亮该地图。");
+
+        if (!confirmScan) {
+          return;
+        }
+
+        cameraModal.style.display = "flex";
+        resultBox.style.display = "none";
+
+        photoGpsLocation = null;
+        manualPickedLocation = {
+          lng: selectedSearchPlace.lng,
+          lat: selectedSearchPlace.lat,
+          source: "selected-search-place"
+        };
+
+        const manualRadio = document.querySelector('input[name="locationMode"][value="manual"]');
+        if (manualRadio) {
+          manualRadio.checked = true;
+        }
+
+        locationChoiceBox.style.display = "block";
+
+        manualLocationHint.textContent =
+          `已选择地点：${selectedSearchPlace?.place?.text || selectedSearchPlace?.place?.name || "已选择地点"}`;
+
+        photoGpsBox.innerHTML = `
+          <strong>已选择要点亮的地点。</strong><br>
+          请上传或拍摄此地的植物照片。识别成功后，系统会自动点亮该区域。
+        `;
+
+        return;
+      }
+
+      const confirmUnlock = confirm("确认点亮？");
+
+      if (!confirmUnlock) {
+        return;
+      }
+
+      try {
+        unlockPlaceBtn.disabled = true;
+        unlockPlaceBtn.textContent = "点亮中...";
+
+        const plantResult = await identifyPlantWithBackend(selectedImageFile);
+        const { lng, lat, matchedBoundary } = selectedSearchPlace;
+
+        if (matchedBoundary) {
+          await unlockBoundary(matchedBoundary.id);
+          await addPlantRecord(matchedBoundary.id, plantResult);
+
+          fitToBoundary(matchedBoundary);
+          openPanelFromBoundary(matchedBoundary);
+
+          alert("已成功点亮该区域。");
+          return;
+        }
+
+        const pendingClaim = await createPendingClaim(lng, lat, selectedSearchPlace.place);
+        await addPlantRecord(pendingClaim.id, plantResult);
+
+        openPendingClaimPanel(pendingClaim);
+
+        alert("已成功点亮该区域。");
+      } catch (error) {
+        console.error(error);
+        alert(error.message || "点亮失败，请再试一次。");
+      } finally {
+        unlockPlaceBtn.disabled = false;
+        unlockPlaceBtn.textContent = "点亮";
+      }
+    }
+
+    function selectSearchResult(index) {
+      const place = latestSearchResults[index];
+
+      if (!place || place.lng === undefined || place.lat === undefined) {
+        alert("这个地点没有可用坐标。");
+        return;
+      }
+
+      hideSearchResults();
+
+      const lng = Number(place.lng);
+      const lat = Number(place.lat);
+
+      map.flyTo({
+        center: [lng, lat],
+        zoom: 16.2,
+        duration: 900
+      });
+
+      if (selectedPlaceMarker) {
+        selectedPlaceMarker.remove();
+      }
+
+      selectedPlaceMarker = new mapboxgl.Marker({
+        color: "#d6452f"
       })
+        .setLngLat([lng, lat])
+        .addTo(map);
+
+      const matchedBoundary = findBoundaryByLocation(lng, lat);
+      const matchedPendingClaim = findPendingClaimForPlace(place, lng, lat);
+
+      const normalizedPlace = {
+        id: place.id || "",
+        name: place.name,
+        text: place.name,
+        address: place.address || "",
+        place_name: place.address || "",
+        types: place.types || [],
+        center: [lng, lat]
+      };
+
+      selectedSearchPlace = {
+        place: normalizedPlace,
+        lng,
+        lat,
+        matchedBoundary
+      };
+
+      if (isSelectingPlantLocationBySearch) {
+        manualPickedLocation = {
+          lng,
+          lat,
+          source: "manual-search-place"
+        };
+
+        if (manualPickMarker) {
+          manualPickMarker.remove();
+        }
+
+        manualPickMarker = new mapboxgl.Marker({
+          color: "#157a63"
+        })
+          .setLngLat([lng, lat])
+          .addTo(map);
+
+        manualLocationHint.textContent = `已选择地点：${place.name}`;
+
+        cameraModal.style.display = "flex";
+        infoPanel.style.display = "none";
+        return;
+      }
+
+      if (matchedBoundary && isBoundaryUnlocked(matchedBoundary.id)) {
+        openPanelFromBoundary(matchedBoundary);
+      } else if (matchedPendingClaim) {
+        openPanelFromPendingClaim(matchedPendingClaim);
+      } else {
+        openLockedPlacePanel(normalizedPlace, matchedBoundary || null);
+      }
+    }
+
+    window.selectSearchResult = selectSearchResult;
+    window.hideSearchResults = hideSearchResults;
+
+    document.addEventListener("click", (event) => {
+      const clickedInsideSearch =
+        event.target.closest(".top-search") ||
+        event.target.closest("#searchResults");
+
+      if (!clickedInsideSearch) {
+        hideSearchResults();
+      }
     });
 
-    const data = await response.json();
+    async function fetchUnlockedIds() {
+      const response = await fetch(`${API_BASE_URL}/unlocked-boundaries`);
+      const data = await response.json();
 
-    if (!response.ok) {
-      throw new Error(data.error || "创建 pending claim 失败");
+      if (!response.ok) {
+        throw new Error(data.error || "获取已点亮区域失败");
+      }
+
+      return data;
     }
 
-    pendingClaims.push(data);
-    updateMapSources();
+    async function fetchPendingClaims() {
+      const response = await fetch(`${API_BASE_URL}/pending-claims`);
+      const data = await response.json();
 
-    return data;
-  }
+      if (!response.ok) {
+        throw new Error(data.error || "获取 pending claims 失败");
+      }
 
-  async function getPlantRecords(boundaryId) {
-    const response = await fetch(`${API_BASE_URL}/plant-records/${boundaryId}`);
-    return await response.json();
-  }
-
-  async function addPlantRecord(boundaryId, plantResult) {
-    const plant = {
-      commonName: plantResult.commonName || "Unknown plant",
-      scientificName: plantResult.scientificName || "Unknown species",
-      genus: plantResult.genus || "Unknown",
-      family: plantResult.family || "Unknown",
-      score: plantResult.score || 0,
-      imageUrl: plantResult.imageUrl || ""
-    };
-
-    const response = await fetch(`${API_BASE_URL}/plant-records`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        boundaryId,
-        plant,
-        userId: CURRENT_USER_ID
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error("植物记录保存失败");
+      return data;
     }
 
-    return await response.json();
-  }
+    async function unlockBoundary(boundaryId) {
+      const response = await fetch(`${API_BASE_URL}/unlocked-boundaries`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ boundaryId })
+      });
 
-  async function deletePlantRecord(boundaryId, recordId) {
-    const confirmDelete = confirm("确定要删除这条植物记录吗？");
+      const data = await response.json();
 
-    if (!confirmDelete) {
-      return;
+      if (!response.ok) {
+        throw new Error(data.error || "点亮区域失败");
+      }
+
+      if (!unlockedIds.includes(boundaryId)) {
+        unlockedIds.push(boundaryId);
+      }
+
+      updateMapSources();
     }
 
-    const response = await fetch(
-      `${API_BASE_URL}/plant-records/${boundaryId}/${recordId}?userId=${CURRENT_USER_ID}`,
-      { method: "DELETE" }
-    );
+    async function createPendingClaim(lng, lat, place = {}) {
+  const existingClaim = findPendingClaimForPlace(place, lng, lat);
 
-    if (!response.ok) {
-      alert("只能删除你自己上传的植物记录。");
-      return;
-    }
-
-    openPlantList();
+  if (existingClaim) {
+    return existingClaim;
   }
 
-  async function identifyPlantWithBackend(file) {
-    const formData = new FormData();
-    formData.append("image", file);
-
-    const response = await fetch(`${API_BASE_URL}/identify-plant`, {
-      method: "POST",
-      body: formData
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.detail || data.error || "植物识别失败");
-    }
-
-    return data;
-  }
-  async function readPhotoGpsLocation(file) {
-  try {
-    const gps = await exifr.gps(file);
-
-    if (!gps || !gps.latitude || !gps.longitude) {
-      return null;
-    }
-
-    return {
-      lng: gps.longitude,
-      lat: gps.latitude,
-      source: "photo-gps"
-    };
-  } catch (error) {
-    console.warn("No readable GPS in photo:", error);
-    return null;
-  }
-}
-
-async function getConfirmedPlantLocation() {
-  if (photoGpsLocation) {
-    return photoGpsLocation;
-  }
-
-  const selectedMode = document.querySelector('input[name="locationMode"]:checked')?.value || "current";
-
-  if (selectedMode === "current") {
-    const currentLocation = await getCurrentPositionPromise();
-
-    function decodeGooglePolyline(encoded) {
-  let index = 0;
-  const coordinates = [];
-  let lat = 0;
-  let lng = 0;
-
-  while (index < encoded.length) {
-    let b;
-    let shift = 0;
-    let result = 0;
-
-    do {
-      b = encoded.charCodeAt(index++) - 63;
-      result |= (b & 0x1f) << shift;
-      shift += 5;
-    } while (b >= 0x20);
-
-    const deltaLat = result & 1 ? ~(result >> 1) : result >> 1;
-    lat += deltaLat;
-
-    shift = 0;
-    result = 0;
-
-    do {
-      b = encoded.charCodeAt(index++) - 63;
-      result |= (b & 0x1f) << shift;
-      shift += 5;
-    } while (b >= 0x20);
-
-    const deltaLng = result & 1 ? ~(result >> 1) : result >> 1;
-    lng += deltaLng;
-
-    coordinates.push([lng / 1e5, lat / 1e5]);
-  }
-
-  return coordinates;
-}
-function formatRouteDistance(meters) {
-  if (!meters && meters !== 0) {
-    return "--";
-  }
-
-  if (meters >= 1000) {
-    return `${(meters / 1000).toFixed(1)} km`;
-  }
-
-  return `${Math.round(meters)} m`;
-}
-
-function formatRouteDuration(durationString) {
-  if (!durationString) {
-    return "--";
-  }
-
-  const seconds = Number(String(durationString).replace("s", ""));
-  const minutes = Math.round(seconds / 60);
-
-  if (minutes < 60) {
-    return `${minutes} 分钟`;
-  }
-
-  const hours = Math.floor(minutes / 60);
-  const restMinutes = minutes % 60;
-
-  if (restMinutes === 0) {
-    return `${hours} 小时`;
-  }
-
-  return `${hours} 小时 ${restMinutes} 分钟`;
-}
-
-function updateUserLocationMarker(lng, lat, heading = 0) {
-  if (!userLocationMarker) {
-    const markerElement = document.createElement("div");
-    markerElement.className = "user-heading-marker";
-
-    userLocationMarker = new mapboxgl.Marker({
-      element: markerElement,
-      rotationAlignment: "map",
-      pitchAlignment: "map"
+  const response = await fetch(`${API_BASE_URL}/pending-claims`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      lng,
+      lat,
+      userId: CURRENT_USER_ID,
+      placeName: place.name || place.text || "Unnamed botanical claim",
+      placeAddress: place.address || place.place_name || "",
+      placeId: place.id || "",
+      placeType: place.types?.[0] || "google_place"
     })
-      .setLngLat([lng, lat])
-      .addTo(map);
-  }
+  });
 
-  userLocationMarker.setLngLat([lng, lat]);
-
-  const markerElement = userLocationMarker.getElement();
-  markerElement.style.transform = `${markerElement.style.transform} rotate(${heading || 0}deg)`;
-}
-
-function startWatchingUserLocation() {
-  if (!navigator.geolocation) {
-    alert("当前浏览器不支持定位。");
-    return;
-  }
-
-  if (userWatchId) {
-    navigator.geolocation.clearWatch(userWatchId);
-  }
-
-  userWatchId = navigator.geolocation.watchPosition(
-    position => {
-      const lng = position.coords.longitude;
-      const lat = position.coords.latitude;
-      const heading = position.coords.heading || 0;
-
-      updateUserLocationMarker(lng, lat, heading);
-    },
-    error => {
-      console.warn("实时定位失败：", error);
-    },
-    {
-      enableHighAccuracy: true,
-      maximumAge: 1000,
-      timeout: 10000
-    }
-  );
-}
-
-async function fetchGoogleRoute(origin, destination, mode) {
-  const url =
-    `${API_BASE_URL}/google-route?` +
-    `fromLat=${encodeURIComponent(origin.lat)}` +
-    `&fromLng=${encodeURIComponent(origin.lng)}` +
-    `&toLat=${encodeURIComponent(destination.lat)}` +
-    `&toLng=${encodeURIComponent(destination.lng)}` +
-    `&mode=${encodeURIComponent(mode)}`;
-
-  const response = await fetch(url);
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.error || "路线获取失败");
+    throw new Error(data.error || "创建植物领地失败");
   }
 
-  return data;
-}
-
-function drawGoogleRoute(encodedPolyline) {
-  const coordinates = decodeGooglePolyline(encodedPolyline);
-
-  const routeGeoJSON = {
-    type: "Feature",
-    properties: {},
-    geometry: {
-      type: "LineString",
-      coordinates
-    }
+  const hydratedData = {
+    ...data,
+    place_name: data.place_name || place.name || place.text || "Unnamed botanical claim",
+    place_address: data.place_address || place.address || place.place_name || "",
+    place_id: data.place_id || place.id || "",
+    place_type: data.place_type || place.types?.[0] || "google_place"
   };
 
-  if (map.getSource("active-google-route")) {
-    map.getSource("active-google-route").setData(routeGeoJSON);
-  } else {
-    map.addSource("active-google-route", {
-      type: "geojson",
-      data: routeGeoJSON
-    });
+  pendingClaims.push(hydratedData);
+  updateMapSources();
 
-    map.addLayer({
-      id: "active-google-route-line",
-      type: "line",
-      source: "active-google-route",
-      layout: {
-        "line-join": "round",
-        "line-cap": "round"
-      },
-      paint: {
-        "line-color": "#157a63",
-        "line-width": 6,
-        "line-opacity": 0.95
-      }
-    });
-  }
-
-  const bbox = turf.bbox(routeGeoJSON);
-
-  map.fitBounds(
-    [[bbox[0], bbox[1]], [bbox[2], bbox[3]]],
-    {
-      padding: {
-        top: 140,
-        right: 60,
-        bottom: 300,
-        left: 60
-      },
-      duration: 900
-    }
-  );
+  return hydratedData;
 }
 
-async function showGoogleRoute(mode = currentRouteMode) {
-  if (routeBtn.disabled) {
-    alert("该区域尚未点亮，点亮后可解锁路线。");
-    return;
-  }
+    async function getPlantRecords(boundaryId) {
+      const response = await fetch(`${API_BASE_URL}/plant-records/${boundaryId}`);
+      return await response.json();
+    }
 
-  if (!currentRouteDestination) {
-    alert("没有可导航的目的地。");
-    return;
-  }
+    async function addPlantRecord(boundaryId, plantResult) {
+      const plant = {
+        commonName: plantResult.commonName || "Unknown plant",
+        scientificName: plantResult.scientificName || "Unknown species",
+        genus: plantResult.genus || "Unknown",
+        family: plantResult.family || "Unknown",
+        score: plantResult.score || 0,
+        imageUrl: plantResult.imageUrl || ""
+      };
+
+      const response = await fetch(`${API_BASE_URL}/plant-records`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          boundaryId,
+          plant,
+          userId: CURRENT_USER_ID
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("植物记录保存失败");
+      }
+
+      return await response.json();
+    }
+
+    async function deletePlantRecord(boundaryId, recordId) {
+      const confirmDelete = confirm("确定要删除这条植物记录吗？");
+
+      if (!confirmDelete) {
+        return;
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}/plant-records/${boundaryId}/${recordId}?userId=${CURRENT_USER_ID}`,
+        { method: "DELETE" }
+      );
+
+      if (!response.ok) {
+        alert("只能删除你自己上传的植物记录。");
+        return;
+      }
+
+      openPlantList();
+    }
+
+    async function identifyPlantWithBackend(file) {
+      const formData = new FormData();
+      formData.append("image", file);
+
+      const response = await fetch(`${API_BASE_URL}/identify-plant`, {
+        method: "POST",
+        body: formData
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || data.error || "植物识别失败");
+      }
+
+      return data;
+    }
+
+    async function readPhotoGpsLocation(file) {
+      try {
+        const gps = await exifr.gps(file);
+
+        if (!gps || !gps.latitude || !gps.longitude) {
+          return null;
+        }
+
+        return {
+          lng: gps.longitude,
+          lat: gps.latitude,
+          source: "photo-gps"
+        };
+      } catch (error) {
+        console.warn("No readable GPS in photo:", error);
+        return null;
+      }
+    }
+
+    async function getConfirmedPlantLocation() {
+      if (photoGpsLocation) {
+        return photoGpsLocation;
+      }
+
+      const selectedMode =
+        document.querySelector('input[name="locationMode"]:checked')?.value || "current";
+
+      if (selectedMode === "current") {
+        const currentLocation = await getCurrentPositionPromise();
+
+        return {
+          ...currentLocation,
+          source: "current-location"
+        };
+      }
+
+      if (selectedMode === "manual") {
+        if (!manualPickedLocation) {
+          throw new Error("你选择了手动地点，但还没有选择位置。");
+        }
+
+        return {
+          ...manualPickedLocation,
+          source: "manual-map-pick"
+        };
+      }
+
+      throw new Error("没有可用的植物地点。");
+    }
+
+    function openPanelFromBoundary(boundary) {
+      currentOpenedBoundaryId = boundary.id;
+      document.getElementById("infoPanel").style.display = "block";
+      setCurrentActivePlace({
+        kind: "boundary",
+        id: boundary.id,
+        name: boundary.fakeName || boundary.name,
+        address: boundary.name,
+        type: boundary.type,
+        lng: boundary.testPoint[0],
+        lat: boundary.testPoint[1]
+      });
+
+      currentRouteDestination = {
+        lng: boundary.testPoint[0],
+        lat: boundary.testPoint[1],
+        name: boundary.name
+      };
+
+      document.getElementById("panelName").textContent = boundary.fakeName;
+      document.getElementById("panelOriginal").textContent =
+        "Formerly known as: " + boundary.name + " / " + boundary.source;
+
+      document.getElementById("panelRating").textContent = `${boundary.rating} ★`;
+      document.getElementById("panelChinese").textContent = boundary.chinesePlantPercent + "%";
+      document.getElementById("panelAsian").textContent = boundary.asianPlantPercent + "%";
+      document.getElementById("panelSource").textContent = boundary.source;
+
+      const tagsBox = document.getElementById("panelTags");
+      tagsBox.innerHTML = "";
+
+      boundary.tags.forEach(tag => {
+        tagsBox.innerHTML += `<span class="tag">${tag}</span>`;
+      });
+
+      const introHtml = boundary.comments.map(comment => `<div class="review">“${escapeHtml(comment)}”</div>`).join("");
+      renderReviewsForCurrentPlace(introHtml);
+
+      setActionButtonsForUnlocked();
+    }
+
+    function openPanelFromPendingClaim(claim) {
+      openPendingClaimPanel(claim);
+    }
+
+    function closePanel() {
+      document.getElementById("infoPanel").style.display = "none";
+    }
+
+    window.closePanel = closePanel;
+    window.deletePlantRecord = deletePlantRecord;
+
+    function getCurrentPositionPromise() {
+      return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+          reject(new Error("当前浏览器不支持定位"));
+          return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+          position => resolve({
+            lng: position.coords.longitude,
+            lat: position.coords.latitude
+          }),
+          error => reject(error),
+          { enableHighAccuracy: false, timeout: 4000, maximumAge: 60000 }
+        );
+      });
+    }
+
+    function decodeGooglePolyline(encoded) {
+      let index = 0;
+      const coordinates = [];
+      let lat = 0;
+      let lng = 0;
+
+      while (index < encoded.length) {
+        let b;
+        let shift = 0;
+        let result = 0;
+
+        do {
+          b = encoded.charCodeAt(index++) - 63;
+          result |= (b & 0x1f) << shift;
+          shift += 5;
+        } while (b >= 0x20);
+
+        const deltaLat = result & 1 ? ~(result >> 1) : result >> 1;
+        lat += deltaLat;
+
+        shift = 0;
+        result = 0;
+
+        do {
+          b = encoded.charCodeAt(index++) - 63;
+          result |= (b & 0x1f) << shift;
+          shift += 5;
+        } while (b >= 0x20);
+
+        const deltaLng = result & 1 ? ~(result >> 1) : result >> 1;
+        lng += deltaLng;
+
+        coordinates.push([lng / 1e5, lat / 1e5]);
+      }
+
+      return coordinates;
+    }
+
+    function formatRouteDistance(meters) {
+      if (!meters && meters !== 0) return "--";
+
+      if (meters >= 1000) {
+        return `${(meters / 1000).toFixed(1)} km`;
+      }
+
+      return `${Math.round(meters)} m`;
+    }
+
+    function formatRouteDuration(durationString) {
+      if (!durationString) return "--";
+
+      const seconds = Number(String(durationString).replace("s", ""));
+      const minutes = Math.round(seconds / 60);
+
+      if (minutes < 60) {
+        return `${minutes} 分钟`;
+      }
+
+      const hours = Math.floor(minutes / 60);
+      const restMinutes = minutes % 60;
+
+      if (restMinutes === 0) {
+        return `${hours} 小时`;
+      }
+
+      return `${hours} 小时 ${restMinutes} 分钟`;
+    }
+
+    function updateUserLocationMarker(lng, lat, heading = 0) {
+      if (!userLocationMarker) {
+        const markerElement = document.createElement("div");
+        markerElement.className = "user-heading-marker";
+
+        userLocationMarker = new mapboxgl.Marker({
+          element: markerElement,
+          rotationAlignment: "map",
+          pitchAlignment: "map"
+        })
+          .setLngLat([lng, lat])
+          .addTo(map);
+      }
+
+      userLocationMarker.setLngLat([lng, lat]);
+
+      const markerElement = userLocationMarker.getElement();
+      markerElement.style.rotate = `${heading || 0}deg`;
+    }
+
+    function startWatchingUserLocation() {
+      if (!navigator.geolocation) {
+        alert("当前浏览器不支持定位。");
+        return;
+      }
+
+      if (userWatchId) {
+        navigator.geolocation.clearWatch(userWatchId);
+      }
+
+      userWatchId = navigator.geolocation.watchPosition(
+        position => {
+          const lng = position.coords.longitude;
+          const lat = position.coords.latitude;
+          const heading = position.coords.heading || 0;
+
+          updateUserLocationMarker(lng, lat, heading);
+        },
+        error => {
+          console.warn("实时定位失败：", error);
+        },
+        {
+          enableHighAccuracy: true,
+          maximumAge: 1000,
+          timeout: 10000
+        }
+      );
+    }
+
+    async function fetchGoogleRoute(origin, destination, mode) {
+      const url =
+        `${API_BASE_URL}/google-route?` +
+        `fromLat=${encodeURIComponent(origin.lat)}` +
+        `&fromLng=${encodeURIComponent(origin.lng)}` +
+        `&toLat=${encodeURIComponent(destination.lat)}` +
+        `&toLng=${encodeURIComponent(destination.lng)}` +
+        `&mode=${encodeURIComponent(mode)}`;
+
+      const response = await fetch(url);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "路线获取失败");
+      }
+
+      return data;
+    }
+
+    function drawGoogleRoute(encodedPolyline) {
+      const coordinates = decodeGooglePolyline(encodedPolyline);
+
+      const routeGeoJSON = {
+        type: "Feature",
+        properties: {},
+        geometry: {
+          type: "LineString",
+          coordinates
+        }
+      };
+
+      if (map.getSource("active-google-route")) {
+        map.getSource("active-google-route").setData(routeGeoJSON);
+      } else {
+        map.addSource("active-google-route", {
+          type: "geojson",
+          data: routeGeoJSON
+        });
+
+        map.addLayer({
+          id: "active-google-route-line",
+          type: "line",
+          source: "active-google-route",
+          layout: {
+            "line-join": "round",
+            "line-cap": "round"
+          },
+          paint: {
+            "line-color": "#157a63",
+            "line-width": 6,
+            "line-opacity": 0.95
+          }
+        });
+      }
+
+      const bbox = turf.bbox(routeGeoJSON);
+
+      map.fitBounds(
+        [[bbox[0], bbox[1]], [bbox[2], bbox[3]]],
+        {
+          padding: {
+            top: 140,
+            right: 60,
+            bottom: 300,
+            left: 60
+          },
+          duration: 900
+        }
+      );
+    }
+async function getRouteOriginWithFallback() {
+  const center = map.getCenter();
+
+  const fallbackOrigin = {
+    lng: center.lng,
+    lat: center.lat,
+    source: "map-center"
+  };
 
   try {
-    routePanel.style.display = "block";
-    routeSummary.textContent = "正在获取当前位置和路线...";
-
-    const origin = await getCurrentPositionPromise();
-
-    startWatchingUserLocation();
-    updateUserLocationMarker(origin.lng, origin.lat, 0);
-
-    const routeData = await fetchGoogleRoute(origin, currentRouteDestination, mode);
-
-    if (!routeData.encodedPolyline) {
-      throw new Error("路线数据缺少 encodedPolyline");
-    }
-
-    drawGoogleRoute(routeData.encodedPolyline);
-
-    routeSummary.textContent =
-      `${currentRouteDestination.name} · ${formatRouteDuration(routeData.duration)} · ${formatRouteDistance(routeData.distanceMeters)}`;
-  } catch (error) {
-    console.error(error);
-    routePanel.style.display = "block";
-    routeSummary.textContent = error.message || "路线获取失败。";
-  }
-}
-window.showGoogleRoute = showGoogleRoute;
-    return {
-      ...currentLocation,
-      source: "current-location"
-    };
-  }
-
-  if (selectedMode === "manual") {
-    if (!manualPickedLocation) {
-      throw new Error("你选择了手动地点，但还没有在地图上点选位置。");
-    }
-
-    return {
-      ...manualPickedLocation,
-      source: "manual-map-pick"
-    };
-  }
-
-  throw new Error("没有可用的植物地点。");
-}
-
-  function openPanelFromBoundary(boundary) {
-    currentOpenedBoundaryId = boundary.id;
-    document.getElementById("infoPanel").style.display = "block";
-
-    currentRouteDestination = {
-     lng: boundary.testPoint[0],
-     lat: boundary.testPoint[1],
-     name: boundary.name
-};
-
-    document.getElementById("panelName").textContent = boundary.fakeName;
-    document.getElementById("panelOriginal").textContent =
-      "Formerly known as: " + boundary.name + " / " + boundary.source;
-
-    document.getElementById("panelRating").textContent = `${boundary.rating} ★`;
-    document.getElementById("panelChinese").textContent = boundary.chinesePlantPercent + "%";
-    document.getElementById("panelAsian").textContent = boundary.asianPlantPercent + "%";
-    document.getElementById("panelSource").textContent = boundary.source;
-
-    const tagsBox = document.getElementById("panelTags");
-    tagsBox.innerHTML = "";
-
-    boundary.tags.forEach(tag => {
-      tagsBox.innerHTML += `<span class="tag">${tag}</span>`;
-    });
-
-    const reviewsBox = document.getElementById("panelReviews");
-    reviewsBox.innerHTML = "";
-
-    boundary.comments.forEach(comment => {
-      reviewsBox.innerHTML += `<div class="review">“${comment}”</div>`;
-    });
-
-    setActionButtonsForUnlocked();
-  }
-
-  function openPanelFromPendingClaim(claim) {
-    currentOpenedBoundaryId = claim.id;
-    document.getElementById("infoPanel").style.display = "block";
-
-    document.getElementById("panelName").textContent = "Pending Botanical Claim";
-    document.getElementById("panelOriginal").textContent =
-      "Boundary pending review / 临时植物领地";
-    document.getElementById("panelRating").textContent = "Pending";
-    document.getElementById("panelChinese").textContent = "--%";
-    document.getElementById("panelAsian").textContent = "--%";
-    document.getElementById("panelSource").textContent = "Pending claim";
-
-    document.getElementById("panelTags").innerHTML = `
-      <span class="tag">Pending</span>
-      <span class="tag">Needs boundary review</span>
-    `;
-
-    document.getElementById("panelReviews").innerHTML = `
-      <div class="review">“This area has been temporarily activated by a plant scan, but its official boundary has not been verified yet.”</div>
-    `;
-    setActionButtonsForUnlocked();
-  }
-
-  function closePanel() {
-    document.getElementById("infoPanel").style.display = "none";
-  }
-
-  window.closePanel = closePanel;
-  window.deletePlantRecord = deletePlantRecord;
-
-  function getCurrentPositionPromise() {
-    return new Promise((resolve, reject) => {
+    const currentLocation = await new Promise((resolve, reject) => {
       if (!navigator.geolocation) {
         reject(new Error("当前浏览器不支持定位"));
         return;
       }
 
       navigator.geolocation.getCurrentPosition(
-        position => resolve({
-          lng: position.coords.longitude,
-          lat: position.coords.latitude
-        }),
-        error => reject(error),
-        { enableHighAccuracy: true, timeout: 10000 }
+        position => {
+          resolve({
+            lng: position.coords.longitude,
+            lat: position.coords.latitude,
+            source: "real-location"
+          });
+        },
+        reject,
+        {
+          enableHighAccuracy: false,
+          timeout: 3000,
+          maximumAge: 60000
+        }
       );
     });
+
+    return currentLocation;
+  } catch (error) {
+    console.warn("定位太慢或失败，使用地图中心作为起点：", error);
+    return fallbackOrigin;
   }
+}
+    window.showGoogleRoute = async function showGoogleRoute(mode = currentRouteMode) {
+      if (routeBtn.disabled) {
+        alert("该区域尚未点亮，点亮后可解锁路线。");
+        return;
+      }
 
-  async function getManualOrRealLocation() {
-    const select = document.getElementById("manualLocationSelect");
-    const value = select.value;
+      if (!currentRouteDestination) {
+        alert("没有可导航的目的地。");
+        return;
+      }
 
-    if (value) {
-      const boundary = getBoundaryById(value);
+      try {
+        routePanel.style.display = "block";
+        routeSummary.textContent = "正在获取当前位置和路线...";
 
-      return {
-        lng: boundary.testPoint[0],
-        lat: boundary.testPoint[1],
-        boundaryId: boundary.id
-      };
+        const origin = await getRouteOriginWithFallback();
+
+if (origin.source === "real-location") {
+  startWatchingUserLocation();
+}
+
+updateUserLocationMarker(origin.lng, origin.lat, 0);
+
+if (origin.source === "map-center") {
+  routeSummary.textContent = "无法读取实时位置，已暂用当前地图中心作为起点...";
+}
+
+const routeData = await fetchGoogleRoute(
+  origin,
+  currentRouteDestination,
+  mode
+);
+
+        if (!routeData.encodedPolyline) {
+          throw new Error("路线数据缺少 encodedPolyline");
+        }
+
+        drawGoogleRoute(routeData.encodedPolyline);
+
+        routeSummary.textContent =
+          `${currentRouteDestination.name} · ${formatRouteDuration(routeData.duration)} · ${formatRouteDistance(routeData.distanceMeters)}`;
+      } catch (error) {
+        console.error(error);
+        routePanel.style.display = "block";
+        routeSummary.textContent = error.message || "路线获取失败。";
+      }
+    };
+
+    async function getManualOrRealLocation() {
+      return await getCurrentPositionPromise();
     }
 
-    return await getCurrentPositionPromise();
-  }
-
-  async function openPlantList() {
-    if (!currentOpenedBoundaryId) {
-      alert("请先点击或搜索一个已点亮区域。");
-      return;
-    }
-
-    const boundary = getBoundaryById(currentOpenedBoundaryId);
-    const claim = getPendingClaimById(currentOpenedBoundaryId);
-    const records = await getPlantRecords(currentOpenedBoundaryId);
-
-    if (boundary) {
-      plantListTitle.textContent = `${boundary.fakeName} 的植物一览`;
-    } else if (claim) {
-      plantListTitle.textContent = `Pending Botanical Claim 的植物一览`;
-    } else {
-      plantListTitle.textContent = `未知区域的植物一览`;
-    }
-
-    if (records.length === 0) {
-      plantListBox.innerHTML = `
-        <strong>暂无植物记录。</strong><br>
-        请点击搜索框右侧的相机按钮，上传或拍摄一张植物照片。
-      `;
-    } else {
-      plantListBox.innerHTML = records.map((plant, index) => {
-        const canDelete = plant.userId === CURRENT_USER_ID;
-
-        return `
-          <div class="plant-record-card">
-            ${canDelete ? `
-              <button
-                class="delete-plant-btn"
-                onclick="deletePlantRecord('${currentOpenedBoundaryId}', '${plant.id}')"
-              >
-                ×
-              </button>
-            ` : ""}
-
-            ${plant.imageUrl ? `
-              <img
-                src="${plant.imageUrl}"
-                style="width:100%; height:140px; object-fit:cover; border-radius:12px; margin-bottom:10px;"
-              >
-            ` : ""}
-
-            <strong>${index + 1}. ${plant.commonName}</strong><br>
-            学名：<i>${plant.scientificName}</i><br>
-            属：${plant.genus}<br>
-            科：${plant.family}<br>
-            置信度：${Math.round(plant.score * 100)}%<br>
-            记录时间：${plant.time}<br>
-            ${canDelete
-              ? `<span style="color:#777;">你上传的，可删除</span>`
-              : `<span style="color:#777;">其他用户上传</span>`
-            }
-          </div>
-        `;
-      }).join("");
-    }
-
-    plantListModal.style.display = "flex";
-  }
-
-  const searchInput = document.getElementById("searchInput");
-  const searchResults = document.getElementById("searchResults");
-  const cameraBtn = document.getElementById("cameraBtn");
-  const cameraModal = document.getElementById("cameraModal");
-  const closeCameraBtn = document.getElementById("closeCameraBtn");
-  const plantImageInput = document.getElementById("plantImageInput");
-  const previewBox = document.getElementById("previewBox");
-  const identifyBtn = document.getElementById("identifyBtn");
-  const resultBox = document.getElementById("resultBox");
-  const routeBtn = document.getElementById("routeBtn");
-  const unlockPlaceBtn = document.getElementById("unlockPlaceBtn");
-  const plantListBtn = document.getElementById("plantListBtn");
-  const savePlaceBtn = document.getElementById("savePlaceBtn");
-  const lockedRouteHint = document.getElementById("lockedRouteHint");
-  const routePanel = document.getElementById("routePanel");
-  const routeSummary = document.getElementById("routeSummary");
-  const routeModeBtns = document.querySelectorAll(".route-mode-btn");
-
-  const plantListModal = document.getElementById("plantListModal");
-  const plantListBox = document.getElementById("plantListBox");
-  const plantListTitle = document.getElementById("plantListTitle");
-  const closePlantListBtn = document.getElementById("closePlantListBtn");
-  const photoGpsBox = document.getElementById("photoGpsBox");
-  const locationChoiceBox = document.getElementById("locationChoiceBox");
-  const pickLocationBtn = document.getElementById("pickLocationBtn");
-  const manualLocationHint = document.getElementById("manualLocationHint");
-
-  map.on("load", async () => {
-    try {
-      unlockedIds = await fetchUnlockedIds();
-      pendingClaims = await fetchPendingClaims();
-    } catch (error) {
-      console.error(error);
-      unlockedIds = [];
-      pendingClaims = [];
-    }
-
-    map.addSource("mask-source", {
-      type: "geojson",
-      data: buildMaskGeoJSON()
-    });
-
-    map.addLayer({
-      id: "mask-fill",
-      type: "fill",
-      source: "mask-source",
-      paint: {
-        "fill-color": "#d8d8d8",
-        "fill-opacity": 0.70
+    async function openPlantList() {
+      if (!currentOpenedBoundaryId) {
+        alert("请先点击或搜索一个已点亮区域。");
+        return;
       }
-    });
 
-    map.addSource("unlocked-boundaries", {
-      type: "geojson",
-      data: buildUnlockedGeoJSON()
-    });
-
-    map.addLayer({
-      id: "unlocked-fill",
-      type: "fill",
-      source: "unlocked-boundaries",
-      paint: {
-        "fill-color": "#6fd99a",
-        "fill-opacity": 0.25
-      }
-    });
-
-    map.addLayer({
-      id: "unlocked-line-glow",
-      type: "line",
-      source: "unlocked-boundaries",
-      layout: {
-        "line-join": "round",
-        "line-cap": "round"
-      },
-      paint: {
-        "line-color": "#8ad65b",
-        "line-width": 11,
-        "line-opacity": 0.34,
-        "line-blur": 2
-      }
-    });
-
-    map.addLayer({
-      id: "unlocked-line",
-      type: "line",
-      source: "unlocked-boundaries",
-      layout: {
-        "line-join": "round",
-        "line-cap": "round"
-      },
-      paint: {
-        "line-color": "#45ad36",
-        "line-width": 5.5,
-        "line-opacity": 0.98
-      }
-    });
-
-    map.addSource("pending-claims", {
-      type: "geojson",
-      data: buildPendingGeoJSON()
-    });
-
-    map.addLayer({
-      id: "pending-fill",
-      type: "fill",
-      source: "pending-claims",
-      paint: {
-        "fill-color": "#b6e88f",
-        "fill-opacity": 0.20
-      }
-    });
-
-    map.addLayer({
-      id: "pending-line",
-      type: "line",
-      source: "pending-claims",
-      layout: {
-        "line-join": "round",
-        "line-cap": "round"
-      },
-      paint: {
-        "line-color": "#77b255",
-        "line-width": 4,
-        "line-dasharray": [2, 2]
-      }
-    });
-
-    map.on("click", "unlocked-fill", (event) => {
-      const feature = event.features[0];
-      const boundary = getBoundaryById(feature.properties.id);
+      const boundary = getBoundaryById(currentOpenedBoundaryId);
+      const claim = getPendingClaimById(currentOpenedBoundaryId);
+      let records = [];
+      let recordOwnerIds = [];
 
       if (boundary) {
-        openPanelFromBoundary(boundary);
+        records = await getPlantRecords(currentOpenedBoundaryId);
+        recordOwnerIds = records.map(() => currentOpenedBoundaryId);
+        plantListTitle.textContent = `${boundary.name} 的植物一览`;
+      } else if (claim) {
+        const { claimName } = getClaimDisplayInfo(claim);
+        const relatedClaims = findRelatedClaimsForClaim(claim);
+        const recordGroups = await Promise.all(
+          relatedClaims.map(async relatedClaim => {
+            try {
+              const claimRecords = await getPlantRecords(relatedClaim.id);
+              return claimRecords.map(record => ({
+                ...record,
+                __claimId: relatedClaim.id
+              }));
+            } catch (error) {
+              console.warn("读取相关植物记录失败：", relatedClaim.id, error);
+              return [];
+            }
+          })
+        );
+
+        const seenRecordIds = new Set();
+        records = recordGroups.flat().filter(record => {
+          const recordKey = record.id || `${record.scientificName}-${record.time}-${record.__claimId}`;
+          if (seenRecordIds.has(recordKey)) {
+            return false;
+          }
+          seenRecordIds.add(recordKey);
+          return true;
+        });
+        recordOwnerIds = records.map(record => record.__claimId || currentOpenedBoundaryId);
+        plantListTitle.textContent = `${claimName} 的植物一览`;
+      } else {
+        records = await getPlantRecords(currentOpenedBoundaryId);
+        recordOwnerIds = records.map(() => currentOpenedBoundaryId);
+        plantListTitle.textContent = `未知区域的植物一览`;
       }
-    });
 
-    map.on("click", "pending-fill", (event) => {
-      const claim = getPendingClaimById(event.features[0].properties.id);
+      if (records.length === 0) {
+        plantListBox.innerHTML = `
+          <strong>暂无植物记录。</strong><br>
+          请点击搜索框右侧的相机按钮，上传或拍摄一张植物照片。
+        `;
+      } else {
+        plantListBox.innerHTML = records.map((plant, index) => {
+          const canDelete = plant.userId === CURRENT_USER_ID;
+          const recordBoundaryId = recordOwnerIds[index] || currentOpenedBoundaryId;
 
-      if (claim) {
-        openPanelFromPendingClaim(claim);
+          return `
+            <div class="plant-record-card">
+              ${canDelete ? `
+                <button
+                  class="delete-plant-btn"
+                  onclick="deletePlantRecord('${recordBoundaryId}', '${plant.id}')"
+                >
+                  ×
+                </button>
+              ` : ""}
+
+              ${plant.imageUrl ? `
+                <img
+                  src="${plant.imageUrl}"
+                  style="width:100%; height:140px; object-fit:cover; border-radius:12px; margin-bottom:10px;"
+                >
+              ` : ""}
+
+              <strong>${index + 1}. ${plant.commonName}</strong><br>
+              学名：<i>${plant.scientificName}</i><br>
+              属：${plant.genus}<br>
+              科：${plant.family}<br>
+              置信度：${Math.round(plant.score * 100)}%<br>
+              记录时间：${plant.time}<br>
+              ${canDelete
+                ? `<span style="color:#777;">你上传的，可删除</span>`
+                : `<span style="color:#777;">其他用户上传</span>`
+              }
+            </div>
+          `;
+        }).join("");
       }
-    });
 
-    map.on("mouseenter", "unlocked-fill", () => {
-      map.getCanvas().style.cursor = "pointer";
-    });
-
-    map.on("mouseleave", "unlocked-fill", () => {
-      map.getCanvas().style.cursor = "";
-    });
-
-    map.on("mouseenter", "pending-fill", () => {
-      map.getCanvas().style.cursor = "pointer";
-    });
-
-    map.on("mouseleave", "pending-fill", () => {
-      map.getCanvas().style.cursor = "";
-    });
-  });
-
-  map.on("error", (error) => {
-    console.error("Mapbox error:", error);
-  });
-
-  searchInput.addEventListener("input", () => {
-  const query = searchInput.value.trim();
-
-  clearTimeout(searchTimer);
-
-  if (query.length < 2) {
-    hideSearchResults();
-    return;
-  }
-
-  searchTimer = setTimeout(async () => {
-    try {
-      const results = await searchPlaces(query);
-      showSearchResults(results);
-    } catch (error) {
-      console.error(error);
-      searchResults.innerHTML = `
-        <div class="search-result-item">
-          <div class="search-result-name">搜索失败</div>
-          <div class="search-result-address">${escapeHtml(error.message || error)}</div>
-        </div>
-      `;
-      searchResults.style.display = "block";
-    }
-  }, 350);
-});
-
-searchInput.addEventListener("keydown", async (event) => {
-  if (event.key !== "Enter") {
-    return;
-  }
-
-  event.preventDefault();
-
-  const query = searchInput.value.trim();
-
-  if (!query) {
-    return;
-  }
-
-  try {
-    const results = await searchPlaces(query);
-    showSearchResults(results);
-  } catch (error) {
-    console.error(error);
-    searchResults.innerHTML = `
-      <div class="search-result-item">
-        <div class="search-result-name">搜索失败</div>
-        <div class="search-result-address">${escapeHtml(error.message || error)}</div>
-      </div>
-    `;
-    searchResults.style.display = "block";
-  }
-});
-
-  plantListBtn.addEventListener("click", openPlantList);
-  unlockPlaceBtn.addEventListener("click", unlockSelectedSearchPlace);
-  
-  pickLocationBtn.addEventListener("click", () => {
-  cameraModal.style.display = "none";
-
-  searchInput.focus();
-  searchInput.placeholder = "搜索植物拍摄地点，例如 Kew Gardens...";
-
-  searchResults.innerHTML = `
-    <div class="search-result-item">
-      <div class="search-result-name">搜索植物拍摄地点</div>
-      <div class="search-result-address">
-        输入地点名称，选择正确地点后，系统会打开该地点详情页。确认后即可用这张植物照片点亮区域。
-      </div>
-    </div>
-  `;
-
-  searchResults.style.display = "block";
-});
-
-  
-
-routeBtn.addEventListener("click", () => {
-  if (routeBtn.disabled) {
-    alert("该区域尚未点亮，点亮后可解锁路线。");
-    return;
-  }
-
-  window.showGoogleRoute(currentRouteMode);
-});
-
-routeModeBtns.forEach(button => {
-  button.addEventListener("click", () => {
-    routeModeBtns.forEach(btn => btn.classList.remove("active"));
-    button.classList.add("active");
-
-    currentRouteMode = button.dataset.mode;
-    window.showGoogleRoute(currentRouteMode);
-  });
-});
-
-  
-
-savePlaceBtn.addEventListener("click", () => {
-  if (savePlaceBtn.disabled) {
-    alert("该区域尚未点亮，点亮后可保存此地。");
-    return;
-  }
-
-  alert("保存功能下一步接入。");
-});
-
-  closePlantListBtn.addEventListener("click", () => {
-    plantListModal.style.display = "none";
-  });
-
-  cameraBtn.addEventListener("click", () => {
-  cameraModal.style.display = "flex";
-
-  identifyBtn.disabled = false;
-  identifyBtn.textContent = "识别植物并点亮区域";
-
-  closeCameraBtn.classList.remove("done-btn");
-  closeCameraBtn.textContent = "关闭";
-});
-
-  closeCameraBtn.addEventListener("click", () => {
-  cameraModal.style.display = "none";
-  resultBox.style.display = "none";
-
-  identifyBtn.disabled = false;
-  identifyBtn.textContent = "识别植物并点亮区域";
-
-  closeCameraBtn.classList.remove("done-btn");
-  closeCameraBtn.textContent = "关闭";
-});
-
-  plantImageInput.addEventListener("change", async (event) => {
-    
-
-
-  const file = event.target.files[0];
-  selectedImageFile = file || null;
-
-  photoGpsLocation = null;
-  manualPickedLocation = null;
-
-  if (manualPickMarker) {
-    manualPickMarker.remove();
-    manualPickMarker = null;
-  }
-
-  if (manualLocationHint) {
-  manualLocationHint.textContent = "尚未手动选择地点。";
-}
-
-  if (!file) {
-    previewBox.innerHTML = "尚未选择图片";
-    photoGpsBox.innerHTML = "上传照片后，系统会优先尝试读取照片里的 GPS 拍摄位置。";
-    if (locationChoiceBox) {
-  locationChoiceBox.style.display = "none";
-}
-    return;
-  }
-
-  const reader = new FileReader();
-
-  reader.onload = function(loadEvent) {
-    previewBox.innerHTML = `<img src="${loadEvent.target.result}" alt="plant preview">`;
-  };
-
-  reader.readAsDataURL(file);
-  resultBox.style.display = "none";
-
-  photoGpsBox.innerHTML = "正在读取照片 GPS 信息...";
-
-  const gpsLocation = await readPhotoGpsLocation(file);
-
-  if (gpsLocation) {
-    photoGpsLocation = gpsLocation;
-    locationChoiceBox.style.display = "none";
-
-    photoGpsBox.innerHTML = `
-  <strong>已定位植物所在地。</strong><br>
-  已点亮植物所在地
-`;
-
-    map.flyTo({
-      center: [gpsLocation.lng, gpsLocation.lat],
-      zoom: 16.8,
-      duration: 900
-    });
-  } else {
-    photoGpsLocation = null;
-    locationChoiceBox.style.display = "block";
-
-    photoGpsBox.innerHTML = `
-      <strong>这张照片没有可读取的 GPS 信息。</strong><br>
-      请选择植物地点来源：使用当前位置，或手动在地图上选择地点。
-    `;
-  }
-});
-
-  identifyBtn.addEventListener("click", async () => {
-    if (!selectedImageFile) {
-      alert("请先拍摄或上传一张植物照片。");
-      return;
+      plantListModal.style.display = "flex";
     }
 
-    resultBox.style.display = "block";
-    resultBox.innerHTML = "正在识别植物，并匹配边界库...";
+    const searchInput = document.getElementById("searchInput");
+    const searchResults = document.getElementById("searchResults");
+    const cameraBtn = document.getElementById("cameraBtn");
+    const cameraModal = document.getElementById("cameraModal");
+    const closeCameraBtn = document.getElementById("closeCameraBtn");
+    const plantImageInput = document.getElementById("plantImageInput");
+    const previewBox = document.getElementById("previewBox");
+    const identifyBtn = document.getElementById("identifyBtn");
+    const resultBox = document.getElementById("resultBox");
+    const routeBtn = document.getElementById("routeBtn");
+    const unlockPlaceBtn = document.getElementById("unlockPlaceBtn");
+    const plantListBtn = document.getElementById("plantListBtn");
+    const savePlaceBtn = document.getElementById("savePlaceBtn");
+    const lockedRouteHint = document.getElementById("lockedRouteHint");
+    const routePanel = document.getElementById("routePanel");
+    const routeSummary = document.getElementById("routeSummary");
+    const routeModeBtns = document.querySelectorAll(".route-mode-btn");
 
-    identifyBtn.disabled = true;
-    identifyBtn.textContent = "正在识别并点亮...";
-    closeCameraBtn.classList.remove("done-btn");
-    closeCameraBtn.textContent = "关闭";
+    const plantListModal = document.getElementById("plantListModal");
+    const plantListBox = document.getElementById("plantListBox");
+    const plantListTitle = document.getElementById("plantListTitle");
+    const closePlantListBtn = document.getElementById("closePlantListBtn");
+    const photoGpsBox = document.getElementById("photoGpsBox");
+    const locationChoiceBox = document.getElementById("locationChoiceBox");
+    const pickLocationBtn = document.getElementById("pickLocationBtn");
+    const manualLocationHint = document.getElementById("manualLocationHint");
+    const exploreTabBtn = document.getElementById("exploreTabBtn");
+    const meTabBtn = document.getElementById("meTabBtn");
+    const contributeTabBtn = document.getElementById("contributeTabBtn");
+    const bottomSheetModal = document.getElementById("bottomSheetModal");
+    const bottomSheetTitle = document.getElementById("bottomSheetTitle");
+    const bottomSheetContent = document.getElementById("bottomSheetContent");
+    const closeBottomSheetBtn = document.getElementById("closeBottomSheetBtn");
 
-    try {
-      const plantResult = await identifyPlantWithBackend(selectedImageFile);
-     const location = await getConfirmedPlantLocation();
-      const { lng, lat } = location;
+    map.on("load", async () => {
+      try {
+        unlockedIds = await fetchUnlockedIds();
+        pendingClaims = await fetchPendingClaims();
+      } catch (error) {
+        console.error(error);
+        unlockedIds = [];
+        pendingClaims = [];
+      }
 
-      map.flyTo({
-        center: [lng, lat],
-        zoom: 16.8,
-        duration: 900
+      map.addSource("mask-source", {
+        type: "geojson",
+        data: buildMaskGeoJSON()
       });
 
-      const matchedBoundary = findBoundaryByLocation(lng, lat);
+      map.addLayer({
+        id: "mask-fill",
+        type: "fill",
+        source: "mask-source",
+        paint: {
+          "fill-color": "#d8d8d8",
+          "fill-opacity": 0.70
+        }
+      });
 
-      if (!matchedBoundary) {
-        const pendingClaim = await createPendingClaim(lng, lat);
+      map.addSource("unlocked-boundaries", {
+        type: "geojson",
+        data: buildUnlockedGeoJSON()
+      });
 
-        await addPlantRecord(pendingClaim.id, plantResult);
+      map.addLayer({
+        id: "unlocked-fill",
+        type: "fill",
+        source: "unlocked-boundaries",
+        paint: {
+          "fill-color": "#6fd99a",
+          "fill-opacity": 0.25
+        }
+      });
 
-        currentOpenedBoundaryId = pendingClaim.id;
-        openPendingClaimPanel(pendingClaim);
+      map.addLayer({
+        id: "unlocked-line-glow",
+        type: "line",
+        source: "unlocked-boundaries",
+        layout: {
+          "line-join": "round",
+          "line-cap": "round"
+        },
+        paint: {
+          "line-color": "#8ad65b",
+          "line-width": 11,
+          "line-opacity": 0.34,
+          "line-blur": 2
+        }
+      });
 
-        resultBox.innerHTML = `
-      <strong>点亮成功，已解锁此地。</strong><br><br>
-      识别结果：<b>${plantResult.commonName}</b><br>
-     学名：<i>${plantResult.scientificName}</i><br>
-     属：${plantResult.genus || "Unknown"}<br>
-     科：${plantResult.family || "Unknown"}<br>
-     置信度：${Math.round(plantResult.score * 100)}%<br><br>
+      map.addLayer({
+        id: "unlocked-line",
+        type: "line",
+        source: "unlocked-boundaries",
+        layout: {
+          "line-join": "round",
+          "line-cap": "round"
+        },
+        paint: {
+          "line-color": "#45ad36",
+          "line-width": 5.5,
+          "line-opacity": 0.98
+        }
+      });
 
-    该区域已生成临时植物领地。你可以关闭此窗口，在地图详情页查看植物记录。
-`;
+      map.addSource("pending-claims", {
+        type: "geojson",
+        data: buildPendingGeoJSON()
+      });
 
-    identifyBtn.disabled = true;
-   identifyBtn.textContent = "已识别并点亮";
+      map.addLayer({
+        id: "pending-fill",
+        type: "fill",
+        source: "pending-claims",
+        paint: {
+          "fill-color": "#b6e88f",
+          "fill-opacity": 0.20
+        }
+      });
 
-   closeCameraBtn.classList.add("done-btn");
-   closeCameraBtn.textContent = "完成并关闭";
+      map.addLayer({
+        id: "pending-line",
+        type: "line",
+        source: "pending-claims",
+        layout: {
+          "line-join": "round",
+          "line-cap": "round"
+        },
+        paint: {
+          "line-color": "#77b255",
+          "line-width": 4,
+          "line-dasharray": [2, 2]
+        }
+      });
 
-  return;
+      map.on("click", "unlocked-fill", (event) => {
+        const feature = event.features[0];
+        const boundary = getBoundaryById(feature.properties.id);
+
+        if (boundary) {
+          openPanelFromBoundary(boundary);
+        }
+      });
+
+      map.on("click", "pending-fill", (event) => {
+        const claim = getPendingClaimById(event.features[0].properties.id);
+
+        if (claim) {
+          openPanelFromPendingClaim(claim);
+        }
+      });
+
+      map.on("mouseenter", "unlocked-fill", () => {
+        map.getCanvas().style.cursor = "pointer";
+      });
+
+      map.on("mouseleave", "unlocked-fill", () => {
+        map.getCanvas().style.cursor = "";
+      });
+
+      map.on("mouseenter", "pending-fill", () => {
+        map.getCanvas().style.cursor = "pointer";
+      });
+
+      map.on("mouseleave", "pending-fill", () => {
+        map.getCanvas().style.cursor = "";
+      });
+    });
+
+    map.on("error", (error) => {
+      console.error("Mapbox error:", error);
+    });
+
+    searchInput.addEventListener("input", () => {
+      const query = searchInput.value.trim();
+
+      clearTimeout(searchTimer);
+
+      if (query.length < 2) {
+        hideSearchResults();
+        return;
       }
 
-      await unlockBoundary(matchedBoundary.id);
-      fitToBoundary(matchedBoundary);
-      openPanelFromBoundary(matchedBoundary);
-      await addPlantRecord(matchedBoundary.id, plantResult);
+      searchTimer = setTimeout(async () => {
+        try {
+          const results = await searchPlaces(query);
+          showSearchResults(results);
+        } catch (error) {
+          console.error(error);
+          searchResults.innerHTML = `
+            <div class="search-result-item">
+              <div class="search-result-name">搜索失败</div>
+              <div class="search-result-address">${escapeHtml(error.message || error)}</div>
+            </div>
+          `;
+          searchResults.style.display = "block";
+        }
+      }, 350);
+    });
 
-      resultBox.innerHTML = `
-     <strong>点亮成功，已解锁此地。</strong><br><br>
-     识别结果：<b>${plantResult.commonName}</b><br>
-     学名：<i>${plantResult.scientificName}</i><br>
-     属：${plantResult.genus || "Unknown"}<br>
-     科：${plantResult.family || "Unknown"}<br>
-     置信度：${Math.round(plantResult.score * 100)}%<br><br>
+    searchInput.addEventListener("keydown", async (event) => {
+      if (event.key !== "Enter") {
+        return;
+      }
 
-     匹配区域：<b>${matchedBoundary.name}</b><br>
-     盗版命名：<b>${matchedBoundary.fakeName}</b><br>
-     边界来源：${matchedBoundary.source}<br><br>
+      event.preventDefault();
 
-     这条植物记录已作为点亮该区域的证据。你可以关闭此窗口，在植物一览中查看。
-`;
+      const query = searchInput.value.trim();
 
-identifyBtn.disabled = true;
-identifyBtn.textContent = "已识别并点亮";
+      if (!query) {
+        return;
+      }
 
-closeCameraBtn.classList.add("done-btn");
-closeCameraBtn.textContent = "完成并关闭";
-    } catch (error) {
-      console.error(error);
+      try {
+        const results = await searchPlaces(query);
+        showSearchResults(results);
+      } catch (error) {
+        console.error(error);
+        searchResults.innerHTML = `
+          <div class="search-result-item">
+            <div class="search-result-name">搜索失败</div>
+            <div class="search-result-address">${escapeHtml(error.message || error)}</div>
+          </div>
+        `;
+        searchResults.style.display = "block";
+      }
+    });
 
-      resultBox.innerHTML = `
+
+
+    exploreTabBtn.addEventListener("click", () => {
+      setActiveBottomTab(exploreTabBtn);
+      closeBottomSheet();
+    });
+
+    meTabBtn.addEventListener("click", () => {
+      setActiveBottomTab(meTabBtn);
+      showSavedPlacesPanel();
+    });
+
+    contributeTabBtn.addEventListener("click", () => {
+      setActiveBottomTab(contributeTabBtn);
+      showContributionsPanel();
+    });
+
+    closeBottomSheetBtn.addEventListener("click", () => {
+      closeBottomSheet();
+      setActiveBottomTab(exploreTabBtn);
+    });
+
+    bottomSheetModal.addEventListener("click", (event) => {
+      if (event.target === bottomSheetModal) {
+        closeBottomSheet();
+        setActiveBottomTab(exploreTabBtn);
+      }
+    });
+
+    plantListBtn.addEventListener("click", openPlantList);
+    unlockPlaceBtn.addEventListener("click", unlockSelectedSearchPlace);
+
+    pickLocationBtn.addEventListener("click", () => {
+      isSelectingPlantLocationBySearch = true;
+      cameraModal.style.display = "none";
+
+      searchInput.focus();
+      searchInput.placeholder = "搜索植物拍摄地点，例如 Kew Gardens...";
+
+      searchResults.innerHTML = `
+        <div class="search-result-item">
+          <div class="search-result-name">搜索植物拍摄地点</div>
+          <div class="search-result-address">
+            输入地点名称，选择正确地点后，系统会打开该地点详情页。确认后即可用这张植物照片点亮区域。
+          </div>
+        </div>
+      `;
+
+      searchResults.style.display = "block";
+    });
+
+    routeBtn.addEventListener("click", () => {
+      if (routeBtn.disabled) {
+        alert("该区域尚未点亮，点亮后可解锁路线。");
+        return;
+      }
+
+      window.showGoogleRoute(currentRouteMode);
+    });
+
+    routeModeBtns.forEach(button => {
+      button.addEventListener("click", () => {
+        routeModeBtns.forEach(btn => btn.classList.remove("active"));
+        button.classList.add("active");
+
+        currentRouteMode = button.dataset.mode;
+        window.showGoogleRoute(currentRouteMode);
+      });
+    });
+
+    savePlaceBtn.addEventListener("click", () => {
+      if (savePlaceBtn.disabled) {
+        alert("该区域尚未点亮，点亮后可保存此地。");
+        return;
+      }
+
+      toggleSaveCurrentPlace();
+    });
+
+    closePlantListBtn.addEventListener("click", () => {
+      plantListModal.style.display = "none";
+    });
+
+    cameraBtn.addEventListener("click", () => {
+      isSelectingPlantLocationBySearch = false;
+      cameraModal.style.display = "flex";
+
       identifyBtn.disabled = false;
-      identifyBtn.textContent = "重新识别植物并点亮区域";
+      identifyBtn.textContent = "识别植物并点亮区域";
 
       closeCameraBtn.classList.remove("done-btn");
       closeCameraBtn.textContent = "关闭";
-        <strong>识别失败。</strong><br>
-        ${error.message || error}<br><br>
+    });
 
-        检查：<br>
-        1. Terminal 里 <code>node server.js</code> 有没有正在运行；<br>
-        2. 页面有没有用 Go Live 打开；<br>
-        3. .env 里有没有 PLANTNET_API_KEY；<br>
-        4. 上传的图片是不是 JPG / PNG；<br>
-        5. 网络是否正常。
-      `;
-    }
-  });
-</script>
+    closeCameraBtn.addEventListener("click", () => {
+      cameraModal.style.display = "none";
+      resultBox.style.display = "none";
+
+      isSelectingPlantLocationBySearch = false;
+      selectedImageFile = null;
+      photoGpsLocation = null;
+      manualPickedLocation = null;
+      plantImageInput.value = "";
+      searchInput.value = "";
+      searchInput.placeholder = "搜索地点或区域 / Search places or areas...";
+      hideSearchResults();
+      if (locationChoiceBox) {
+        locationChoiceBox.style.display = "none";
+      }
+      if (manualPickMarker) {
+        manualPickMarker.remove();
+        manualPickMarker = null;
+      }
+
+      identifyBtn.disabled = false;
+      identifyBtn.textContent = "识别植物并点亮区域";
+
+      closeCameraBtn.classList.remove("done-btn");
+      closeCameraBtn.textContent = "关闭";
+    });
+
+    plantImageInput.addEventListener("change", async (event) => {
+      const file = event.target.files[0];
+      selectedImageFile = file || null;
+
+      photoGpsLocation = null;
+      manualPickedLocation = null;
+
+      if (manualPickMarker) {
+        manualPickMarker.remove();
+        manualPickMarker = null;
+      }
+
+      if (manualLocationHint) {
+        manualLocationHint.textContent = "尚未手动选择地点。";
+      }
+
+      if (!file) {
+        previewBox.innerHTML = "尚未选择图片";
+        photoGpsBox.innerHTML = "上传照片后，系统会优先尝试读取照片里的 GPS 拍摄位置。";
+
+        if (locationChoiceBox) {
+          locationChoiceBox.style.display = "none";
+        }
+
+        return;
+      }
+
+      const reader = new FileReader();
+
+      reader.onload = function(loadEvent) {
+        previewBox.innerHTML = `<img src="${loadEvent.target.result}" alt="plant preview">`;
+      };
+
+      reader.readAsDataURL(file);
+      resultBox.style.display = "none";
+
+      photoGpsBox.innerHTML = "正在读取照片 GPS 信息...";
+
+      const gpsLocation = await readPhotoGpsLocation(file);
+
+      if (gpsLocation) {
+        photoGpsLocation = gpsLocation;
+        locationChoiceBox.style.display = "none";
+
+        photoGpsBox.innerHTML = `
+          <strong>已定位植物所在地。</strong><br>
+          已点亮植物所在地
+        `;
+
+        map.flyTo({
+          center: [gpsLocation.lng, gpsLocation.lat],
+          zoom: 16.8,
+          duration: 900
+        });
+      } else {
+        photoGpsLocation = null;
+        locationChoiceBox.style.display = "block";
+
+        photoGpsBox.innerHTML = `
+          <strong>这张照片没有可读取的 GPS 信息。</strong><br>
+          请选择植物地点来源：使用当前位置，或手动在地图上选择地点。
+        `;
+      }
+    });
+
+    identifyBtn.addEventListener("click", async () => {
+      if (!selectedImageFile) {
+        alert("请先拍摄或上传一张植物照片。");
+        return;
+      }
+
+      resultBox.style.display = "block";
+      resultBox.innerHTML = "正在识别植物，并匹配边界库...";
+
+      identifyBtn.disabled = true;
+      identifyBtn.textContent = "正在识别并点亮...";
+      closeCameraBtn.classList.remove("done-btn");
+      closeCameraBtn.textContent = "关闭";
+
+      try {
+        const plantResult = await identifyPlantWithBackend(selectedImageFile);
+        const location = await getConfirmedPlantLocation();
+        const { lng, lat } = location;
+
+        map.flyTo({
+          center: [lng, lat],
+          zoom: 16.8,
+          duration: 900
+        });
+
+        const matchedBoundary = findBoundaryByLocation(lng, lat);
+
+       if (!matchedBoundary) {
+        const placeForClaim =
+         selectedSearchPlace?.place || selectedSearchPlace || {
+          name: "Scanned botanical place",
+          address: "",
+          types: ["plant_scan"]
+        };
+
+       const pendingClaim = await createPendingClaim(lng, lat, placeForClaim);
+
+       await addPlantRecord(pendingClaim.id, plantResult);
+
+          currentOpenedBoundaryId = pendingClaim.id;
+          isSelectingPlantLocationBySearch = false;
+          searchInput.value = "";
+          searchInput.placeholder = "搜索地点或区域 / Search places or areas...";
+          hideSearchResults();
+          openPendingClaimPanel(pendingClaim);
+          addContribution("上传植物", {
+            placeKey: `claim:${pendingClaim.id}`,
+            placeName: getClaimDisplayInfo(pendingClaim).claimName,
+            summary: `识别植物：${plantResult.commonName || "Unknown plant"}`
+          });
+          addContribution("点亮地图", {
+            placeKey: `claim:${pendingClaim.id}`,
+            placeName: getClaimDisplayInfo(pendingClaim).claimName,
+            summary: "通过植物识别点亮了一个 Google Places 地点。"
+          });
+
+          resultBox.innerHTML = `
+            <strong>点亮成功，已解锁此地。</strong><br><br>
+            识别结果：<b>${plantResult.commonName}</b><br>
+            学名：<i>${plantResult.scientificName}</i><br>
+            属：${plantResult.genus || "Unknown"}<br>
+            科：${plantResult.family || "Unknown"}<br>
+            置信度：${Math.round(plantResult.score * 100)}%<br><br>
+
+            该区域已生成临时植物领地。你可以关闭此窗口，在地图详情页查看植物记录。
+          `;
+
+          identifyBtn.disabled = true;
+          identifyBtn.textContent = "已识别并点亮";
+
+          closeCameraBtn.classList.add("done-btn");
+          closeCameraBtn.textContent = "完成并关闭";
+
+          return;
+        }
+
+        await unlockBoundary(matchedBoundary.id);
+        fitToBoundary(matchedBoundary);
+        isSelectingPlantLocationBySearch = false;
+        searchInput.value = "";
+        searchInput.placeholder = "搜索地点或区域 / Search places or areas...";
+        hideSearchResults();
+        openPanelFromBoundary(matchedBoundary);
+        await addPlantRecord(matchedBoundary.id, plantResult);
+        addContribution("上传植物", {
+          placeKey: `boundary:${matchedBoundary.id}`,
+          placeName: matchedBoundary.fakeName || matchedBoundary.name,
+          summary: `识别植物：${plantResult.commonName || "Unknown plant"}`
+        });
+        addContribution("点亮地图", {
+          placeKey: `boundary:${matchedBoundary.id}`,
+          placeName: matchedBoundary.fakeName || matchedBoundary.name,
+          summary: "通过植物识别点亮了本地边界区域。"
+        });
+
+        resultBox.innerHTML = `
+          <strong>点亮成功，已解锁此地。</strong><br><br>
+          识别结果：<b>${plantResult.commonName}</b><br>
+          学名：<i>${plantResult.scientificName}</i><br>
+          属：${plantResult.genus || "Unknown"}<br>
+          科：${plantResult.family || "Unknown"}<br>
+          置信度：${Math.round(plantResult.score * 100)}%<br><br>
+
+          匹配区域：<b>${matchedBoundary.name}</b><br>
+          盗版命名：<b>${matchedBoundary.fakeName}</b><br>
+          边界来源：${matchedBoundary.source}<br><br>
+
+          这条植物记录已作为点亮该区域的证据。你可以关闭此窗口，在植物一览中查看。
+        `;
+
+        identifyBtn.disabled = true;
+        identifyBtn.textContent = "已识别并点亮";
+
+        closeCameraBtn.classList.add("done-btn");
+        closeCameraBtn.textContent = "完成并关闭";
+      } catch (error) {
+        console.error(error);
+
+        identifyBtn.disabled = false;
+        identifyBtn.textContent = "重新识别植物并点亮区域";
+
+        closeCameraBtn.classList.remove("done-btn");
+        closeCameraBtn.textContent = "关闭";
+
+        resultBox.innerHTML = `
+          <strong>识别失败。</strong><br>
+          ${error.message || error}<br><br>
+
+          检查：<br>
+          1. Terminal 里 <code>node server.js</code> 有没有正在运行；<br>
+          2. 页面有没有用 Go Live 打开；<br>
+          3. .env 里有没有 PLANTNET_API_KEY；<br>
+          4. 上传的图片是不是 JPG / PNG；<br>
+          5. 网络是否正常。
+        `;
+      }
+    });
+  </script>
+</body>
+</html>
