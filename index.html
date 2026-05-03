@@ -266,6 +266,18 @@
       box-shadow: 0 -6px 24px rgba(0,0,0,0.22);
       z-index: 28;
       display: none;
+      transition: transform 0.26s ease, max-height 0.26s ease;
+      will-change: transform;
+    }
+
+    .info-panel.route-peek {
+      transform: translateX(-50%) translateY(calc(100% - 78px));
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .info-panel.route-peek .info-content {
+      pointer-events: none;
     }
 
     .bottom-handle {
@@ -274,6 +286,8 @@
       background: #d2d2d2;
       border-radius: 999px;
       margin: 10px auto 8px;
+      cursor: grab;
+      touch-action: pan-y;
     }
 
     .close-panel {
@@ -1336,6 +1350,8 @@
     let userHeading = 0;
     let followUserHeading = false;
     let lastBearingUpdateTime = 0;
+    let routeModeActive = false;
+    let routePanelTouchStartY = null;
     let isSelectingPlantLocationBySearch = false;
     let currentActivePlace = null;
 
@@ -1741,6 +1757,7 @@
       });
 
       document.getElementById("infoPanel").style.display = "block";
+      expandInfoPanel();
 
       document.getElementById("panelName").textContent =
         place.text || "Unclaimed place";
@@ -1810,6 +1827,7 @@
       };
 
       document.getElementById("infoPanel").style.display = "block";
+      expandInfoPanel();
       document.getElementById("panelName").textContent = claimName;
       document.getElementById("panelOriginal").textContent = claimAddress;
 
@@ -2219,6 +2237,7 @@
     function openPanelFromBoundary(boundary) {
       currentOpenedBoundaryId = boundary.id;
       document.getElementById("infoPanel").style.display = "block";
+      expandInfoPanel();
       setCurrentActivePlace({
         kind: "boundary",
         id: boundary.id,
@@ -2261,7 +2280,57 @@
       openPendingClaimPanel(claim);
     }
 
+    function getInfoPanelElement() {
+      return document.getElementById("infoPanel");
+    }
+
+    function isInfoPanelVisible() {
+      return getInfoPanelElement().style.display !== "none";
+    }
+
+    function collapseInfoPanel() {
+      if (!isInfoPanelVisible()) return;
+      getInfoPanelElement().classList.add("route-peek");
+    }
+
+    function expandInfoPanel() {
+      getInfoPanelElement().classList.remove("route-peek");
+    }
+
+    // 兼容旧命名：路线模式和普通详情页都可以使用同一套收起/展开逻辑
+    function collapseInfoPanelForRoute() {
+      collapseInfoPanel();
+    }
+
+    function expandInfoPanelFromRoute() {
+      expandInfoPanel();
+    }
+
+    function clearActiveGoogleRoute() {
+      if (map.getLayer("active-google-route-line")) {
+        map.removeLayer("active-google-route-line");
+      }
+
+      if (map.getSource("active-google-route")) {
+        map.removeSource("active-google-route");
+      }
+    }
+
+    function closeRouteMode() {
+      routeModeActive = false;
+      expandInfoPanelFromRoute();
+      clearActiveGoogleRoute();
+      routePanel.style.display = "none";
+      routeSummary.textContent = "路线加载中...";
+    }
+
     function closePanel() {
+      if (routeModeActive) {
+        closeRouteMode();
+        return;
+      }
+
+      expandInfoPanel();
       document.getElementById("infoPanel").style.display = "none";
     }
 
@@ -2628,6 +2697,8 @@ async function getRouteOriginWithFallback() {
       }
 
       try {
+        routeModeActive = true;
+        expandInfoPanelFromRoute();
         routePanel.style.display = "block";
         routeSummary.textContent = "正在获取当前位置和路线...";
 
@@ -2658,6 +2729,8 @@ const routeData = await fetchGoogleRoute(
 
         routeSummary.textContent =
           `${currentRouteDestination.name} · ${formatRouteDuration(routeData.duration)} · ${formatRouteDistance(routeData.distanceMeters)}`;
+
+        collapseInfoPanelForRoute();
       } catch (error) {
         console.error(error);
         routePanel.style.display = "block";
@@ -3100,6 +3173,55 @@ const routeData = await fetchGoogleRoute(
         currentRouteMode = button.dataset.mode;
         window.showGoogleRoute(currentRouteMode);
       });
+    });
+
+    const infoPanelElement = document.getElementById("infoPanel");
+    const infoPanelHandle = infoPanelElement.querySelector(".bottom-handle");
+
+    infoPanelHandle.addEventListener("click", (event) => {
+      if (!isInfoPanelVisible()) return;
+      event.stopPropagation();
+      infoPanelElement.classList.toggle("route-peek");
+    });
+
+    infoPanelHandle.addEventListener("touchstart", (event) => {
+      if (!isInfoPanelVisible()) return;
+      routePanelTouchStartY = event.touches[0].clientY;
+    }, { passive: true });
+
+    infoPanelHandle.addEventListener("touchend", (event) => {
+      if (!isInfoPanelVisible() || routePanelTouchStartY === null) return;
+
+      const endY = event.changedTouches[0].clientY;
+      const deltaY = endY - routePanelTouchStartY;
+      routePanelTouchStartY = null;
+
+      if (deltaY > 28) {
+        collapseInfoPanel();
+      } else if (deltaY < -28) {
+        expandInfoPanel();
+      } else {
+        infoPanelElement.classList.toggle("route-peek");
+      }
+    }, { passive: true });
+
+    infoPanelElement.addEventListener("click", (event) => {
+      if (!isInfoPanelVisible()) return;
+      if (!infoPanelElement.classList.contains("route-peek")) return;
+      if (event.target.closest(".close-panel")) return;
+      expandInfoPanel();
+    });
+
+    map.on("click", (event) => {
+      if (!isInfoPanelVisible()) return;
+
+      const clickedPanelLayer = map.queryRenderedFeatures(event.point, {
+        layers: ["unlocked-fill", "pending-fill"]
+      }).length > 0;
+
+      if (!clickedPanelLayer) {
+        collapseInfoPanel();
+      }
     });
 
     savePlaceBtn.addEventListener("click", () => {
