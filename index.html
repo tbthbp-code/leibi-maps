@@ -160,24 +160,25 @@
     }
 
     .user-heading-marker {
-      width: 38px;
-      height: 38px;
+      width: 42px;
+      height: 42px;
       border-radius: 50%;
       background: #1a73e8;
       box-shadow: 0 0 0 8px rgba(26, 115, 232, 0.16);
       display: flex;
       align-items: center;
       justify-content: center;
+      pointer-events: none;
     }
 
-    .user-heading-marker::before {
-      content: "";
+    .user-heading-arrow {
       width: 0;
       height: 0;
       border-left: 8px solid transparent;
       border-right: 8px solid transparent;
-      border-bottom: 18px solid white;
-      transform: translateY(-3px);
+      border-bottom: 19px solid white;
+      transform: translateY(-3px) rotate(0deg);
+      transform-origin: 50% 65%;
     }
 
     .camera-btn {
@@ -225,35 +226,30 @@
       cursor: pointer;
     }
 
-
-
     .locate-btn {
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 26px;
-      font-weight: 800;
-      color: #1a73e8;
-      transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+      font-size: 24px;
+      font-weight: 700;
     }
 
     .locate-btn.is-compass {
-      background: rgba(255,255,255,0.98);
+      background: white;
       color: #1a73e8;
     }
 
     .locate-btn.is-compass::before {
       content: "◈";
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 34px;
-      height: 34px;
+      display: inline-block;
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
       background: #1a73e8;
       color: white;
-      font-size: 21px;
-      line-height: 1;
+      line-height: 32px;
+      text-align: center;
+      font-size: 20px;
       transform: rotate(45deg);
     }
 
@@ -579,6 +575,178 @@
       background: #d8d8d8;
     }
 
+    .bottom-tabs {
+      position: absolute;
+      left: 50%;
+      bottom: 14px;
+      transform: translateX(-50%);
+      width: min(92vw, 520px);
+      height: 74px;
+      background: rgba(255,255,255,0.96);
+      border-radius: 30px;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.20);
+      z-index: 26;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding: 7px 10px;
+      box-sizing: border-box;
+      backdrop-filter: blur(10px);
+    }
+
+    .bottom-tab {
+      border: none;
+      background: transparent;
+      color: #4d5d5a;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      min-width: 88px;
+      cursor: pointer;
+    }
+
+    .bottom-tab-icon {
+      min-width: 62px;
+      height: 32px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .bottom-tab.active .bottom-tab-icon {
+      background: #cceff3;
+      color: #006d74;
+    }
+
+    .sheet-modal {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.30);
+      z-index: 45;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .sheet-card {
+      width: min(100vw, 620px);
+      max-height: 72vh;
+      overflow-y: auto;
+      background: white;
+      border-radius: 28px 28px 0 0;
+      box-shadow: 0 -10px 36px rgba(0,0,0,0.22);
+      padding: 18px 20px 26px;
+      box-sizing: border-box;
+    }
+
+    .sheet-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .sheet-header h2 {
+      margin: 0;
+      color: #155f4f;
+      font-size: 24px;
+    }
+
+    .sheet-close {
+      border: none;
+      background: #f1f3f4;
+      color: #222;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 22px;
+    }
+
+    .saved-card,
+    .contribution-card,
+    .place-review-card {
+      background: #f6faf8;
+      border-radius: 16px;
+      padding: 13px;
+      margin-top: 10px;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .saved-card button,
+    .review-submit-btn {
+      border: none;
+      border-radius: 999px;
+      background: #157a63;
+      color: white;
+      padding: 8px 13px;
+      margin-top: 9px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .review-summary {
+      background: #f6faf8;
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .review-score-big {
+      font-size: 30px;
+      font-weight: 800;
+      color: #0b7f7a;
+      margin-right: 8px;
+    }
+
+    .review-form {
+      background: #f7f7f7;
+      border-radius: 16px;
+      padding: 12px;
+      margin-top: 12px;
+    }
+
+    .review-form label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      color: #444;
+      margin: 8px 0 6px;
+    }
+
+    .review-form select,
+    .review-form textarea {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      padding: 10px;
+      font-size: 14px;
+      font-family: inherit;
+      background: white;
+    }
+
+    .review-form textarea {
+      min-height: 76px;
+      resize: vertical;
+    }
+
+    .empty-state {
+      color: #777;
+      background: #f6f6f6;
+      padding: 14px;
+      border-radius: 16px;
+      line-height: 1.5;
+    }
+
+
     @media (max-width: 700px) {
       .search-results {
         top: 112px;
@@ -606,6 +774,11 @@
 
       .mini-legend {
         display: none;
+      }
+
+      .bottom-tabs {
+        bottom: 10px;
+        width: calc(100vw - 28px);
       }
     }
   </style>
@@ -695,6 +868,33 @@
     当前版本使用本地边界库，不再实时请求 OSM，所以更稳定。
   </div>
 
+
+  <div class="bottom-tabs">
+    <button id="exploreTabBtn" class="bottom-tab active" type="button">
+      <span class="bottom-tab-icon">📍</span>
+      <span>探索</span>
+    </button>
+    <button id="meTabBtn" class="bottom-tab" type="button">
+      <span class="bottom-tab-icon">🔖</span>
+      <span>我</span>
+    </button>
+    <button id="contributeTabBtn" class="bottom-tab" type="button">
+      <span class="bottom-tab-icon">＋</span>
+      <span>贡献</span>
+    </button>
+  </div>
+
+  <div id="bottomSheetModal" class="sheet-modal">
+    <div class="sheet-card">
+      <div class="bottom-handle"></div>
+      <div class="sheet-header">
+        <h2 id="bottomSheetTitle">我的地点</h2>
+        <button id="closeBottomSheetBtn" class="sheet-close" type="button">×</button>
+      </div>
+      <div id="bottomSheetContent"></div>
+    </div>
+  </div>
+
   <div id="cameraModal" class="modal">
     <div class="modal-card">
       <h2>植物识别 / Plant Scan</h2>
@@ -776,6 +976,260 @@
 
     const CURRENT_USER_ID = getOrCreateUserId();
 
+    const STORAGE_KEYS = {
+      savedPlaces: "leibiSavedPlaces",
+      reviews: "leibiPlaceReviews",
+      contributions: "leibiContributions"
+    };
+
+    function readLocalList(key) {
+      try {
+        return JSON.parse(localStorage.getItem(key) || "[]");
+      } catch (error) {
+        console.warn("Local storage read failed:", error);
+        return [];
+      }
+    }
+
+    function writeLocalList(key, value) {
+      localStorage.setItem(key, JSON.stringify(value));
+    }
+
+    function getPlaceKey(place) {
+      if (!place) return "unknown";
+      if (place.key) return place.key;
+      if (place.kind && place.id) return `${place.kind}:${place.id}`;
+      if (place.id) return `place:${place.id}`;
+      return `coords:${Number(place.lng || 0).toFixed(5)},${Number(place.lat || 0).toFixed(5)}`;
+    }
+
+    function setCurrentActivePlace(place) {
+      currentActivePlace = {
+        ...place,
+        key: getPlaceKey(place)
+      };
+      updateSaveButtonState();
+    }
+
+    function getSavedPlaces() {
+      return readLocalList(STORAGE_KEYS.savedPlaces);
+    }
+
+    function isCurrentPlaceSaved() {
+      if (!currentActivePlace) return false;
+      return getSavedPlaces().some(place => place.key === currentActivePlace.key);
+    }
+
+    function updateSaveButtonState() {
+      if (typeof savePlaceBtn === "undefined" || !currentActivePlace || savePlaceBtn.disabled) return;
+      savePlaceBtn.textContent = isCurrentPlaceSaved() ? "已保存" : "保存";
+    }
+
+    function toggleSaveCurrentPlace() {
+      if (!currentActivePlace) {
+        alert("请先打开一个已点亮地点。");
+        return;
+      }
+
+      const savedPlaces = getSavedPlaces();
+      const existingIndex = savedPlaces.findIndex(place => place.key === currentActivePlace.key);
+
+      if (existingIndex >= 0) {
+        savedPlaces.splice(existingIndex, 1);
+        writeLocalList(STORAGE_KEYS.savedPlaces, savedPlaces);
+        savePlaceBtn.textContent = "保存";
+        alert("已从保存中移除。");
+        return;
+      }
+
+      savedPlaces.unshift({
+        ...currentActivePlace,
+        savedAt: new Date().toISOString()
+      });
+      writeLocalList(STORAGE_KEYS.savedPlaces, savedPlaces);
+      savePlaceBtn.textContent = "已保存";
+      alert("已保存此地。你可以在底部“我”里面查看。");
+    }
+
+    function addContribution(type, payload) {
+      const contributions = readLocalList(STORAGE_KEYS.contributions);
+      contributions.unshift({
+        id: `${type}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        type,
+        time: new Date().toISOString(),
+        ...payload
+      });
+      writeLocalList(STORAGE_KEYS.contributions, contributions.slice(0, 80));
+    }
+
+    function getReviews() {
+      return readLocalList(STORAGE_KEYS.reviews);
+    }
+
+    function getReviewsForPlace(placeKey) {
+      return getReviews().filter(review => review.placeKey === placeKey);
+    }
+
+    function getAverageRating(reviews) {
+      if (!reviews.length) return null;
+      const total = reviews.reduce((sum, review) => sum + Number(review.rating || 0), 0);
+      return total / reviews.length;
+    }
+
+    function renderReviewsForCurrentPlace(introHtml = "") {
+      const reviewsBox = document.getElementById("panelReviews");
+
+      if (!currentActivePlace) {
+        reviewsBox.innerHTML = introHtml || `<div class="review">暂无可评论地点。</div>`;
+        return;
+      }
+
+      const placeReviews = getReviewsForPlace(currentActivePlace.key);
+      const average = getAverageRating(placeReviews);
+      const averageText = average ? average.toFixed(1) : "--";
+
+      reviewsBox.innerHTML = `
+        ${introHtml}
+        <div class="review-summary">
+          <span class="review-score-big">${averageText}</span>
+          <span>殖民植物用户评分</span><br>
+          <span class="muted">评分标准：这里的殖民植物越多，评分越高。</span><br>
+          <span class="muted">${placeReviews.length ? `${placeReviews.length} 条评论` : "暂无评论，成为第一个评分的人。"}</span>
+        </div>
+
+        <div class="review-form">
+          <label for="reviewRatingInput">你认为这里有多少殖民植物？</label>
+          <select id="reviewRatingInput">
+            <option value="5">5 ★ 非常多，殖民植物痕迹很强</option>
+            <option value="4">4 ★ 较多，植物迁移线索明显</option>
+            <option value="3">3 ★ 中等，需要进一步观察</option>
+            <option value="2">2 ★ 较少，只有零星线索</option>
+            <option value="1">1 ★ 很少，几乎看不到</option>
+          </select>
+
+          <label for="reviewTextInput">评论 / 观察记录</label>
+          <textarea id="reviewTextInput" placeholder="比如：这里哪些植物让你想到殖民、迁移、采集、命名或植物园制度？"></textarea>
+          <button class="review-submit-btn" type="button" onclick="submitCurrentPlaceReview()">发布评论</button>
+        </div>
+
+        ${placeReviews.map(review => `
+          <div class="place-review-card">
+            <strong>${"★".repeat(Number(review.rating || 0))}${"☆".repeat(5 - Number(review.rating || 0))}</strong>
+            <span class="muted"> · ${new Date(review.time).toLocaleString()}</span><br>
+            ${escapeHtml(review.text || "这个用户只留下了评分，没有写评论。")}
+          </div>
+        `).join("")}
+      `;
+    }
+
+    function submitCurrentPlaceReview() {
+      if (!currentActivePlace) {
+        alert("请先打开一个已点亮地点。");
+        return;
+      }
+
+      const ratingInput = document.getElementById("reviewRatingInput");
+      const textInput = document.getElementById("reviewTextInput");
+      const rating = Number(ratingInput?.value || 5);
+      const text = (textInput?.value || "").trim();
+
+      const reviews = getReviews();
+      const newReview = {
+        id: `review-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        placeKey: currentActivePlace.key,
+        placeName: currentActivePlace.name,
+        rating,
+        text,
+        userId: CURRENT_USER_ID,
+        time: new Date().toISOString()
+      };
+
+      reviews.unshift(newReview);
+      writeLocalList(STORAGE_KEYS.reviews, reviews);
+      addContribution("评论", {
+        placeKey: currentActivePlace.key,
+        placeName: currentActivePlace.name,
+        summary: `${rating} 星：${text || "未填写文字评论"}`
+      });
+
+      renderReviewsForCurrentPlace();
+    }
+
+    function setActiveBottomTab(activeButton) {
+      [exploreTabBtn, meTabBtn, contributeTabBtn].forEach(button => {
+        if (button) button.classList.toggle("active", button === activeButton);
+      });
+    }
+
+    function openBottomSheet(title, html) {
+      bottomSheetTitle.textContent = title;
+      bottomSheetContent.innerHTML = html;
+      bottomSheetModal.style.display = "flex";
+    }
+
+    function closeBottomSheet() {
+      bottomSheetModal.style.display = "none";
+    }
+
+    function openSavedPlaceByKey(placeKey) {
+      const savedPlace = getSavedPlaces().find(place => place.key === placeKey);
+      if (!savedPlace) return;
+
+      closeBottomSheet();
+
+      if (savedPlace.kind === "boundary") {
+        const boundary = getBoundaryById(savedPlace.id);
+        if (boundary) {
+          fitToBoundary(boundary);
+          openPanelFromBoundary(boundary);
+          return;
+        }
+      }
+
+      if (savedPlace.kind === "claim") {
+        const claim = getPendingClaimById(savedPlace.id) || savedPlace;
+        map.flyTo({ center: [Number(claim.lng), Number(claim.lat)], zoom: 16.3, duration: 800 });
+        openPendingClaimPanel(claim);
+        return;
+      }
+
+      map.flyTo({ center: [Number(savedPlace.lng), Number(savedPlace.lat)], zoom: 16.3, duration: 800 });
+    }
+
+    function showSavedPlacesPanel() {
+      const savedPlaces = getSavedPlaces();
+      const html = savedPlaces.length ? savedPlaces.map(place => `
+        <div class="saved-card">
+          <strong>${escapeHtml(place.name)}</strong><br>
+          <span class="muted">${escapeHtml(place.address || place.type || "已保存地点")}</span><br>
+          <button type="button" onclick="openSavedPlaceByKey('${escapeHtml(place.key)}')">打开地点</button>
+        </div>
+      `).join("") : `
+        <div class="empty-state">还没有保存地点。点亮一个地点后，详情页里的“保存”按钮就会亮起来。</div>
+      `;
+
+      openBottomSheet("我 · 已保存地点", html);
+    }
+
+    function showContributionsPanel() {
+      const contributions = readLocalList(STORAGE_KEYS.contributions);
+      const html = contributions.length ? contributions.map(item => `
+        <div class="contribution-card">
+          <strong>${escapeHtml(item.type || "贡献")}</strong> · ${escapeHtml(item.placeName || "未知地点")}<br>
+          <span class="muted">${new Date(item.time).toLocaleString()}</span><br>
+          ${escapeHtml(item.summary || "已记录一次贡献。")}
+        </div>
+      `).join("") : `
+        <div class="empty-state">这里会记录你上传的植物图片、发布的评论、点亮过的地图区域。</div>
+      `;
+
+      openBottomSheet("贡献", html);
+    }
+
+    window.submitCurrentPlaceReview = submitCurrentPlaceReview;
+    window.openSavedPlaceByKey = openSavedPlaceByKey;
+
+
     const boundaryLibrary = [
       {
         id: "elephant-park",
@@ -806,7 +1260,7 @@
       {
         id: "baldwin-point",
         name: "Baldwin Point",
-        fakeName: "Bao-de-wen Dian",
+        fakeName: "Baldwin Point",
         source: "Local boundary library / manually cleaned",
         type: "residential block",
         rating: 4.2,
@@ -882,7 +1336,8 @@
     let userHeading = 0;
     let followUserHeading = false;
     let lastBearingUpdateTime = 0;
-    let deviceHeadingListenerStarted = false;
+    let isSelectingPlantLocationBySearch = false;
+    let currentActivePlace = null;
 
     const map = new mapboxgl.Map({
       container: "map",
@@ -1014,6 +1469,83 @@
       });
     }
 
+
+
+    function findPendingClaimForPlace(place, lng, lat) {
+      const normalizedName = String(place.name || place.text || "").toLowerCase().trim();
+      const normalizedAddress = String(place.address || place.place_name || "").toLowerCase().trim();
+      const placeId = String(place.id || place.place_id || "").trim();
+
+      // 从最新的 claim 往前找。这样用户刚刚点亮的地点，会优先被搜索结果认出来。
+      return [...pendingClaims].reverse().find(claim => {
+        const claimName = String(claim.place_name || claim.placeName || claim.name || "").toLowerCase().trim();
+        const claimAddress = String(claim.place_address || claim.placeAddress || claim.address || "").toLowerCase().trim();
+        const claimPlaceId = String(claim.place_id || claim.placeId || "").trim();
+
+        const samePlaceId = placeId && claimPlaceId && claimPlaceId === placeId;
+        const sameName = normalizedName && claimName && (
+          claimName === normalizedName ||
+          claimName.includes(normalizedName) ||
+          normalizedName.includes(claimName)
+        );
+        const sameAddress = normalizedAddress && claimAddress && (
+          claimAddress.includes(normalizedAddress) ||
+          normalizedAddress.includes(claimAddress)
+        );
+
+        const distanceKm = turf.distance(
+          turf.point([lng, lat]),
+          turf.point([Number(claim.lng), Number(claim.lat)]),
+          { units: "kilometers" }
+        );
+        const closeEnough = distanceKm < 0.35;
+
+        return samePlaceId || (sameName && closeEnough) || (sameAddress && closeEnough);
+      });
+    }
+
+    function findRelatedClaimsForClaim(baseClaim) {
+      if (!baseClaim) {
+        return [];
+      }
+
+      const baseName = String(baseClaim.place_name || baseClaim.placeName || baseClaim.name || "").toLowerCase().trim();
+      const baseAddress = String(baseClaim.place_address || baseClaim.placeAddress || baseClaim.address || "").toLowerCase().trim();
+      const basePlaceId = String(baseClaim.place_id || baseClaim.placeId || "").trim();
+      const baseLng = Number(baseClaim.lng);
+      const baseLat = Number(baseClaim.lat);
+
+      return pendingClaims.filter(claim => {
+        if (!claim || !claim.id) {
+          return false;
+        }
+
+        const claimName = String(claim.place_name || claim.placeName || claim.name || "").toLowerCase().trim();
+        const claimAddress = String(claim.place_address || claim.placeAddress || claim.address || "").toLowerCase().trim();
+        const claimPlaceId = String(claim.place_id || claim.placeId || "").trim();
+
+        const samePlaceId = basePlaceId && claimPlaceId && basePlaceId === claimPlaceId;
+        const sameName = baseName && claimName && (
+          baseName === claimName ||
+          baseName.includes(claimName) ||
+          claimName.includes(baseName)
+        );
+        const sameAddress = baseAddress && claimAddress && (
+          baseAddress.includes(claimAddress) ||
+          claimAddress.includes(baseAddress)
+        );
+
+        const distanceKm = turf.distance(
+          turf.point([baseLng, baseLat]),
+          turf.point([Number(claim.lng), Number(claim.lat)]),
+          { units: "kilometers" }
+        );
+        const closeEnough = distanceKm < 0.35;
+
+        return claim.id === baseClaim.id || samePlaceId || (sameName && closeEnough) || (sameAddress && closeEnough);
+      });
+    }
+
     function fitToBoundary(boundary) {
       const feature = boundaryToFeature(boundary);
       const bbox = turf.bbox(feature);
@@ -1132,6 +1664,7 @@
 
       savePlaceBtn.classList.add("is-disabled");
       savePlaceBtn.disabled = true;
+      savePlaceBtn.textContent = "保存";
 
       lockedRouteHint.style.display = "block";
       routePanel.style.display = "none";
@@ -1150,6 +1683,7 @@
 
       savePlaceBtn.classList.remove("is-disabled");
       savePlaceBtn.disabled = false;
+      updateSaveButtonState();
 
       lockedRouteHint.style.display = "none";
       routePanel.style.display = "none";
@@ -1171,12 +1705,7 @@
         matchedBoundary
       };
 
-      const isChoosingPlantLocation =
-        selectedImageFile &&
-        locationChoiceBox.style.display !== "none" &&
-        document.querySelector('input[name="locationMode"]:checked')?.value === "manual";
-
-      if (isChoosingPlantLocation) {
+      if (isSelectingPlantLocationBySearch) {
         manualPickedLocation = {
           lng,
           lat,
@@ -1201,6 +1730,15 @@
       }
 
       currentOpenedBoundaryId = null;
+      setCurrentActivePlace({
+        kind: "locked",
+        id: place.id || `place-${lng}-${lat}`,
+        name: place.text || place.name || "Unclaimed place",
+        address: place.place_name || place.address || "尚未点亮区域",
+        type: "locked",
+        lng,
+        lat
+      });
 
       document.getElementById("infoPanel").style.display = "block";
 
@@ -1230,36 +1768,66 @@
       setActionButtonsForLocked();
     }
 
+    function getClaimDisplayInfo(claim) {
+      const claimName =
+        claim.place_name ||
+        claim.placeName ||
+        claim.name ||
+        "Unnamed botanical claim";
+
+      const claimAddress =
+        claim.place_address ||
+        claim.placeAddress ||
+        claim.address ||
+        "Google place claim / 临时植物领地";
+
+      const claimType =
+        claim.place_type ||
+        claim.placeType ||
+        "Google Places claim";
+
+      return { claimName, claimAddress, claimType };
+    }
+
     function openPendingClaimPanel(claim) {
       currentOpenedBoundaryId = claim.id;
+
+      const { claimName, claimAddress, claimType } = getClaimDisplayInfo(claim);
+      setCurrentActivePlace({
+        kind: "claim",
+        id: claim.id,
+        name: claimName,
+        address: claimAddress,
+        type: claimType,
+        lng: claim.lng,
+        lat: claim.lat
+      });
+
       currentRouteDestination = {
         lng: claim.lng,
         lat: claim.lat,
-        name: "Pending Botanical Claim"
+        name: claimName
       };
 
       document.getElementById("infoPanel").style.display = "block";
-      const claimName = claim.place_name || claim.placeName || "Unnamed botanical claim";
-      const claimAddress = claim.place_address || claim.placeAddress || "Google place claim / 临时植物领地";
-
       document.getElementById("panelName").textContent = claimName;
       document.getElementById("panelOriginal").textContent = claimAddress;
 
-      document.getElementById("panelRating").textContent = "Pending";
+      document.getElementById("panelRating").textContent = "Activated";
       document.getElementById("panelChinese").textContent = "--%";
       document.getElementById("panelAsian").textContent = "--%";
-      document.getElementById("panelSource").textContent = "Pending claim";
+      document.getElementById("panelSource").textContent = claimType;
 
       document.getElementById("panelTags").innerHTML = `
-        <span class="tag">Pending</span>
-        <span class="tag">Needs boundary review</span>
+        <span class="tag">Activated place</span>
+        <span class="tag">Google Places claim</span>
       `;
 
-      document.getElementById("panelReviews").innerHTML = `
+      renderReviewsForCurrentPlace(`
         <div class="review">
-         该地点已通过植物识别被点亮。它目前使用 Google Places 的地点信息和临时范围显示，之后可以继续补充更精确的边界。
+          该地点已通过植物识别被点亮。它目前使用 Google Places 的地点信息和临时范围显示，之后可以继续补充更精确的边界。
         </div>
-      `;
+      `);
 
       setActionButtonsForUnlocked();
     }
@@ -1329,7 +1897,7 @@
           return;
         }
 
-        const pendingClaim = await createPendingClaim(lng, lat);
+        const pendingClaim = await createPendingClaim(lng, lat, selectedSearchPlace.place);
         await addPlantRecord(pendingClaim.id, plantResult);
 
         openPendingClaimPanel(pendingClaim);
@@ -1374,24 +1942,26 @@
         .addTo(map);
 
       const matchedBoundary = findBoundaryByLocation(lng, lat);
+      const matchedPendingClaim = findPendingClaimForPlace(place, lng, lat);
+
+      const normalizedPlace = {
+        id: place.id || "",
+        name: place.name,
+        text: place.name,
+        address: place.address || "",
+        place_name: place.address || "",
+        types: place.types || [],
+        center: [lng, lat]
+      };
 
       selectedSearchPlace = {
-        place: {
-          text: place.name,
-          place_name: place.address || "",
-          center: [lng, lat]
-        },
+        place: normalizedPlace,
         lng,
         lat,
         matchedBoundary
       };
 
-      const isChoosingPlantLocation =
-        selectedImageFile &&
-        locationChoiceBox.style.display !== "none" &&
-        document.querySelector('input[name="locationMode"]:checked')?.value === "manual";
-
-      if (isChoosingPlantLocation) {
+      if (isSelectingPlantLocationBySearch) {
         manualPickedLocation = {
           lng,
           lat,
@@ -1410,33 +1980,17 @@
 
         manualLocationHint.textContent = `已选择地点：${place.name}`;
 
-        if (matchedBoundary && isBoundaryUnlocked(matchedBoundary.id)) {
-          openPanelFromBoundary(matchedBoundary);
-        } else {
-          openLockedPlacePanel(
-            {
-              text: place.name,
-              place_name: place.address || "",
-              center: [lng, lat]
-            },
-            matchedBoundary || null
-          );
-        }
-
+        cameraModal.style.display = "flex";
+        infoPanel.style.display = "none";
         return;
       }
 
       if (matchedBoundary && isBoundaryUnlocked(matchedBoundary.id)) {
         openPanelFromBoundary(matchedBoundary);
+      } else if (matchedPendingClaim) {
+        openPanelFromPendingClaim(matchedPendingClaim);
       } else {
-        openLockedPlacePanel(
-          {
-            text: place.name,
-            place_name: place.address || "",
-            center: [lng, lat]
-          },
-          matchedBoundary || null
-        );
+        openLockedPlacePanel(normalizedPlace, matchedBoundary || null);
       }
     }
 
@@ -1498,6 +2052,12 @@
     }
 
     async function createPendingClaim(lng, lat, place = {}) {
+  const existingClaim = findPendingClaimForPlace(place, lng, lat);
+
+  if (existingClaim) {
+    return existingClaim;
+  }
+
   const response = await fetch(`${API_BASE_URL}/pending-claims`, {
     method: "POST",
     headers: {
@@ -1520,10 +2080,18 @@
     throw new Error(data.error || "创建植物领地失败");
   }
 
-  pendingClaims.push(data);
+  const hydratedData = {
+    ...data,
+    place_name: data.place_name || place.name || place.text || "Unnamed botanical claim",
+    place_address: data.place_address || place.address || place.place_name || "",
+    place_id: data.place_id || place.id || "",
+    place_type: data.place_type || place.types?.[0] || "google_place"
+  };
+
+  pendingClaims.push(hydratedData);
   updateMapSources();
 
-  return data;
+  return hydratedData;
 }
 
     async function getPlantRecords(boundaryId) {
@@ -1651,12 +2219,21 @@
     function openPanelFromBoundary(boundary) {
       currentOpenedBoundaryId = boundary.id;
       document.getElementById("infoPanel").style.display = "block";
+      setCurrentActivePlace({
+        kind: "boundary",
+        id: boundary.id,
+        name: boundary.fakeName || boundary.name,
+        address: boundary.name,
+        type: boundary.type,
+        lng: boundary.testPoint[0],
+        lat: boundary.testPoint[1]
+      });
 
-    currentRouteDestination = {
-      lng: claim.lng,
-      lat: claim.lat,
-      name: claimName
-    };
+      currentRouteDestination = {
+        lng: boundary.testPoint[0],
+        lat: boundary.testPoint[1],
+        name: boundary.name
+      };
 
       document.getElementById("panelName").textContent = boundary.fakeName;
       document.getElementById("panelOriginal").textContent =
@@ -1674,45 +2251,14 @@
         tagsBox.innerHTML += `<span class="tag">${tag}</span>`;
       });
 
-      const reviewsBox = document.getElementById("panelReviews");
-      reviewsBox.innerHTML = "";
-
-      boundary.comments.forEach(comment => {
-        reviewsBox.innerHTML += `<div class="review">“${comment}”</div>`;
-      });
+      const introHtml = boundary.comments.map(comment => `<div class="review">“${escapeHtml(comment)}”</div>`).join("");
+      renderReviewsForCurrentPlace(introHtml);
 
       setActionButtonsForUnlocked();
     }
 
     function openPanelFromPendingClaim(claim) {
-      currentOpenedBoundaryId = claim.id;
-
-      currentRouteDestination = {
-        lng: claim.lng,
-        lat: claim.lat,
-        name: "Pending Botanical Claim"
-      };
-
-      document.getElementById("infoPanel").style.display = "block";
-
-      document.getElementById("panelName").textContent = "Pending Botanical Claim";
-      document.getElementById("panelOriginal").textContent =
-        "Boundary pending review / 临时植物领地";
-      document.getElementById("panelRating").textContent = "Pending";
-      document.getElementById("panelChinese").textContent = "--%";
-      document.getElementById("panelAsian").textContent = "--%";
-      document.getElementById("panelSource").textContent = "Pending claim";
-
-      document.getElementById("panelTags").innerHTML = `
-        <span class="tag">Pending</span>
-        <span class="tag">Needs boundary review</span>
-      `;
-
-      document.getElementById("panelReviews").innerHTML = `
-        <div class="review">“This area has been temporarily activated by a plant scan, but its official boundary has not been verified yet.”</div>
-      `;
-
-      setActionButtonsForUnlocked();
+      openPendingClaimPanel(claim);
     }
 
     function closePanel() {
@@ -1735,7 +2281,7 @@
             lat: position.coords.latitude
           }),
           error => reject(error),
-          { enableHighAccuracy: true, timeout: 10000 }
+          { enableHighAccuracy: false, timeout: 4000, maximumAge: 60000 }
         );
       });
     }
@@ -1808,22 +2354,6 @@
       return `${hours} 小时 ${restMinutes} 分钟`;
     }
 
-    function updateLocateButtonState() {
-      if (typeof locateBtn === "undefined" || !locateBtn) {
-        return;
-      }
-
-      if (followUserHeading) {
-        locateBtn.classList.add("is-compass");
-        locateBtn.textContent = "";
-        locateBtn.title = "退出指南针模式";
-      } else {
-        locateBtn.classList.remove("is-compass");
-        locateBtn.textContent = "➤";
-        locateBtn.title = "定位 / 开启指南针模式";
-      }
-    }
-
     function updateUserLocationMarker(lng, lat, heading = userHeading) {
       if (!userLocationMarker) {
         const markerElement = document.createElement("div");
@@ -1852,8 +2382,24 @@
         if (followUserHeading) {
           arrowElement.style.transform = "translateY(-3px) rotate(0deg)";
         } else {
-          arrowElement.style.transform = `translateY(-3px) rotate(${heading || 0}deg)`;
+          arrowElement.style.transform = `translateY(-3px) rotate(${heading || userHeading || 0}deg)`;
         }
+      }
+    }
+
+    function updateLocateButtonState() {
+      if (typeof locateBtn === "undefined" || !locateBtn) {
+        return;
+      }
+
+      if (followUserHeading) {
+        locateBtn.classList.add("is-compass");
+        locateBtn.textContent = "";
+        locateBtn.title = "退出指南针模式";
+      } else {
+        locateBtn.classList.remove("is-compass");
+        locateBtn.textContent = "➤";
+        locateBtn.title = "定位 / 开启指南针模式";
       }
     }
 
@@ -1872,7 +2418,7 @@
           heading = 360 - event.alpha;
         }
 
-        if (heading === null || Number.isNaN(heading)) {
+        if (heading === null) {
           return;
         }
 
@@ -1906,16 +2452,11 @@
         }
       }
 
-      if (deviceHeadingListenerStarted) {
-        return;
-      }
-
       if (typeof DeviceOrientationEvent.requestPermission === "function") {
         DeviceOrientationEvent.requestPermission()
           .then(permissionState => {
             if (permissionState === "granted") {
               window.addEventListener("deviceorientation", handleOrientation, true);
-              deviceHeadingListenerStarted = true;
             } else {
               console.warn("用户没有允许方向传感器权限。");
             }
@@ -1925,7 +2466,6 @@
           });
       } else {
         window.addEventListener("deviceorientation", handleOrientation, true);
-        deviceHeadingListenerStarted = true;
       }
     }
 
@@ -1943,13 +2483,18 @@
         position => {
           const lng = position.coords.longitude;
           const lat = position.coords.latitude;
-          const gpsHeading = position.coords.heading;
+          const gpsHeading =
+            typeof position.coords.heading === "number"
+              ? position.coords.heading
+              : null;
 
-          if (typeof gpsHeading === "number" && !Number.isNaN(gpsHeading)) {
-            userHeading = gpsHeading;
-          }
+          const heading = gpsHeading ?? userHeading;
 
-          updateUserLocationMarker(lng, lat, userHeading);
+          updateUserLocationMarker(
+            lng,
+            lat,
+            followUserHeading ? 0 : heading
+          );
         },
         error => {
           console.warn("实时定位失败：", error);
@@ -2090,9 +2635,10 @@ async function getRouteOriginWithFallback() {
 
 if (origin.source === "real-location") {
   startWatchingUserLocation();
+  updateLocateButtonState();
 }
 
-updateUserLocationMarker(origin.lng, origin.lat, userHeading);
+updateUserLocationMarker(origin.lng, origin.lat, followUserHeading ? 0 : userHeading);
 
 if (origin.source === "map-center") {
   routeSummary.textContent = "无法读取实时位置，已暂用当前地图中心作为起点...";
@@ -2131,13 +2677,45 @@ const routeData = await fetchGoogleRoute(
 
       const boundary = getBoundaryById(currentOpenedBoundaryId);
       const claim = getPendingClaimById(currentOpenedBoundaryId);
-      const records = await getPlantRecords(currentOpenedBoundaryId);
+      let records = [];
+      let recordOwnerIds = [];
 
       if (boundary) {
-        plantListTitle.textContent = `${boundary.fakeName} 的植物一览`;
+        records = await getPlantRecords(currentOpenedBoundaryId);
+        recordOwnerIds = records.map(() => currentOpenedBoundaryId);
+        plantListTitle.textContent = `${boundary.name} 的植物一览`;
       } else if (claim) {
-        plantListTitle.textContent = `Pending Botanical Claim 的植物一览`;
+        const { claimName } = getClaimDisplayInfo(claim);
+        const relatedClaims = findRelatedClaimsForClaim(claim);
+        const recordGroups = await Promise.all(
+          relatedClaims.map(async relatedClaim => {
+            try {
+              const claimRecords = await getPlantRecords(relatedClaim.id);
+              return claimRecords.map(record => ({
+                ...record,
+                __claimId: relatedClaim.id
+              }));
+            } catch (error) {
+              console.warn("读取相关植物记录失败：", relatedClaim.id, error);
+              return [];
+            }
+          })
+        );
+
+        const seenRecordIds = new Set();
+        records = recordGroups.flat().filter(record => {
+          const recordKey = record.id || `${record.scientificName}-${record.time}-${record.__claimId}`;
+          if (seenRecordIds.has(recordKey)) {
+            return false;
+          }
+          seenRecordIds.add(recordKey);
+          return true;
+        });
+        recordOwnerIds = records.map(record => record.__claimId || currentOpenedBoundaryId);
+        plantListTitle.textContent = `${claimName} 的植物一览`;
       } else {
+        records = await getPlantRecords(currentOpenedBoundaryId);
+        recordOwnerIds = records.map(() => currentOpenedBoundaryId);
         plantListTitle.textContent = `未知区域的植物一览`;
       }
 
@@ -2149,13 +2727,14 @@ const routeData = await fetchGoogleRoute(
       } else {
         plantListBox.innerHTML = records.map((plant, index) => {
           const canDelete = plant.userId === CURRENT_USER_ID;
+          const recordBoundaryId = recordOwnerIds[index] || currentOpenedBoundaryId;
 
           return `
             <div class="plant-record-card">
               ${canDelete ? `
                 <button
                   class="delete-plant-btn"
-                  onclick="deletePlantRecord('${currentOpenedBoundaryId}', '${plant.id}')"
+                  onclick="deletePlantRecord('${recordBoundaryId}', '${plant.id}')"
                 >
                   ×
                 </button>
@@ -2214,6 +2793,13 @@ const routeData = await fetchGoogleRoute(
     const locationChoiceBox = document.getElementById("locationChoiceBox");
     const pickLocationBtn = document.getElementById("pickLocationBtn");
     const manualLocationHint = document.getElementById("manualLocationHint");
+    const exploreTabBtn = document.getElementById("exploreTabBtn");
+    const meTabBtn = document.getElementById("meTabBtn");
+    const contributeTabBtn = document.getElementById("contributeTabBtn");
+    const bottomSheetModal = document.getElementById("bottomSheetModal");
+    const bottomSheetTitle = document.getElementById("bottomSheetTitle");
+    const bottomSheetContent = document.getElementById("bottomSheetContent");
+    const closeBottomSheetBtn = document.getElementById("closeBottomSheetBtn");
 
     map.on("load", async () => {
       try {
@@ -2348,9 +2934,6 @@ const routeData = await fetchGoogleRoute(
       map.on("mouseleave", "pending-fill", () => {
         map.getCanvas().style.cursor = "";
       });
-
-      startWatchingUserLocation();
-      updateLocateButtonState();
     });
 
     map.on("error", (error) => {
@@ -2412,10 +2995,40 @@ const routeData = await fetchGoogleRoute(
       }
     });
 
+
+
+    exploreTabBtn.addEventListener("click", () => {
+      setActiveBottomTab(exploreTabBtn);
+      closeBottomSheet();
+    });
+
+    meTabBtn.addEventListener("click", () => {
+      setActiveBottomTab(meTabBtn);
+      showSavedPlacesPanel();
+    });
+
+    contributeTabBtn.addEventListener("click", () => {
+      setActiveBottomTab(contributeTabBtn);
+      showContributionsPanel();
+    });
+
+    closeBottomSheetBtn.addEventListener("click", () => {
+      closeBottomSheet();
+      setActiveBottomTab(exploreTabBtn);
+    });
+
+    bottomSheetModal.addEventListener("click", (event) => {
+      if (event.target === bottomSheetModal) {
+        closeBottomSheet();
+        setActiveBottomTab(exploreTabBtn);
+      }
+    });
+
     plantListBtn.addEventListener("click", openPlantList);
     unlockPlaceBtn.addEventListener("click", unlockSelectedSearchPlace);
 
     pickLocationBtn.addEventListener("click", () => {
+      isSelectingPlantLocationBySearch = true;
       cameraModal.style.display = "none";
 
       searchInput.focus();
@@ -2433,18 +3046,23 @@ const routeData = await fetchGoogleRoute(
       searchResults.style.display = "block";
     });
 
+
     locateBtn.addEventListener("click", async () => {
       followUserHeading = !followUserHeading;
       updateLocateButtonState();
 
-      // iPhone/Safari 要求方向权限由用户点击触发，所以放在这个按钮里。
+      // iPhone/Safari 方向权限必须由用户点击触发
       startWatchingDeviceHeading();
       startWatchingUserLocation();
 
       try {
         const location = await getCurrentPositionPromise();
 
-        updateUserLocationMarker(location.lng, location.lat, userHeading);
+        updateUserLocationMarker(
+          location.lng,
+          location.lat,
+          followUserHeading ? 0 : userHeading
+        );
 
         if (followUserHeading) {
           map.easeTo({
@@ -2490,7 +3108,7 @@ const routeData = await fetchGoogleRoute(
         return;
       }
 
-      alert("保存功能下一步接入。");
+      toggleSaveCurrentPlace();
     });
 
     closePlantListBtn.addEventListener("click", () => {
@@ -2498,6 +3116,7 @@ const routeData = await fetchGoogleRoute(
     });
 
     cameraBtn.addEventListener("click", () => {
+      isSelectingPlantLocationBySearch = false;
       cameraModal.style.display = "flex";
 
       identifyBtn.disabled = false;
@@ -2510,6 +3129,23 @@ const routeData = await fetchGoogleRoute(
     closeCameraBtn.addEventListener("click", () => {
       cameraModal.style.display = "none";
       resultBox.style.display = "none";
+
+      isSelectingPlantLocationBySearch = false;
+      selectedImageFile = null;
+      photoGpsLocation = null;
+      manualPickedLocation = null;
+      plantCameraInput.value = "";
+      plantGalleryInput.value = "";
+      searchInput.value = "";
+      searchInput.placeholder = "搜索地点或区域 / Search places or areas...";
+      hideSearchResults();
+      if (locationChoiceBox) {
+        locationChoiceBox.style.display = "none";
+      }
+      if (manualPickMarker) {
+        manualPickMarker.remove();
+        manualPickMarker = null;
+      }
 
       identifyBtn.disabled = false;
       identifyBtn.textContent = "识别植物并点亮区域";
@@ -2626,7 +3262,21 @@ const routeData = await fetchGoogleRoute(
        await addPlantRecord(pendingClaim.id, plantResult);
 
           currentOpenedBoundaryId = pendingClaim.id;
+          isSelectingPlantLocationBySearch = false;
+          searchInput.value = "";
+          searchInput.placeholder = "搜索地点或区域 / Search places or areas...";
+          hideSearchResults();
           openPendingClaimPanel(pendingClaim);
+          addContribution("上传植物", {
+            placeKey: `claim:${pendingClaim.id}`,
+            placeName: getClaimDisplayInfo(pendingClaim).claimName,
+            summary: `识别植物：${plantResult.commonName || "Unknown plant"}`
+          });
+          addContribution("点亮地图", {
+            placeKey: `claim:${pendingClaim.id}`,
+            placeName: getClaimDisplayInfo(pendingClaim).claimName,
+            summary: "通过植物识别点亮了一个 Google Places 地点。"
+          });
 
           resultBox.innerHTML = `
             <strong>点亮成功，已解锁此地。</strong><br><br>
@@ -2650,8 +3300,22 @@ const routeData = await fetchGoogleRoute(
 
         await unlockBoundary(matchedBoundary.id);
         fitToBoundary(matchedBoundary);
+        isSelectingPlantLocationBySearch = false;
+        searchInput.value = "";
+        searchInput.placeholder = "搜索地点或区域 / Search places or areas...";
+        hideSearchResults();
         openPanelFromBoundary(matchedBoundary);
         await addPlantRecord(matchedBoundary.id, plantResult);
+        addContribution("上传植物", {
+          placeKey: `boundary:${matchedBoundary.id}`,
+          placeName: matchedBoundary.fakeName || matchedBoundary.name,
+          summary: `识别植物：${plantResult.commonName || "Unknown plant"}`
+        });
+        addContribution("点亮地图", {
+          placeKey: `boundary:${matchedBoundary.id}`,
+          placeName: matchedBoundary.fakeName || matchedBoundary.name,
+          summary: "通过植物识别点亮了本地边界区域。"
+        });
 
         resultBox.innerHTML = `
           <strong>点亮成功，已解锁此地。</strong><br><br>
