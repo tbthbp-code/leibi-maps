@@ -388,6 +388,18 @@
       background: #f2f2f2;
       color: #333;
     }
+    .ghost-btn.done-btn {
+
+  background: #157a63;
+  color: white;
+  font-weight: 700;
+}
+
+.identify-btn:disabled {
+  background: #b9c9c3;
+  color: white;
+  cursor: not-allowed;
+}
 
     .preview-box {
       margin-top: 12px;
@@ -608,7 +620,7 @@
   </label>
 
   <button id="pickLocationBtn" class="ghost-btn" type="button">
-    在地图上点选植物地点
+  搜索植物拍摄地点
   </button>
 
   <div id="manualLocationHint" class="muted">
@@ -984,6 +996,44 @@ function showSearchResults(results) {
   searchResults.style.display = "block";
 }
 
+function hideSearchResults() {
+  searchResults.style.display = "none";
+}
+
+function setActionButtonsForLocked() {
+  routeBtn.classList.add("is-disabled");
+  routeBtn.disabled = true;
+
+  unlockPlaceBtn.classList.remove("is-disabled");
+  unlockPlaceBtn.disabled = false;
+  unlockPlaceBtn.textContent = "点亮";
+
+  plantListBtn.classList.add("is-disabled");
+  plantListBtn.disabled = true;
+
+  savePlaceBtn.classList.add("is-disabled");
+  savePlaceBtn.disabled = true;
+
+  lockedRouteHint.style.display = "block";
+}
+
+function setActionButtonsForUnlocked() {
+  routeBtn.classList.remove("is-disabled");
+  routeBtn.disabled = false;
+
+  unlockPlaceBtn.classList.add("is-disabled");
+  unlockPlaceBtn.disabled = true;
+  unlockPlaceBtn.textContent = "已点亮";
+
+  plantListBtn.classList.remove("is-disabled");
+  plantListBtn.disabled = false;
+
+  savePlaceBtn.classList.remove("is-disabled");
+  savePlaceBtn.disabled = false;
+
+  lockedRouteHint.style.display = "none";
+}
+
 function openLockedPlacePanel(place, matchedBoundary) {
   const [lng, lat] = place.center;
 
@@ -993,6 +1043,34 @@ function openLockedPlacePanel(place, matchedBoundary) {
     lat,
     matchedBoundary
   };
+  const isChoosingPlantLocation =
+  selectedImageFile &&
+  locationChoiceBox.style.display !== "none" &&
+  document.querySelector('input[name="locationMode"]:checked')?.value === "manual";
+
+if (isChoosingPlantLocation) {
+  manualPickedLocation = {
+    lng,
+    lat,
+    source: "manual-search-place"
+  };
+
+  if (manualPickMarker) {
+    manualPickMarker.remove();
+  }
+
+  manualPickMarker = new mapboxgl.Marker({
+    color: "#157a63"
+  })
+    .setLngLat([lng, lat])
+    .addTo(map);
+
+  manualLocationHint.textContent = `已选择地点：${place.name}`;
+
+  cameraModal.style.display = "flex";
+
+  return;
+}
 
   currentOpenedBoundaryId = null;
 
@@ -1051,36 +1129,83 @@ function openPendingClaimPanel(claim) {
   setActionButtonsForUnlocked();
 }
 
-async function unlockSelectedSearchPlace() {
+ async function unlockSelectedSearchPlace() {
   if (!selectedSearchPlace) {
     alert("请先搜索并选择一个地点。");
     return;
   }
 
-  const { lng, lat, matchedBoundary } = selectedSearchPlace;
+  if (!selectedImageFile) {
+    const confirmScan = confirm("请先拍摄此地的植物以点亮该地图。");
+
+    if (!confirmScan) {
+      return;
+    }
+
+    cameraModal.style.display = "flex";
+    resultBox.style.display = "none";
+
+    photoGpsLocation = null;
+    manualPickedLocation = {
+      lng: selectedSearchPlace.lng,
+      lat: selectedSearchPlace.lat,
+      source: "selected-search-place"
+    };
+
+    const manualRadio = document.querySelector('input[name="locationMode"][value="manual"]');
+    if (manualRadio) {
+      manualRadio.checked = true;
+    }
+
+    locationChoiceBox.style.display = "block";
+
+   manualLocationHint.textContent =
+  `已选择地点：${selectedSearchPlace?.place?.text || selectedSearchPlace?.place?.name || "已选择地点"}`;
+
+    photoGpsBox.innerHTML = `
+      <strong>已选择要点亮的地点。</strong><br>
+      请上传或拍摄此地的植物照片。识别成功后，系统会自动点亮该区域。
+    `;
+
+    return;
+  }
+
+  const confirmUnlock = confirm("确认点亮？");
+
+  if (!confirmUnlock) {
+    return;
+  }
 
   try {
+    unlockPlaceBtn.disabled = true;
+    unlockPlaceBtn.textContent = "点亮中...";
+
+    const plantResult = await identifyPlantWithBackend(selectedImageFile);
+    const { lng, lat, matchedBoundary } = selectedSearchPlace;
+
     if (matchedBoundary) {
       await unlockBoundary(matchedBoundary.id);
+      await addPlantRecord(matchedBoundary.id, plantResult);
+
       fitToBoundary(matchedBoundary);
       openPanelFromBoundary(matchedBoundary);
-      alert("点亮成功，已解锁此地。");
+
+      alert("已成功点亮该区域。");
       return;
     }
 
     const pendingClaim = await createPendingClaim(lng, lat);
-
-    map.flyTo({
-      center: [lng, lat],
-      zoom: 16.8,
-      duration: 900
-    });
+    await addPlantRecord(pendingClaim.id, plantResult);
 
     openPendingClaimPanel(pendingClaim);
-    alert("点亮成功，已解锁此地。");
+
+    alert("已成功点亮该区域。");
   } catch (error) {
     console.error(error);
-    alert(error.message || "点亮失败");
+    alert(error.message || "点亮失败，请再试一次。");
+  } finally {
+    unlockPlaceBtn.disabled = false;
+    unlockPlaceBtn.textContent = "点亮";
   }
 }
 
@@ -1088,13 +1213,14 @@ function selectSearchResult(index) {
   const place = latestSearchResults[index];
 
   if (!place || place.lng === undefined || place.lat === undefined) {
+    alert("这个地点没有可用坐标。");
     return;
   }
 
   hideSearchResults();
 
-  const lng = place.lng;
-  const lat = place.lat;
+  const lng = Number(place.lng);
+  const lat = Number(place.lat);
 
   map.flyTo({
     center: [lng, lat],
@@ -1117,7 +1243,7 @@ function selectSearchResult(index) {
   selectedSearchPlace = {
     place: {
       text: place.name,
-      place_name: place.address,
+      place_name: place.address || "",
       center: [lng, lat]
     },
     lng,
@@ -1125,13 +1251,53 @@ function selectSearchResult(index) {
     matchedBoundary
   };
 
+  const isChoosingPlantLocation =
+    selectedImageFile &&
+    locationChoiceBox.style.display !== "none" &&
+    document.querySelector('input[name="locationMode"]:checked')?.value === "manual";
+
+  if (isChoosingPlantLocation) {
+    manualPickedLocation = {
+      lng,
+      lat,
+      source: "manual-search-place"
+    };
+
+    if (manualPickMarker) {
+      manualPickMarker.remove();
+    }
+
+    manualPickMarker = new mapboxgl.Marker({
+      color: "#157a63"
+    })
+      .setLngLat([lng, lat])
+      .addTo(map);
+
+    manualLocationHint.textContent = `已选择地点：${place.name}`;
+
+    if (matchedBoundary && isBoundaryUnlocked(matchedBoundary.id)) {
+      openPanelFromBoundary(matchedBoundary);
+    } else {
+      openLockedPlacePanel(
+        {
+          text: place.name,
+          place_name: place.address || "",
+          center: [lng, lat]
+        },
+        matchedBoundary || null
+      );
+    }
+
+    return;
+  }
+
   if (matchedBoundary && isBoundaryUnlocked(matchedBoundary.id)) {
     openPanelFromBoundary(matchedBoundary);
   } else {
     openLockedPlacePanel(
       {
         text: place.name,
-        place_name: place.address,
+        place_name: place.address || "",
         center: [lng, lat]
       },
       matchedBoundary || null
@@ -1140,6 +1306,18 @@ function selectSearchResult(index) {
 }
 
 window.selectSearchResult = selectSearchResult;
+window.hideSearchResults = hideSearchResults;
+
+document.addEventListener("click", (event) => {
+  const clickedInsideSearch =
+    event.target.closest(".top-search") ||
+    event.target.closest("#searchResults");
+
+  if (!clickedInsideSearch) {
+    hideSearchResults();
+  }
+});
+
   async function fetchUnlockedIds() {
     const response = await fetch(`${API_BASE_URL}/unlocked-boundaries`);
     const data = await response.json();
@@ -1355,6 +1533,7 @@ async function getConfirmedPlantLocation() {
     boundary.comments.forEach(comment => {
       reviewsBox.innerHTML += `<div class="review">“${comment}”</div>`;
     });
+
     setActionButtonsForUnlocked();
   }
 
@@ -1378,6 +1557,7 @@ async function getConfirmedPlantLocation() {
     document.getElementById("panelReviews").innerHTML = `
       <div class="review">“This area has been temporarily activated by a plant scan, but its official boundary has not been verified yet.”</div>
     `;
+    setActionButtonsForUnlocked();
   }
 
   function closePanel() {
@@ -1680,6 +1860,8 @@ searchInput.addEventListener("keydown", async (event) => {
     return;
   }
 
+  event.preventDefault();
+
   const query = searchInput.value.trim();
 
   if (!query) {
@@ -1687,27 +1869,42 @@ searchInput.addEventListener("keydown", async (event) => {
   }
 
   try {
-    let results = latestSearchResults;
-
-    if (!results.length) {
-      results = await searchPlaces(query);
-      latestSearchResults = results;
-    }
-
-    if (!results.length) {
-      alert("没有找到相关地点。");
-      return;
-    }
-
-    selectSearchResult(0);
+    const results = await searchPlaces(query);
+    showSearchResults(results);
   } catch (error) {
     console.error(error);
-    alert(error.message || "搜索失败");
+    searchResults.innerHTML = `
+      <div class="search-result-item">
+        <div class="search-result-name">搜索失败</div>
+        <div class="search-result-address">${escapeHtml(error.message || error)}</div>
+      </div>
+    `;
+    searchResults.style.display = "block";
   }
 });
 
   plantListBtn.addEventListener("click", openPlantList);
   unlockPlaceBtn.addEventListener("click", unlockSelectedSearchPlace);
+  
+  pickLocationBtn.addEventListener("click", () => {
+  cameraModal.style.display = "none";
+
+  searchInput.focus();
+  searchInput.placeholder = "搜索植物拍摄地点，例如 Kew Gardens...";
+
+  searchResults.innerHTML = `
+    <div class="search-result-item">
+      <div class="search-result-name">搜索植物拍摄地点</div>
+      <div class="search-result-address">
+        输入地点名称，选择正确地点后，系统会打开该地点详情页。确认后即可用这张植物照片点亮区域。
+      </div>
+    </div>
+  `;
+
+  searchResults.style.display = "block";
+});
+
+  
 
 routeBtn.addEventListener("click", () => {
   if (routeBtn.disabled) {
@@ -1732,42 +1929,28 @@ savePlaceBtn.addEventListener("click", () => {
   });
 
   cameraBtn.addEventListener("click", () => {
-    cameraModal.style.display = "flex";
-  });
+  cameraModal.style.display = "flex";
+
+  identifyBtn.disabled = false;
+  identifyBtn.textContent = "识别植物并点亮区域";
+
+  closeCameraBtn.classList.remove("done-btn");
+  closeCameraBtn.textContent = "关闭";
+});
 
   closeCameraBtn.addEventListener("click", () => {
-    cameraModal.style.display = "none";
-    resultBox.style.display = "none";
-  });
+  cameraModal.style.display = "none";
+  resultBox.style.display = "none";
+
+  identifyBtn.disabled = false;
+  identifyBtn.textContent = "识别植物并点亮区域";
+
+  closeCameraBtn.classList.remove("done-btn");
+  closeCameraBtn.textContent = "关闭";
+});
 
   plantImageInput.addEventListener("change", async (event) => {
-    pickLocationBtn.addEventListener("click", () => {
-  cameraModal.style.display = "none";
-
-  alert("请在地图上点击植物实际拍摄地点。");
-
-  map.once("click", (event) => {
-    manualPickedLocation = {
-      lng: event.lngLat.lng,
-      lat: event.lngLat.lat
-    };
-
-    if (manualPickMarker) {
-      manualPickMarker.remove();
-    }
-
-    manualPickMarker = new mapboxgl.Marker({
-      color: "#157a63"
-    })
-      .setLngLat([manualPickedLocation.lng, manualPickedLocation.lat])
-      .addTo(map);
-
-    manualLocationHint.textContent =
-      `已选择地点：${manualPickedLocation.lat.toFixed(6)}, ${manualPickedLocation.lng.toFixed(6)}`;
-
-    cameraModal.style.display = "flex";
-  });
-});
+    
 
 
   const file = event.target.files[0];
@@ -1841,6 +2024,11 @@ savePlaceBtn.addEventListener("click", () => {
     resultBox.style.display = "block";
     resultBox.innerHTML = "正在识别植物，并匹配边界库...";
 
+    identifyBtn.disabled = true;
+    identifyBtn.textContent = "正在识别并点亮...";
+    closeCameraBtn.classList.remove("done-btn");
+    closeCameraBtn.textContent = "关闭";
+
     try {
       const plantResult = await identifyPlantWithBackend(selectedImageFile);
      const location = await getConfirmedPlantLocation();
@@ -1860,22 +2048,26 @@ savePlaceBtn.addEventListener("click", () => {
         await addPlantRecord(pendingClaim.id, plantResult);
 
         currentOpenedBoundaryId = pendingClaim.id;
-        openPanelFromPendingClaim(pendingClaim);
+        openPendingClaimPanel(pendingClaim);
 
         resultBox.innerHTML = `
-          <strong>植物识别成功，已创建待确认植物领地。</strong><br>
-          识别结果：<b>${plantResult.commonName}</b><br>
-          学名：<i>${plantResult.scientificName}</i><br>
-          属：${plantResult.genus || "Unknown"}<br>
-          科：${plantResult.family || "Unknown"}<br>
-          置信度：${Math.round(plantResult.score * 100)}%<br><br>
+      <strong>点亮成功，已解锁此地。</strong><br><br>
+      识别结果：<b>${plantResult.commonName}</b><br>
+     学名：<i>${plantResult.scientificName}</i><br>
+     属：${plantResult.genus || "Unknown"}<br>
+     科：${plantResult.family || "Unknown"}<br>
+     置信度：${Math.round(plantResult.score * 100)}%<br><br>
 
-          当前地点没有已知边界，所以系统创建了一个 pending claim。<br>
-          这个区域会以绿色虚线显示，所有用户都能看到。<br>
-          管理员之后可以把它修正成正式边界。
-        `;
+    该区域已生成临时植物领地。你可以关闭此窗口，在地图详情页查看植物记录。
+`;
 
-        return;
+    identifyBtn.disabled = true;
+   identifyBtn.textContent = "已识别并点亮";
+
+   closeCameraBtn.classList.add("done-btn");
+   closeCameraBtn.textContent = "完成并关闭";
+
+  return;
       }
 
       await unlockBoundary(matchedBoundary.id);
@@ -1884,23 +2076,34 @@ savePlaceBtn.addEventListener("click", () => {
       await addPlantRecord(matchedBoundary.id, plantResult);
 
       resultBox.innerHTML = `
-        <strong>植物识别成功，区域已点亮。</strong><br>
-        识别结果：<b>${plantResult.commonName}</b><br>
-        学名：<i>${plantResult.scientificName}</i><br>
-        属：${plantResult.genus || "Unknown"}<br>
-        科：${plantResult.family || "Unknown"}<br>
-        置信度：${Math.round(plantResult.score * 100)}%<br><br>
+     <strong>点亮成功，已解锁此地。</strong><br><br>
+     识别结果：<b>${plantResult.commonName}</b><br>
+     学名：<i>${plantResult.scientificName}</i><br>
+     属：${plantResult.genus || "Unknown"}<br>
+     科：${plantResult.family || "Unknown"}<br>
+     置信度：${Math.round(plantResult.score * 100)}%<br><br>
 
-        匹配区域：<b>${matchedBoundary.name}</b><br>
-        盗版命名：<b>${matchedBoundary.fakeName}</b><br>
-        边界来源：${matchedBoundary.source}<br><br>
+     匹配区域：<b>${matchedBoundary.name}</b><br>
+     盗版命名：<b>${matchedBoundary.fakeName}</b><br>
+     边界来源：${matchedBoundary.source}<br><br>
 
-        这条植物记录已作为点亮该区域的证据。
-      `;
+     这条植物记录已作为点亮该区域的证据。你可以关闭此窗口，在植物一览中查看。
+`;
+
+identifyBtn.disabled = true;
+identifyBtn.textContent = "已识别并点亮";
+
+closeCameraBtn.classList.add("done-btn");
+closeCameraBtn.textContent = "完成并关闭";
     } catch (error) {
       console.error(error);
 
       resultBox.innerHTML = `
+      identifyBtn.disabled = false;
+      identifyBtn.textContent = "重新识别植物并点亮区域";
+
+      closeCameraBtn.classList.remove("done-btn");
+      closeCameraBtn.textContent = "关闭";
         <strong>识别失败。</strong><br>
         ${error.message || error}<br><br>
 
