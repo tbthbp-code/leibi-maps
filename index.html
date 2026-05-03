@@ -1302,6 +1302,7 @@
     let currentRouteMode = "WALK";
     let userLocationMarker = null;
     let userWatchId = null;
+    let userHeading = 0;
     let isSelectingPlantLocationBySearch = false;
     let currentActivePlace = null;
 
@@ -2320,25 +2321,77 @@
       return `${hours} 小时 ${restMinutes} 分钟`;
     }
 
-    function updateUserLocationMarker(lng, lat, heading = 0) {
+    function updateUserLocationMarker(lng, lat, heading = userHeading) {
       if (!userLocationMarker) {
-        const markerElement = document.createElement("div");
-        markerElement.className = "user-heading-marker";
+         const markerElement = document.createElement("div");
+         markerElement.className = "user-heading-marker";
 
-        userLocationMarker = new mapboxgl.Marker({
-          element: markerElement,
-          rotationAlignment: "map",
-          pitchAlignment: "map"
-        })
-          .setLngLat([lng, lat])
-          .addTo(map);
+         userLocationMarker = new mapboxgl.Marker({
+         element: markerElement,
+         rotationAlignment: "map",
+         pitchAlignment: "map"
+         })
+         .setLngLat([lng, lat])
+         .addTo(map);
       }
+ 
 
       userLocationMarker.setLngLat([lng, lat]);
 
       const markerElement = userLocationMarker.getElement();
-      markerElement.style.rotate = `${heading || 0}deg`;
+       markerElement.style.transform = `rotate(${heading || 0}deg)`;
     }
+  
+  function startWatchingDeviceHeading() {
+  if (!window.DeviceOrientationEvent) {
+    console.warn("当前设备不支持方向传感器。");
+    return;
+  }
+
+  function handleOrientation(event) {
+    let heading = null;
+
+    // iPhone Safari 常用 webkitCompassHeading，0 = 北，顺时针增加
+    if (typeof event.webkitCompassHeading === "number") {
+      heading = event.webkitCompassHeading;
+    }
+
+    // Android / Chrome 常用 alpha
+    else if (typeof event.alpha === "number") {
+      heading = 360 - event.alpha;
+    }
+
+    if (heading === null) {
+      return;
+    }
+
+    userHeading = heading;
+
+    if (userLocationMarker) {
+      const markerElement = userLocationMarker.getElement();
+      markerElement.style.transform = `rotate(${userHeading}deg)`;
+    }
+  }
+
+  // iOS 13+ 需要用户手势触发授权
+  if (
+    typeof DeviceOrientationEvent.requestPermission === "function"
+  ) {
+    DeviceOrientationEvent.requestPermission()
+      .then(permissionState => {
+        if (permissionState === "granted") {
+          window.addEventListener("deviceorientation", handleOrientation, true);
+        } else {
+          console.warn("用户没有允许方向传感器权限。");
+        }
+      })
+      .catch(error => {
+        console.warn("方向传感器授权失败：", error);
+      });
+  } else {
+    window.addEventListener("deviceorientation", handleOrientation, true);
+  }
+}
 
     function startWatchingUserLocation() {
   if (!navigator.geolocation) {
@@ -2795,6 +2848,7 @@ const routeData = await fetchGoogleRoute(
       });
 
       startWatchingUserLocation();
+      startWatchingDeviceHeading();
     });
 
     map.on("error", (error) => {
