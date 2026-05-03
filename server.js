@@ -20,6 +20,128 @@ app.use(cors());
 app.use(express.json());
 
 // ---------- 已点亮正式区域 ----------
+app.get("/test-route", (req, res) => {
+  res.json({ ok: true, message: "test route works" });
+});
+
+app.get("/google-route", async (req, res) => {
+  try {
+    const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+
+    if (!apiKey) {
+      return res.status(500).json({
+        error: ".env 文件中缺少 GOOGLE_PLACES_API_KEY"
+      });
+    }
+
+    const {
+      fromLat,
+      fromLng,
+      toLat,
+      toLng,
+      mode = "WALK"
+    } = req.query;
+
+    if (!fromLat || !fromLng || !toLat || !toLng) {
+      return res.status(400).json({
+        error: "缺少路线坐标参数"
+      });
+    }
+
+    const travelModeMap = {
+      WALK: "WALK",
+      WALKING: "WALK",
+      步行: "WALK",
+
+      BICYCLE: "BICYCLE",
+      BICYCLING: "BICYCLE",
+      骑行: "BICYCLE",
+      自行车: "BICYCLE",
+
+      DRIVE: "DRIVE",
+      DRIVING: "DRIVE",
+      自驾: "DRIVE",
+      开车: "DRIVE",
+
+      TRANSIT: "TRANSIT",
+      公交: "TRANSIT",
+      公共交通: "TRANSIT"
+    };
+
+    const travelMode = travelModeMap[mode] || "WALK";
+
+    const body = {
+      origin: {
+        location: {
+          latLng: {
+            latitude: Number(fromLat),
+            longitude: Number(fromLng)
+          }
+        }
+      },
+      destination: {
+        location: {
+          latLng: {
+            latitude: Number(toLat),
+            longitude: Number(toLng)
+          }
+        }
+      },
+      travelMode,
+      computeAlternativeRoutes: false,
+      languageCode: "zh-CN",
+      units: "METRIC"
+    };
+
+    if (travelMode === "DRIVE") {
+      body.routingPreference = "TRAFFIC_AWARE";
+    }
+
+    const response = await fetch(
+      "https://routes.googleapis.com/directions/v2:computeRoutes",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-Api-Key": apiKey,
+          "X-Goog-FieldMask":
+            "routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline"
+        },
+        body: JSON.stringify(body)
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return res.status(response.status).json({
+        error: "Google Routes API error",
+        detail: data
+      });
+    }
+
+    const route = data.routes?.[0];
+
+    if (!route) {
+      return res.status(404).json({
+        error: "没有找到路线"
+      });
+    }
+
+    res.json({
+      mode: travelMode,
+      duration: route.duration,
+      distanceMeters: route.distanceMeters,
+      encodedPolyline: route.polyline?.encodedPolyline
+    });
+  } catch (error) {
+    console.error("Google route error:", error);
+
+    res.status(500).json({
+      error: error.message || "路线接口失败"
+    });
+  }
+});
 
 app.get("/unlocked-boundaries", async (req, res) => {
   const { data, error } = await supabase
@@ -259,6 +381,103 @@ app.get("/google-places", async (req, res) => {
         }
       })
     });
+
+app.get("/google-route", async (req, res) => {
+  try {
+    const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+
+    if (!apiKey) {
+      return res.status(500).json({
+        error: ".env 文件中缺少 GOOGLE_PLACES_API_KEY"
+      });
+    }
+
+    const {
+      fromLat,
+      fromLng,
+      toLat,
+      toLng,
+      mode = "WALK"
+    } = req.query;
+
+    if (!fromLat || !fromLng || !toLat || !toLng) {
+      return res.status(400).json({
+        error: "缺少路线坐标参数"
+      });
+    }
+
+    const travelModeMap = {
+      WALK: "WALK",
+      BICYCLE: "BICYCLE",
+      DRIVE: "DRIVE",
+      TRANSIT: "TRANSIT"
+    };
+
+    const travelMode = travelModeMap[mode] || "WALK";
+
+    const response = await fetch("https://routes.googleapis.com/directions/v2:computeRoutes", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": apiKey,
+        "X-Goog-FieldMask": "routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline,routes.legs"
+      },
+      body: JSON.stringify({
+        origin: {
+          location: {
+            latLng: {
+              latitude: Number(fromLat),
+              longitude: Number(fromLng)
+            }
+          }
+        },
+        destination: {
+          location: {
+            latLng: {
+              latitude: Number(toLat),
+              longitude: Number(toLng)
+            }
+          }
+        },
+        travelMode,
+        routingPreference: travelMode === "DRIVE" ? "TRAFFIC_AWARE" : undefined,
+        computeAlternativeRoutes: false,
+        languageCode: "zh-CN",
+        units: "METRIC"
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return res.status(response.status).json({
+        error: "Google Routes API error",
+        detail: data
+      });
+    }
+
+    const route = data.routes?.[0];
+
+    if (!route) {
+      return res.status(404).json({
+        error: "没有找到路线"
+      });
+    }
+
+    res.json({
+      mode: travelMode,
+      duration: route.duration,
+      distanceMeters: route.distanceMeters,
+      encodedPolyline: route.polyline?.encodedPolyline,
+      raw: route
+    });
+  } catch (error) {
+    console.error("Google route error:", error);
+    res.status(500).json({
+      error: error.message || "路线接口失败"
+    });
+  }
+});
 
     const data = await response.json();
 
