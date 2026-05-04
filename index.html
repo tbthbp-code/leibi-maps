@@ -2661,7 +2661,20 @@
         manualPickedLocation = {
           lng,
           lat,
-          source: "manual-search-place"
+          source: "manual-search-place",
+          placeName: place.text || place.name || "已选择地点",
+          placeAddress: place.place_name || place.address || "",
+          placeId: place.id || "",
+          placeType: place.types?.[0] || "manual_search_place",
+          placeInfo: {
+            id: place.id || `manual-${lng}-${lat}`,
+            name: place.text || place.name || "已选择地点",
+            text: place.text || place.name || "已选择地点",
+            address: place.place_name || place.address || "",
+            place_name: place.place_name || place.address || "",
+            types: place.types || ["manual_search_place"],
+            center: [lng, lat]
+          }
         };
 
         if (manualPickMarker) {
@@ -2806,7 +2819,12 @@
         manualPickedLocation = {
           lng: selectedSearchPlace.lng,
           lat: selectedSearchPlace.lat,
-          source: "selected-search-place"
+          source: "selected-search-place",
+          placeName: selectedSearchPlace?.place?.text || selectedSearchPlace?.place?.name || "已选择地点",
+          placeAddress: selectedSearchPlace?.place?.place_name || selectedSearchPlace?.place?.address || "",
+          placeId: selectedSearchPlace?.place?.id || "",
+          placeType: selectedSearchPlace?.place?.types?.[0] || "selected_search_place",
+          placeInfo: selectedSearchPlace?.place || null
         };
 
         const manualRadio = document.querySelector('input[name="locationMode"][value="manual"]');
@@ -2919,7 +2937,20 @@
         manualPickedLocation = {
           lng,
           lat,
-          source: "manual-search-place"
+          source: "manual-search-place",
+          placeName: place.text || place.name || "已选择地点",
+          placeAddress: place.place_name || place.address || "",
+          placeId: place.id || "",
+          placeType: place.types?.[0] || "manual_search_place",
+          placeInfo: {
+            id: place.id || `manual-${lng}-${lat}`,
+            name: place.text || place.name || "已选择地点",
+            text: place.text || place.name || "已选择地点",
+            address: place.place_name || place.address || "",
+            place_name: place.place_name || place.address || "",
+            types: place.types || ["manual_search_place"],
+            center: [lng, lat]
+          }
         };
 
         if (manualPickMarker) {
@@ -3164,6 +3195,102 @@
       }
     }
 
+    function pickBestReverseGeocodeFeature(features = []) {
+      if (!features.length) return null;
+
+      const priority = ["poi", "address", "neighborhood", "locality", "place"];
+
+      for (const type of priority) {
+        const found = features.find(feature =>
+          Array.isArray(feature.place_type) && feature.place_type.includes(type)
+        );
+
+        if (found) return found;
+      }
+
+      return features[0] || null;
+    }
+
+    async function getPlaceInfoFromCoordinates(lng, lat) {
+      try {
+        const params = new URLSearchParams({
+          access_token: mapboxgl.accessToken,
+          language: "zh,en",
+          types: "poi,address,neighborhood,locality,place",
+          limit: "8"
+        });
+
+        const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?${params.toString()}`;
+        const response = await fetch(url);
+
+        if (!response.ok) {
+          throw new Error("Mapbox reverse geocoding failed");
+        }
+
+        const data = await response.json();
+        const feature = pickBestReverseGeocodeFeature(data.features || []);
+
+        if (!feature) return null;
+
+        return {
+          id: feature.id || `reverse-${lng}-${lat}`,
+          name: feature.text || feature.place_name || "Scanned botanical place",
+          text: feature.text || feature.place_name || "Scanned botanical place",
+          address: feature.place_name || feature.text || "",
+          place_name: feature.place_name || feature.text || "",
+          types: feature.place_type || ["reverse_geocoded_place"],
+          center: feature.center || [lng, lat],
+          source: "mapbox-reverse-geocoding"
+        };
+      } catch (error) {
+        console.warn("Reverse geocoding failed:", error);
+        return null;
+      }
+    }
+
+    async function enrichLocationWithPlaceInfo(location) {
+      if (!location || location.placeName || location.place_name) {
+        return location;
+      }
+
+      const placeInfo = await getPlaceInfoFromCoordinates(location.lng, location.lat);
+
+      if (!placeInfo) {
+        return location;
+      }
+
+      return {
+        ...location,
+        placeName: placeInfo.name || placeInfo.text,
+        placeAddress: placeInfo.place_name || placeInfo.address || "",
+        placeId: placeInfo.id || "",
+        placeType: placeInfo.types?.[0] || "reverse_geocoded_place",
+        placeInfo
+      };
+    }
+
+    function getPlaceObjectFromLocation(location) {
+      if (!location) return null;
+
+      if (location.placeInfo) {
+        return location.placeInfo;
+      }
+
+      if (location.placeName || location.placeAddress || location.placeId) {
+        return {
+          id: location.placeId || `location-${location.lng}-${location.lat}`,
+          name: location.placeName || "Scanned botanical place",
+          text: location.placeName || "Scanned botanical place",
+          address: location.placeAddress || "",
+          place_name: location.placeAddress || "",
+          types: [location.placeType || "location_place"],
+          center: [location.lng, location.lat]
+        };
+      }
+
+      return null;
+    }
+
     async function getConfirmedPlantLocation() {
       if (photoGpsLocation) {
         return photoGpsLocation;
@@ -3174,11 +3301,12 @@
 
       if (selectedMode === "current") {
         const currentLocation = await getCurrentPositionPromise();
-
-        return {
+        const enrichedCurrentLocation = await enrichLocationWithPlaceInfo({
           ...currentLocation,
           source: "current-location"
-        };
+        });
+
+        return enrichedCurrentLocation;
       }
 
       if (selectedMode === "manual") {
@@ -4337,13 +4465,16 @@ const routeData = await fetchGoogleRoute(
 
         try {
           const currentLocation = await getCurrentPositionPromise();
-          photoGpsLocation = {
+          photoGpsBox.innerHTML = "已获取当前位置，正在识别真实地点名称...";
+          photoGpsLocation = await enrichLocationWithPlaceInfo({
             ...currentLocation,
             source: "camera-current-location"
-          };
+          });
 
+          const cameraPlaceName = photoGpsLocation.placeName || "当前位置附近";
           photoGpsBox.innerHTML = `
-            <strong>已使用当前位置作为植物拍摄地点。</strong><br>
+            <strong>已定位植物所在地。</strong><br>
+            植物拍摄地点：${escapeHtml(cameraPlaceName)}<br>
             实时拍摄默认视为植物与用户处于同一位置。
           `;
 
@@ -4368,16 +4499,18 @@ const routeData = await fetchGoogleRoute(
       const gpsLocation = await readPhotoGpsLocation(file);
 
       if (gpsLocation) {
-        photoGpsLocation = gpsLocation;
+        photoGpsBox.innerHTML = "已读取照片 GPS，正在识别真实地点名称...";
+        photoGpsLocation = await enrichLocationWithPlaceInfo(gpsLocation);
         locationChoiceBox.style.display = "none";
 
+        const gpsPlaceName = photoGpsLocation.placeName || "照片 GPS 所在地";
         photoGpsBox.innerHTML = `
           <strong>已定位植物所在地。</strong><br>
-          已点亮植物所在地
+          植物拍摄地点：${escapeHtml(gpsPlaceName)}
         `;
 
         map.flyTo({
-          center: [gpsLocation.lng, gpsLocation.lat],
+          center: [photoGpsLocation.lng, photoGpsLocation.lat],
           zoom: 16.8,
           duration: 900
         });
@@ -4411,7 +4544,7 @@ const routeData = await fetchGoogleRoute(
 
       try {
         const plantResult = await identifyPlantWithBackend(selectedImageFile);
-        const location = await getConfirmedPlantLocation();
+        const location = await enrichLocationWithPlaceInfo(await getConfirmedPlantLocation());
         const { lng, lat } = location;
 
         map.flyTo({
@@ -4423,8 +4556,17 @@ const routeData = await fetchGoogleRoute(
         const matchedBoundary = findBoundaryByLocation(lng, lat);
 
        if (!matchedBoundary) {
+        const locationPlaceInfo = getPlaceObjectFromLocation(location);
+        const shouldUseSelectedSearchPlace = [
+          "selected-search-place",
+          "manual-search-place",
+          "manual-map-pick"
+        ].includes(location.source);
+
         const placeForClaim =
-         selectedSearchPlace?.place || selectedSearchPlace || {
+         (shouldUseSelectedSearchPlace && (selectedSearchPlace?.place || selectedSearchPlace)) ||
+         locationPlaceInfo ||
+         {
           name: "Scanned botanical place",
           address: "",
           types: ["plant_scan"]
