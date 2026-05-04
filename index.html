@@ -1070,7 +1070,7 @@
     <button class="close-panel" onclick="closePanel()">×</button>
 
     <div class="info-content">
-      <h1 id="panelName">Xiang-bao Gong-yuan</h1>
+      <h1 id="panelName">Elephant Park</h1>
       <div id="panelOriginal" class="muted">Formerly known as: Elephant Park</div>
 
       <div class="rating-line">
@@ -1409,7 +1409,7 @@
           min: 10,
           name: "Botanical Clerk / 植物书记员",
           permissions: "评分与评论、命名提案",
-          description: "植物不相同，但收录的流程是相同的。你现在不仅能记录，也能开始为地点提交名字。"
+          description: "植物不相同，但收录的流程是相同的。"
         },
         {
           min: 30,
@@ -1419,19 +1419,19 @@
         },
         {
           min: 70,
-          name: "Botanical District Officer / 植物区官",
+          name: "Territory Officer / 领地官",
           permissions: "全部功能",
           description: "没错，你想要的不是那株植物。你想要的是它头上的编号，是地图里的秩序，秩序！"
         },
         {
           min: 150,
-          name: "Deputy Botanical Commissioner / 副植物专员",
+          name: "Botanical Commissioner / 植物专员",
           permissions: "全部功能",
           description: "一天清晨，当你从不安的梦中醒来，发现自己已经变成了一名相当合格的归档员。"
         },
         {
           min: 200,
-          name: "Governor of Unclaimed Flora / 未收录植物总督",
+          name: "Chief Cartographer / 总制图官",
           permissions: "全部功能、完整头衔档案",
           description: "别犯傻了，伦敦从不缺雨，地图也从不缺空白。你已抵达本系统的荣耀尽头：凡你未记录之处，皆可暂称荒野。"
         }
@@ -1506,17 +1506,23 @@
 
         ${levels.map(level => {
           const isUnlocked = rank.archiveCount >= level.min;
-          const isCurrent = level.name === rank.current.name;
-          const descriptionHtml = isUnlocked
-            ? `<div style="margin-top:6px;">${escapeHtml(level.description)}</div>`
-            : "";
+          const isCurrent = isUnlocked && level.name === rank.current.name;
+
+          if (!isUnlocked) {
+            return `
+              <div class="rank-level-card">
+                <strong>尚未解锁</strong><br>
+                <span class="muted">解锁条件：${level.min} 次植物归档</span>
+              </div>
+            `;
+          }
 
           return `
             <div class="rank-level-card ${isCurrent ? "is-current" : ""}">
               <strong>${escapeHtml(level.name)}</strong><br>
               <span class="muted">解锁条件：${level.min} 次植物归档</span><br>
               <span class="muted">功能限制：${escapeHtml(level.permissions)}</span>
-              ${descriptionHtml}
+              <div style="margin-top:6px;">${escapeHtml(level.description)}</div>
             </div>
           `;
         }).join("")}
