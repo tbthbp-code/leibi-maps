@@ -542,6 +542,130 @@ app.get("/test-powo-lookup", async (req, res) => {
   }
 });
 
+function normalisePowoText(value) {
+  return JSON.stringify(value || "").toLowerCase();
+}
+
+function classifyPowoOrigin(lookupData) {
+  const text = normalisePowoText({
+    locations: lookupData.locations || [],
+    taxonRemarks: lookupData.taxonRemarks || "",
+    native: lookupData.native || lookupData.natives || null,
+    introduced: lookupData.introduced || null
+  });
+
+  const isChinese =
+    text.includes("china") ||
+    text.includes("chinese") ||
+    text.includes("chn_") ||
+    text.includes("chs_") ||
+    text.includes("chc_");
+
+  const isAsian =
+    isChinese ||
+    text.includes("japan") ||
+    text.includes("jap_") ||
+    text.includes("korea") ||
+    text.includes("kor_") ||
+    text.includes("taiwan") ||
+    text.includes("india") ||
+    text.includes("vietnam") ||
+    text.includes("thailand") ||
+    text.includes("asia") ||
+    text.includes("eastern_asia") ||
+    text.includes("southeastern_asia") ||
+    text.includes("malesia") ||
+    text.includes("indochina");
+
+  const isUkRelated =
+    text.includes("great britain") ||
+    text.includes("united kingdom") ||
+    text.includes("britain") ||
+    text.includes("gbr") ||
+    text.includes("england") ||
+    text.includes("scotland") ||
+    text.includes("wales");
+
+  return {
+    isChinese,
+    isAsian,
+    isUkNative: isUkRelated,
+    isNonUkNative: !isUkRelated,
+    colonisationEffective: !isUkRelated,
+    confidence: "prototype-estimate",
+    source: "POWO"
+  };
+}
+
+app.get("/classify-plant-origin", async (req, res) => {
+  try {
+    const scientificName = req.query.name;
+
+    if (!scientificName) {
+      return res.status(400).json({
+        error: "Missing plant scientific name"
+      });
+    }
+
+    const searchUrl = `https://powo.science.kew.org/api/2/search?q=${encodeURIComponent(scientificName)}`;
+    const searchResponse = await fetch(searchUrl);
+
+    if (!searchResponse.ok) {
+      const errorText = await searchResponse.text();
+
+      return res.status(searchResponse.status).json({
+        error: "POWO search API error",
+        detail: errorText
+      });
+    }
+
+    const searchData = await searchResponse.json();
+
+    const firstAccepted =
+      searchData.results?.find(item => item.accepted === true) ||
+      searchData.results?.[0];
+
+    if (!firstAccepted?.fqId) {
+      return res.status(404).json({
+        error: "No accepted POWO result found",
+        scientificName
+      });
+    }
+
+    const lookupUrl = `https://powo.science.kew.org/api/2/taxon/${encodeURIComponent(firstAccepted.fqId)}`;
+    const lookupResponse = await fetch(lookupUrl);
+
+    if (!lookupResponse.ok) {
+      const errorText = await lookupResponse.text();
+
+      return res.status(lookupResponse.status).json({
+        error: "POWO lookup API error",
+        detail: errorText
+      });
+    }
+
+    const lookupData = await lookupResponse.json();
+    const classification = classifyPowoOrigin(lookupData);
+
+    res.json({
+      scientificName,
+      matchedName: firstAccepted.name,
+      family: lookupData.family || firstAccepted.family || "",
+      genus: lookupData.genus || "",
+      taxonRemarks: lookupData.taxonRemarks || "",
+      locations: lookupData.locations || [],
+      classification
+    });
+  } catch (error) {
+    console.error("Plant origin classification error:", error);
+
+    res.status(500).json({
+      error: "Plant origin classification failed",
+      detail: error.message
+    });
+  }
+});
+
 app.get("/google-place-nearby", async (req, res) => {
   try {
     const lat = Number(req.query.lat);
