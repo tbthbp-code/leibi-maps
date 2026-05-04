@@ -521,6 +521,117 @@ app.get("/google-route", async (req, res) => {
   }
 });
 
+app.get("/google-place-nearby", async (req, res) => {
+  try {
+    const lat = Number(req.query.lat);
+    const lng = Number(req.query.lng);
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      return res.status(400).json({
+        error: "Missing or invalid lat/lng"
+      });
+    }
+
+    const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+
+    if (!apiKey) {
+      return res.status(500).json({
+        error: "Missing GOOGLE_PLACES_API_KEY"
+      });
+    }
+
+    const response = await fetch("https://places.googleapis.com/v1/places:searchNearby", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": apiKey,
+        "X-Goog-FieldMask": [
+          "places.id",
+          "places.displayName",
+          "places.formattedAddress",
+          "places.location",
+          "places.types",
+          "places.primaryType",
+          "places.rating"
+        ].join(",")
+      },
+      body: JSON.stringify({
+        languageCode: "zh-CN",
+        locationRestriction: {
+          circle: {
+            center: {
+              latitude: lat,
+              longitude: lng
+            },
+            radius: 120
+          }
+        },
+        rankPreference: "DISTANCE"
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return res.status(response.status).json({
+        error: "Google Places Nearby API error",
+        detail: data
+      });
+    }
+
+    const rawPlaces = data.places || [];
+
+    const places = rawPlaces
+      .map(place => ({
+        id: place.id,
+        name: place.displayName?.text || "Unnamed place",
+        address: place.formattedAddress || "",
+        lng: place.location?.longitude,
+        lat: place.location?.latitude,
+        types: place.types || [],
+        primaryType: place.primaryType || "",
+        rating: place.rating || null,
+        source: "google-nearby"
+      }))
+      .filter(place => place.lng && place.lat && place.name && place.name !== "Unnamed place");
+
+    const priorityTypes = [
+      "tourist_attraction",
+      "park",
+      "point_of_interest",
+      "establishment",
+      "university",
+      "school",
+      "premise",
+      "street_address",
+      "route",
+      "neighborhood"
+    ];
+
+    places.sort((a, b) => {
+      const aIndex = priorityTypes.findIndex(type => a.types.includes(type) || a.primaryType === type);
+      const bIndex = priorityTypes.findIndex(type => b.types.includes(type) || b.primaryType === type);
+
+      const aScore = aIndex === -1 ? 999 : aIndex;
+      const bScore = bIndex === -1 ? 999 : bIndex;
+
+      return aScore - bScore;
+    });
+
+    res.json({
+      place: places[0] || null,
+      places
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      error: "Server error",
+      detail: error.message
+    });
+  }
+});
+
 app.post("/identify-plant", upload.single("image"), async (req, res) => {
   try {
     if (!req.file) {

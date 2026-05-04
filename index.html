@@ -3211,7 +3211,42 @@
       return features[0] || null;
     }
 
-    async function getPlaceInfoFromCoordinates(lng, lat) {
+    function normalizeGooglePlaceForLocation(place, lng, lat) {
+      if (!place) return null;
+
+      return {
+        id: place.id || place.placeId || `google-nearby-${lng}-${lat}`,
+        name: place.name || place.displayName || place.text || "Scanned botanical place",
+        text: place.name || place.displayName || place.text || "Scanned botanical place",
+        address: place.address || place.formattedAddress || place.place_name || "",
+        place_name: place.address || place.formattedAddress || place.place_name || "",
+        types: place.types || ["google_nearby_place"],
+        center: [Number(place.lng || lng), Number(place.lat || lat)],
+        source: "google-places-nearby"
+      };
+    }
+
+    async function getGooglePlaceInfoFromCoordinates(lng, lat) {
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/google-place-nearby?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || "Google nearby place lookup failed");
+        }
+
+        const data = await response.json();
+        const place = Array.isArray(data) ? data[0] : (data.place || data);
+        return normalizeGooglePlaceForLocation(place, lng, lat);
+      } catch (error) {
+        console.warn("Google nearby place lookup failed:", error);
+        return null;
+      }
+    }
+
+    async function getMapboxPlaceInfoFromCoordinates(lng, lat) {
       try {
         const params = new URLSearchParams({
           access_token: mapboxgl.accessToken,
@@ -3243,9 +3278,20 @@
           source: "mapbox-reverse-geocoding"
         };
       } catch (error) {
-        console.warn("Reverse geocoding failed:", error);
+        console.warn("Mapbox reverse geocoding failed:", error);
         return null;
       }
+    }
+
+    async function getPlaceInfoFromCoordinates(lng, lat) {
+      // GPS 命名优先走你自己的 Render 后端，让 Google Places Nearby 按真实坐标找附近地点。
+      // 如果 Google 没返回可用名字，再退回 Mapbox reverse geocoding。
+      const googlePlace = await getGooglePlaceInfoFromCoordinates(lng, lat);
+      if (googlePlace && googlePlace.name && googlePlace.name !== "Scanned botanical place") {
+        return googlePlace;
+      }
+
+      return await getMapboxPlaceInfoFromCoordinates(lng, lat);
     }
 
     async function enrichLocationWithPlaceInfo(location) {
