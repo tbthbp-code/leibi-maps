@@ -736,7 +736,8 @@
     }
 
     .review-form select,
-    .review-form textarea {
+    .review-form textarea,
+    .review-form input {
       width: 100%;
       box-sizing: border-box;
       border: 1px solid #ddd;
@@ -760,7 +761,53 @@
       line-height: 1.5;
     }
 
+    .locked-feature {
+      background: #f4f4f4;
+      color: #444;
+    }
 
+    .rename-card strong {
+      color: #155f4f;
+    }
+
+    .place-meta-tabs {
+      display: flex;
+      gap: 24px;
+      align-items: flex-end;
+      border-bottom: 1px solid #ececec;
+      margin: 12px 0 14px;
+      padding-top: 2px;
+    }
+
+    .place-meta-tab {
+      position: relative;
+      border: none;
+      background: transparent;
+      padding: 0 0 10px;
+      color: #666;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .place-meta-tab.is-active {
+      color: #0b7f7a;
+    }
+
+    .place-meta-tab.is-active::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -1px;
+      height: 3px;
+      border-radius: 999px;
+      background: #0b7f7a;
+    }
+
+    .place-meta-content {
+      margin-top: 4px;
+    }
 
     .archive-number {
       display: inline-block;
@@ -1200,7 +1247,9 @@
     const STORAGE_KEYS = {
       savedPlaces: "leibiSavedPlaces",
       reviews: "leibiPlaceReviews",
-      contributions: "leibiContributions"
+      contributions: "leibiContributions",
+      renameProposals: "leibiRenameProposals",
+      renameApplications: "leibiRenameApplications"
     };
 
     function readLocalList(key) {
@@ -1229,6 +1278,7 @@
         ...place,
         key: getPlaceKey(place)
       };
+      currentPlacePanelTab = "reviews";
       updateSaveButtonState();
     }
 
@@ -1321,12 +1371,74 @@
 
     function getUserRankLevels() {
       return [
-        { min: 0, name: "Unlicensed Wanderer / 无证游荡者", description: "尚未完成植物归档。你还只是路过这片被系统假装为空白的地图。" },
-        { min: 10, name: "Plant Scout / 植物侦察员", description: "完成 10 次植物归档后解锁。你开始替植物系统寻找可被收录的线索。" },
-        { min: 30, name: "Botanical Clerk / 植物书记员", description: "完成 30 次植物归档后解锁。你开始像档案员一样，把植物转化成编号、地点和记录。" },
-        { min: 70, name: "Claim Agent / 领地代理人", description: "完成 70 次植物归档后解锁。你已经能把植物、地点和命名权串成一套开荒机器。" },
-        { min: 150, name: "Amateur Coloniser / 业余殖民者", description: "完成 150 次植物归档后解锁。这个头衔很可疑，也很诚实：你已经被系统训练成了热衷归档、命名和占领的玩家。" }
+        {
+          min: 0,
+          name: "Unlicensed Wanderer / 无证游荡者",
+          permissions: "基础功能",
+          description: "地图外有两株植物，一株尚未收录，另一株也尚未收录。"
+        },
+        {
+          min: 2,
+          name: "Plant Witness / 植物目击者",
+          permissions: "基础功能",
+          description: "地图外有两株植物，一株归你，另一株也归你——至少档案上是这么写的。"
+        },
+        {
+          min: 5,
+          name: "Plant Scout / 植物侦察员",
+          permissions: "评分与评论",
+          description: "档案系统是最有价值的机构，只要你懂得如何利用它。"
+        },
+        {
+          min: 10,
+          name: "Botanical Clerk / 植物书记员",
+          permissions: "评分与评论、命名提案",
+          description: "植物不相同，但收录的流程是相同的。你现在不仅能记录，也能开始为地点提交名字。"
+        },
+        {
+          min: 30,
+          name: "Assistant Claim Officer / 助理领地官",
+          permissions: "评分与评论、正式改名",
+          description: "你终于可以让名字进入正式流程了。一个被点亮的地点，若没有新的名字，总是不体面的。"
+        },
+        {
+          min: 70,
+          name: "Botanical District Officer / 植物区官",
+          permissions: "全部功能",
+          description: "没错，你想要的不是那株植物。你想要的是它头上的编号，是地图里的秩序，秩序！"
+        },
+        {
+          min: 150,
+          name: "Deputy Botanical Commissioner / 副植物专员",
+          permissions: "全部功能",
+          description: "一天清晨，当你从不安的梦中醒来，发现自己已经变成了一名相当合格的归档员。"
+        },
+        {
+          min: 200,
+          name: "Governor of Unclaimed Flora / 未收录植物总督",
+          permissions: "全部功能、完整头衔档案",
+          description: "别犯傻了，伦敦从不缺雨，地图也从不缺空白。你已抵达本系统的荣耀尽头：凡你未记录之处，皆可暂称荒野。"
+        }
       ];
+    }
+
+    function getPermissionState() {
+      const archiveCount = getUserArchiveCount();
+      return {
+        archiveCount,
+        canReview: archiveCount >= 5,
+        canProposeName: archiveCount >= 10,
+        canApplyRename: archiveCount >= 30
+      };
+    }
+
+    function renderLockedFeature(title, body) {
+      return `
+        <div class="review-form locked-feature">
+          <strong>${escapeHtml(title)}</strong><br>
+          <span class="muted">${body}</span>
+        </div>
+      `;
     }
 
     function getUserArchiveCount(contributions = readLocalList(STORAGE_KEYS.contributions)) {
@@ -1380,13 +1492,14 @@
           const isUnlocked = rank.archiveCount >= level.min;
           const isCurrent = level.name === rank.current.name;
           const descriptionHtml = isUnlocked
-            ? escapeHtml(level.description)
-            : `<span class="muted">🔒 权限不足，档案暂不可见。</span>`;
+            ? `<div style="margin-top:6px;">${escapeHtml(level.description)}</div>`
+            : "";
 
           return `
             <div class="rank-level-card ${isCurrent ? "is-current" : ""}">
               <strong>${escapeHtml(level.name)}</strong><br>
               <span class="muted">解锁条件：${level.min} 次植物归档</span><br>
+              <span class="muted">功能限制：${escapeHtml(level.permissions)}</span>
               ${descriptionHtml}
             </div>
           `;
@@ -1445,6 +1558,168 @@
       }
     }
 
+    function getRenameProposals() {
+      return readLocalList(STORAGE_KEYS.renameProposals);
+    }
+
+    function getRenameApplications() {
+      return readLocalList(STORAGE_KEYS.renameApplications);
+    }
+
+    function getRenameProposalsForPlace(placeKey) {
+      return getRenameProposals().filter(item => item.placeKey === placeKey);
+    }
+
+    function getRenameApplicationsForPlace(placeKey) {
+      return getRenameApplications().filter(item => item.placeKey === placeKey);
+    }
+
+    function renderNamingSectionForCurrentPlace() {
+      if (!currentActivePlace) {
+        return "";
+      }
+
+      const permissions = getPermissionState();
+      const proposals = getRenameProposalsForPlace(currentActivePlace.key).map(item => ({ ...item, entryType: "proposal" }));
+      const applications = getRenameApplicationsForPlace(currentActivePlace.key).map(item => ({ ...item, entryType: "application" }));
+      const allNameEntries = [...applications, ...proposals].sort((a, b) => new Date(b.time) - new Date(a.time));
+
+      let formHtml = "";
+      if (permissions.canApplyRename) {
+        formHtml = `
+          <div class="review-form naming-form">
+            <label for="formalRenameInput">新的名字</label>
+            <input id="formalRenameInput" type="text" placeholder="例如：秋园 / Southern Archive / Xiang-bao Territory">
+
+            <label for="formalRenameReasonInput">命名理由</label>
+            <textarea id="formalRenameReasonInput" placeholder="请说明为什么这个名字应该被地图承认。"></textarea>
+
+            <button class="review-submit-btn" type="button" onclick="submitFormalRenameApplication()">提交名字</button>
+          </div>
+        `;
+      } else if (permissions.canProposeName) {
+        formHtml = `
+          <div class="review-form naming-form">
+            <label for="renameProposalInput">新的名字</label>
+            <input id="renameProposalInput" type="text" placeholder="例如：秋园 / Southern Archive / Xiang-bao Territory">
+
+            <label for="renameProposalReasonInput">命名理由</label>
+            <textarea id="renameProposalReasonInput" placeholder="为什么这个地方应该获得这个名字？"></textarea>
+
+            <button class="review-submit-btn" type="button" onclick="submitRenameProposal()">提交名字</button>
+          </div>
+        `;
+      } else {
+        formHtml = renderLockedFeature(
+          "命名提案尚未开放",
+          "完成 10 次植物归档后可使用。"
+        );
+      }
+
+      const listHtml = allNameEntries.length ? allNameEntries.map(item => `
+        <div class="place-review-card rename-card">
+          <strong>${escapeHtml(item.proposedName)}</strong>
+          <span class="muted"> · ${new Date(item.time).toLocaleString()}</span><br>
+          ${escapeHtml(item.reason || "这个用户提交了名字，但没有写理由。")}
+        </div>
+      `).join("") : `<div class="empty-state">这里还没有新的名字。</div>`;
+
+      return `
+        ${formHtml}
+        ${listHtml}
+      `;
+    }
+
+    function submitRenameProposal() {
+      if (!currentActivePlace) {
+        alert("请先打开一个已点亮地点。");
+        return;
+      }
+
+      const permissions = getPermissionState();
+      if (!permissions.canProposeName) {
+        alert("完成 10 次植物归档后可使用。")
+        return;
+      }
+
+      const nameInput = document.getElementById("renameProposalInput");
+      const reasonInput = document.getElementById("renameProposalReasonInput");
+      const proposedName = (nameInput?.value || "").trim();
+      const reason = (reasonInput?.value || "").trim();
+
+      if (!proposedName) {
+        alert("请先填写新的名字。");
+        return;
+      }
+
+      const proposals = getRenameProposals();
+      proposals.unshift({
+        id: `rename-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        placeKey: currentActivePlace.key,
+        placeName: currentActivePlace.name,
+        proposedName,
+        reason,
+        userId: CURRENT_USER_ID,
+        userRank: getUserRankInfo().name,
+        time: new Date().toISOString()
+      });
+      writeLocalList(STORAGE_KEYS.renameProposals, proposals);
+
+      addContribution("命名提案", {
+        placeKey: currentActivePlace.key,
+        placeName: currentActivePlace.name,
+        summary: `${proposedName}：${reason || "未填写理由"}`
+      });
+
+      renderReviewsForCurrentPlace();
+    }
+
+    function submitFormalRenameApplication() {
+      if (!currentActivePlace) {
+        alert("请先打开一个已点亮地点。");
+        return;
+      }
+
+      const permissions = getPermissionState();
+      if (!permissions.canApplyRename) {
+        alert("完成 30 次植物归档后可使用。")
+        return;
+      }
+
+      const nameInput = document.getElementById("formalRenameInput");
+      const reasonInput = document.getElementById("formalRenameReasonInput");
+      const proposedName = (nameInput?.value || "").trim();
+      const reason = (reasonInput?.value || "").trim();
+
+      if (!proposedName || !reason) {
+        alert("请填写新的名字和命名理由。");
+        return;
+      }
+
+      const applications = getRenameApplications();
+      applications.unshift({
+        id: `formal-rename-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        placeKey: currentActivePlace.key,
+        placeName: currentActivePlace.name,
+        proposedName,
+        reason,
+        status: "pending",
+        userId: CURRENT_USER_ID,
+        userRank: getUserRankInfo().name,
+        time: new Date().toISOString()
+      });
+      writeLocalList(STORAGE_KEYS.renameApplications, applications);
+
+      addContribution("正式改名申请", {
+        placeKey: currentActivePlace.key,
+        placeName: currentActivePlace.name,
+        summary: `${proposedName}：${reason}`
+      });
+
+      alert("新的名字已提交。")
+      renderReviewsForCurrentPlace();
+    }
+
     function getReviews() {
       return readLocalList(STORAGE_KEYS.reviews);
     }
@@ -1459,6 +1734,11 @@
       return total / reviews.length;
     }
 
+    function switchPlacePanelTab(tab) {
+      currentPlacePanelTab = tab === "naming" ? "naming" : "reviews";
+      renderReviewsForCurrentPlace();
+    }
+
     function renderReviewsForCurrentPlace(introHtml = "") {
       const reviewsBox = document.getElementById("panelReviews");
 
@@ -1467,12 +1747,13 @@
         return;
       }
 
+      const permissions = getPermissionState();
       const placeReviews = getReviewsForPlace(currentActivePlace.key);
       const average = getAverageRating(placeReviews);
       const averageText = average ? average.toFixed(1) : "--";
+      const activeTab = currentPlacePanelTab === "naming" ? "naming" : "reviews";
 
-      reviewsBox.innerHTML = `
-        ${introHtml}
+      const reviewHtml = permissions.canReview ? `
         <div class="review-summary">
           <span class="review-score-big">${averageText}</span>
           <span>殖民植物用户评分</span><br>
@@ -1502,12 +1783,36 @@
             ${escapeHtml(review.text || "这个用户只留下了评分，没有写评论。")}
           </div>
         `).join("")}
+      ` : renderLockedFeature(
+        "评分和评论尚未开放",
+        "完成 5 次植物归档后可使用。"
+      );
+
+      const contentHtml = activeTab === "reviews"
+        ? reviewHtml
+        : renderNamingSectionForCurrentPlace();
+
+      reviewsBox.innerHTML = `
+        ${introHtml}
+        <div class="place-meta-tabs">
+          <button class="place-meta-tab ${activeTab === "reviews" ? "is-active" : ""}" type="button" onclick="switchPlacePanelTab('reviews')">评论</button>
+          <button class="place-meta-tab ${activeTab === "naming" ? "is-active" : ""}" type="button" onclick="switchPlacePanelTab('naming')">命名提案</button>
+        </div>
+        <div class="place-meta-content">
+          ${contentHtml}
+        </div>
       `;
     }
 
     function submitCurrentPlaceReview() {
       if (!currentActivePlace) {
         alert("请先打开一个已点亮地点。");
+        return;
+      }
+
+      const permissions = getPermissionState();
+      if (!permissions.canReview) {
+        alert("完成 5 次植物归档后，可解锁评分与评论。");
         return;
       }
 
@@ -1581,7 +1886,22 @@
 
     function showSavedPlacesPanel() {
       const savedPlaces = getSavedPlaces();
-      const html = savedPlaces.length ? savedPlaces.map(place => `
+      const contributions = readLocalList(STORAGE_KEYS.contributions);
+      const rank = getUserRankInfo(contributions);
+      const passportCount = rank.archiveCount;
+      const lightCount = rank.lightCount;
+      const commentCount = rank.commentCount;
+
+      const rankHtml = `
+        <div class="colonial-rank-card" onclick="showRankGuide()" role="button" tabindex="0">
+          <div class="rank-title">我的头衔</div>
+          <div class="rank-name">${escapeHtml(rank.name)}</div>
+          <div class="rank-note">归档植物 ${passportCount} · 点亮地点 ${lightCount} · 评论 ${commentCount}<br>${escapeHtml(rank.note)}</div>
+          <button class="rank-guide-btn" type="button">查看头衔档次</button>
+        </div>
+      `;
+
+      const savedHtml = savedPlaces.length ? savedPlaces.map(place => `
         <div class="saved-card">
           <strong>${escapeHtml(place.name)}</strong><br>
           <span class="muted">${escapeHtml(place.address || place.type || "已保存地点")}</span><br>
@@ -1591,7 +1911,7 @@
         <div class="empty-state">还没有保存地点。点亮一个地点后，详情页里的“保存”按钮就会亮起来。</div>
       `;
 
-      openBottomSheet("我 · 已保存地点", html);
+      openBottomSheet("我", rankHtml + savedHtml);
     }
 
     function showContributionsPanel() {
@@ -1600,15 +1920,6 @@
       const passportCount = rank.archiveCount;
       const lightCount = rank.lightCount;
       const commentCount = rank.commentCount;
-
-      const rankHtml = `
-        <div class="colonial-rank-card" onclick="showRankGuide()" role="button" tabindex="0">
-          <div class="rank-title">你的开荒身份</div>
-          <div class="rank-name">${escapeHtml(rank.name)}</div>
-          <div class="rank-note">${escapeHtml(rank.note)}<br>归档植物 ${passportCount} · 点亮地点 ${lightCount} · 评论 ${commentCount}</div>
-          <button class="rank-guide-btn" type="button">查看头衔档次</button>
-        </div>
-      `;
 
       const html = contributions.length ? contributions.map(item => {
         if (item.passport || item.type === "植物护照") {
@@ -1626,7 +1937,7 @@
         <div class="empty-state">这里会记录你上传的植物图片、发布的评论、点亮过的地图区域。第一份植物归档会在这里生成一张 Plant Passport。</div>
       `;
 
-      openBottomSheet("贡献", rankHtml + html);
+      openBottomSheet("贡献", html);
     }
 
     function getNearbyPlacesToCheck() {
@@ -1798,6 +2109,8 @@
     }
 
     window.submitCurrentPlaceReview = submitCurrentPlaceReview;
+    window.submitRenameProposal = submitRenameProposal;
+    window.submitFormalRenameApplication = submitFormalRenameApplication;
     window.openSavedPlaceByKey = openSavedPlaceByKey;
     window.closeRewardModal = closeRewardModal;
     window.showRankGuide = showRankGuide;
@@ -1913,6 +2226,7 @@
     let routePanelTouchStartY = null;
     let isSelectingPlantLocationBySearch = false;
     let currentActivePlace = null;
+    let currentPlacePanelTab = "reviews";
 
     const map = new mapboxgl.Map({
       container: "map",
