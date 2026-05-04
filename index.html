@@ -1015,6 +1015,15 @@
       border: 1px solid #157a63;
     }
 
+
+    .passport-card {
+      cursor: pointer;
+    }
+
+    .passport-card:hover {
+      box-shadow: 0 4px 14px rgba(21, 122, 99, 0.16);
+    }
+
     @media (max-width: 700px) {
       .search-results {
         top: 112px;
@@ -1070,7 +1079,7 @@
     <button class="close-panel" onclick="closePanel()">×</button>
 
     <div class="info-content">
-      <h1 id="panelName">Elephant Park</h1>
+      <h1 id="panelName">Xiang-bao Gong-yuan</h1>
       <div id="panelOriginal" class="muted">Formerly known as: Elephant Park</div>
 
       <div class="rating-line">
@@ -1533,8 +1542,15 @@
 
     function getPlantPassportHtml(item) {
       const archiveLabel = item.archiveLabel || formatArchiveNumber(item.archiveNumber || 1);
+      const placeKey = item.placeKey || "";
       return `
-        <div class="passport-card">
+        <div
+          class="passport-card"
+          role="button"
+          tabindex="0"
+          title="点击跳转到植物所在地"
+          onclick='openContributionPlace(${JSON.stringify(placeKey)})'
+        >
           <div class="passport-title">
             <span>Plant Passport / 植物护照</span>
             <span class="passport-stamp">ARCHIVED</span>
@@ -1545,7 +1561,8 @@
           归档地点：${escapeHtml(item.placeName || "未知地点")}<br>
           归档时间：${new Date(item.time).toLocaleString()}<br>
           归档者身份：${escapeHtml(getUserRankInfo().name)}<br>
-          植物身份：${escapeHtml(item.plantIdentity || "迁移者 / 被收录者 / 领地通行证")}
+          植物身份：${escapeHtml(item.plantIdentity || "迁移者 / 被收录者 / 领地通行证")}<br>
+          <span class="muted">点击这张名片可跳转到植物所在地。</span>
         </div>
       `;
     }
@@ -1953,6 +1970,55 @@
       map.flyTo({ center: [Number(savedPlace.lng), Number(savedPlace.lat)], zoom: 16.3, duration: 800 });
     }
 
+    function openContributionPlace(placeKey) {
+      if (!placeKey) {
+        alert("这张植物名片没有记录地点编号，暂时无法跳转。");
+        return;
+      }
+
+      closeBottomSheet();
+
+      if (placeKey.startsWith("boundary:")) {
+        const boundaryId = placeKey.replace("boundary:", "");
+        const boundary = getBoundaryById(boundaryId);
+        if (boundary) {
+          fitToBoundary(boundary);
+          openPanelFromBoundary(boundary);
+          return;
+        }
+      }
+
+      if (placeKey.startsWith("claim:")) {
+        const claimId = placeKey.replace("claim:", "");
+        const claim = getPendingClaimById(claimId);
+        if (claim) {
+          const containingBoundary = boundaryLibrary.find(boundary => isClaimInsideBoundary(claim, boundary));
+          if (containingBoundary) {
+            fitToBoundary(containingBoundary);
+            openPanelFromBoundary(containingBoundary);
+            return;
+          }
+
+          map.flyTo({ center: [Number(claim.lng), Number(claim.lat)], zoom: 16.3, duration: 800 });
+          openPendingClaimPanel(claim);
+          return;
+        }
+      }
+
+      const fallbackBoundary = boundaryLibrary.find(boundary => {
+        const key = String(placeKey).toLowerCase();
+        return key.includes(boundary.id.toLowerCase()) || key.includes(boundary.name.toLowerCase());
+      });
+
+      if (fallbackBoundary) {
+        fitToBoundary(fallbackBoundary);
+        openPanelFromBoundary(fallbackBoundary);
+        return;
+      }
+
+      alert("没有找到这张植物名片对应的地点。它可能来自旧版本临时点亮记录。");
+    }
+
     function showSavedPlacesPanel() {
       const savedPlaces = getSavedPlaces();
       const contributions = readLocalList(STORAGE_KEYS.contributions);
@@ -2181,6 +2247,7 @@
     window.submitRenameProposal = submitRenameProposal;
     window.submitFormalRenameApplication = submitFormalRenameApplication;
     window.openSavedPlaceByKey = openSavedPlaceByKey;
+    window.openContributionPlace = openContributionPlace;
     window.closeRewardModal = closeRewardModal;
     window.showRankGuide = showRankGuide;
 
@@ -2189,8 +2256,8 @@
       {
         id: "elephant-park",
         name: "Elephant Park",
-        fakeName: "Xiang-bao Gong-yuan",
-        source: "Local boundary library / future OS Open Greenspace import",
+        fakeName: "Elephant Park",
+        source: "Local boundary library / manually cleaned",
         type: "park / public landscape",
         rating: 4.8,
         chinesePlantPercent: 68,
@@ -2203,14 +2270,14 @@
         ],
         testPoint: [-0.0982, 51.4941],
         polygon: [
-          [-0.09829773648985451, 51.493967185232236],
-          [-0.09880585671572817, 51.49303262487021],
-          [-0.0980144769880269, 51.49198498322269],
-          [-0.09399611195664193, 51.49287954631336],
-          [-0.09421124431017347, 51.49407545885296],
-          [-0.09823729264019221, 51.49480734185116],
-          [-0.09829773648985451, 51.493967185232236]
-        ]
+            [-0.09829773648985451, 51.493967185232236],
+            [-0.09880585671572817, 51.49303262487021],
+            [-0.0980144769880269, 51.49198498322269],
+            [-0.09399611195664193, 51.49287954631336],
+            [-0.09421124431017347, 51.49407545885296],
+            [-0.09823729264019221, 51.49480734185116],
+            [-0.09829773648985451, 51.493967185232236]
+          ]
       },
       {
         id: "baldwin-point",
@@ -2229,44 +2296,245 @@
         ],
         testPoint: [-0.0974, 51.4921],
         polygon: [
-          [-0.09636380324153038, 51.49152347755748],
-          [-0.09667378660745385, 51.492150739721865],
-          [-0.09526917448010863, 51.492488492697106],
-          [-0.09430047646145567, 51.49271768079083],
-          [-0.09401955403569673, 51.492753868279294],
-          [-0.0936030138880426, 51.49259102435539],
-          [-0.09342864824398589, 51.49241611727018],
-          [-0.09388143118624726, 51.49228663289651],
-          [-0.09383668400894862, 51.49218447766185],
-          [-0.09462721748278113, 51.492017314056824],
-          [-0.09627540519849731, 51.49140437559416],
-          [-0.09636380324153038, 51.49152347755748]
-        ]
+            [-0.09636380324153038, 51.49152347755748],
+            [-0.09667378660745385, 51.492150739721865],
+            [-0.09526917448010863, 51.492488492697106],
+            [-0.09430047646145567, 51.49271768079083],
+            [-0.09401955403569673, 51.492753868279294],
+            [-0.0936030138880426, 51.49259102435539],
+            [-0.09342864824398589, 51.49241611727018],
+            [-0.09388143118624726, 51.49228663289651],
+            [-0.09383668400894862, 51.49218447766185],
+            [-0.09462721748278113, 51.492017314056824],
+            [-0.09627540519849731, 51.49140437559416],
+            [-0.09637235741732297, 51.49152510654915],
+            [-0.09636380324153038, 51.49152347755748]
+          ]
+      },
+      {
+        id: "qingguo-lane",
+        name: "青果巷",
+        fakeName: "青果巷",
+        source: "Local boundary library / geojson.io manually drawn",
+        type: "historic lane / cultural block",
+        rating: 4.6,
+        chinesePlantPercent: 58,
+        asianPlantPercent: 72,
+        tags: ["China site", "Historic lane boundary", "Plant-scan activated"],
+        comments: [
+          "青果巷作为一个历史街区边界被点亮，而不是作为一个模糊的 GPS 点被记录。",
+          "这条边界来自 geojson.io 手动校准，用于替代 Scanned botanical place 的临时命名。",
+          "植物扫描在这里触发的不是单株植物档案，而是一段街区身份的显影。"
+        ],
+        testPoint: [119.9553, 31.7749],
+        polygon: [
+            [119.9532004068144, 31.776022942015828],
+            [119.95392637411783, 31.77586388148127],
+            [119.95385901632648, 31.77596568025477],
+            [119.95492925678337, 31.775730270420908],
+            [119.95645603338062, 31.775450322811906],
+            [119.95651590697258, 31.7753294360826],
+            [119.9580875887612, 31.775157649406026],
+            [119.95840940931896, 31.77507493718835],
+            [119.95757117903094, 31.773280700113745],
+            [119.9546747940168, 31.773427039902728],
+            [119.95464485722181, 31.773522478770033],
+            [119.95455504683275, 31.77356701687441],
+            [119.95403863710249, 31.773573379459222],
+            [119.95259418669508, 31.773910595817526],
+            [119.95321537521295, 31.77601657959943],
+            [119.9532004068144, 31.776022942015828]
+          ]
+      },
+      {
+        id: "hongmei-park",
+        name: "红梅公园",
+        fakeName: "红梅公园",
+        source: "Local boundary library / geojson.io manually drawn",
+        type: "park / public landscape",
+        rating: 4.7,
+        chinesePlantPercent: 62,
+        asianPlantPercent: 76,
+        tags: ["China site", "Park boundary", "Plant-scan activated"],
+        comments: [
+          "红梅公园使用手动画边界替代临时圆形点亮范围。",
+          "绿色描边代表这块公共景观已被植物扫描激活。",
+          "之后可以继续补充更细的园内分区。"
+        ],
+        testPoint: [119.9682, 31.7768],
+        polygon: [
+            [119.96404901283029, 31.780609665793037],
+            [119.96412615599434, 31.777964682347516],
+            [119.96353472507644, 31.77632519182417],
+            [119.9631232948733, 31.7752977629507],
+            [119.96376615456654, 31.77499171810146],
+            [119.96397186966811, 31.77527590263786],
+            [119.96389472650418, 31.775691247697466],
+            [119.96435758548262, 31.776784252100086],
+            [119.96430615670715, 31.777199590386516],
+            [119.96479473007435, 31.77706843112911],
+            [119.96492330201187, 31.777308889625544],
+            [119.96520616027738, 31.778073980682436],
+            [119.96572044803128, 31.7783144365646],
+            [119.96618330700977, 31.77813955962145],
+            [119.96641473649811, 31.777702365816722],
+            [119.96592616313279, 31.776456352135483],
+            [119.96618330700977, 31.776609372263636],
+            [119.967006167416, 31.776303331754193],
+            [119.9671090249667, 31.774707532691963],
+            [119.97083761118137, 31.772827514913317],
+            [119.97230333128078, 31.774751253581016],
+            [119.97340904995065, 31.77566938747762],
+            [119.97094046873207, 31.779188816320712],
+            [119.9697061781228, 31.778970222156687],
+            [119.96890903210522, 31.779210675708725],
+            [119.96484615884975, 31.780522229532806],
+            [119.96407472721893, 31.780544088605623],
+            [119.96404901283029, 31.780609665793037]
+          ]
+      },
+      {
+        id: "wujin-maternity-hospital",
+        name: "常州武进妇婴医院",
+        fakeName: "常州武进妇婴医院",
+        source: "Local boundary library / geojson.io manually drawn",
+        type: "hospital / institutional block",
+        rating: 3.9,
+        chinesePlantPercent: 35,
+        asianPlantPercent: 49,
+        tags: ["China site", "Institutional boundary", "Plant-scan activated"],
+        comments: [
+          "医院地块被作为一个较小的机构边界单元点亮。",
+          "这里的重点不是植物数量，而是定位、拍摄与边界承认的流程。",
+          "该边界由手动校准坐标替代临时范围。"
+        ],
+        testPoint: [119.9394, 31.7208],
+        polygon: [
+            [119.93828025357107, 31.722116556762828],
+            [119.93764557574832, 31.719417206623334],
+            [119.94053688583006, 31.719192257230162],
+            [119.94129497322893, 31.72176414606689],
+            [119.94130378819898, 31.721914108228802],
+            [119.93828025357107, 31.722116556762828]
+          ]
       },
       {
         id: "goldsmiths",
         name: "Goldsmiths, University of London",
-        fakeName: "Jin-shi-mi-si",
-        source: "Local boundary library / future GIS import",
+        fakeName: "Goldsmiths, University of London",
+        source: "Local boundary library / geojson.io manually drawn",
         type: "campus",
         rating: 4.4,
         chinesePlantPercent: 43,
         asianPlantPercent: 59,
-        tags: ["Campus", "Future unlocked site", "Educational territory"],
+        tags: ["Campus", "Educational territory", "Plant-scan activated"],
         comments: [
           "A campus can become a bounded site of botanical recording.",
           "The system treats institutional land as a unit of visibility.",
-          "This area could be unlocked through a plant scan on site."
+          "This boundary has been manually corrected from geojson.io."
         ],
-        testPoint: [-0.0354, 51.4743],
+        testPoint: [-0.0367, 51.4739],
         polygon: [
-          [-0.03720, 51.47510],
-          [-0.03415, 51.47512],
-          [-0.03375, 51.47375],
-          [-0.03645, 51.47325],
-          [-0.03735, 51.47420],
-          [-0.03720, 51.47510]
-        ]
+            [-0.03992873639214167, 51.4749475511029],
+            [-0.03741900508822482, 51.47558382532807],
+            [-0.03719199421655617, 51.475568114960254],
+            [-0.036599243607668086, 51.475568114960254],
+            [-0.03600649299787051, 51.47541101098426],
+            [-0.03546418924932482, 51.47515964349725],
+            [-0.03508583779654373, 51.474900419325735],
+            [-0.03395078343820046, 51.47397348447828],
+            [-0.034896662069684226, 51.473494298908975],
+            [-0.03531284866821238, 51.47311723131588],
+            [-0.03557769468471861, 51.4727087379062],
+            [-0.035792093841735095, 51.47231595233208],
+            [-0.03610738671861213, 51.47186817265262],
+            [-0.036964983344887514, 51.4715382269184],
+            [-0.03725505279246022, 51.471459668058515],
+            [-0.038074814273045376, 51.47248877840133],
+            [-0.03832704857492786, 51.47259875828638],
+            [-0.03861711802250056, 51.47294440762741],
+            [-0.03893241089934918, 51.472905129425385],
+            [-0.03992873639214167, 51.47495540639409],
+            [-0.03992873639214167, 51.4749475511029]
+          ]
+      },
+      {
+        id: "taskmaster-house",
+        name: "Taskmaster House",
+        fakeName: "Taskmaster House",
+        source: "Local boundary library / geojson.io manually drawn",
+        type: "building / media site",
+        rating: 3.6,
+        chinesePlantPercent: 28,
+        asianPlantPercent: 40,
+        tags: ["Building boundary", "Micro territory", "Plant-scan activated"],
+        comments: [
+          "A very small site can still become a claimable map unit.",
+          "This boundary tests how precise the system can become at building scale.",
+          "The line is intentionally tight rather than circular."
+        ],
+        testPoint: [-0.2667, 51.4746],
+        polygon: [
+            [-0.26634109715493537, 51.47467115535346],
+            [-0.2663952853586409, 51.47447802025155],
+            [-0.2668027003690838, 51.47451927247761],
+            [-0.2668508676616739, 51.4745423987097],
+            [-0.2668719408518143, 51.47456677499537],
+            [-0.26687495130735783, 51.474596776559906],
+            [-0.266840832809379, 51.474616152559605],
+            [-0.26687896524853727, 51.47464740415509],
+            [-0.2669682754357723, 51.47466302994479],
+            [-0.2669682754357723, 51.474720532804696],
+            [-0.2669261290555198, 51.47473490850834],
+            [-0.2663400936693847, 51.47467053032187],
+            [-0.26634109715493537, 51.47467115535346]
+          ]
+      },
+      {
+        id: "kew-gardens",
+        name: "Kew Gardens",
+        fakeName: "Kew Gardens",
+        source: "Local boundary library / geojson.io manually drawn",
+        type: "botanical garden / institution",
+        rating: 4.5,
+        chinesePlantPercent: 52,
+        asianPlantPercent: 81,
+        tags: ["Botanical institution", "Imperial botany", "Plant-scan activated"],
+        comments: [
+          "Kew is treated as an institutional boundary rather than a single point.",
+          "The project reads this site through plant movement, naming and botanical authority.",
+          "This manually cleaned boundary replaces a broad temporary unlocked area."
+        ],
+        testPoint: [-0.2956, 51.4789],
+        polygon: [
+            [-0.29077023731855434, 51.4860158305282],
+            [-0.2937457901266498, 51.485257822348274],
+            [-0.29645083813477413, 51.483713692633586],
+            [-0.2981640352060424, 51.48228181653977],
+            [-0.29879521307441337, 51.48208528101799],
+            [-0.2994714750762739, 51.4813833615259],
+            [-0.30294295335232846, 51.478715968927645],
+            [-0.30582833789344477, 51.47565529470853],
+            [-0.3068201888294766, 51.474616303558605],
+            [-0.31029166710555955, 51.47335263377991],
+            [-0.305016823491286, 51.47206084626907],
+            [-0.3020863548166801, 51.472229342366575],
+            [-0.29843454000678094, 51.47076902217967],
+            [-0.29347528532588285, 51.470291599672066],
+            [-0.2927088550571568, 51.47374577924003],
+            [-0.29113091038618677, 51.47621690169308],
+            [-0.2902292277171057, 51.478715968927645],
+            [-0.28657741290723493, 51.48273103740911],
+            [-0.2884258623788867, 51.48309602610715],
+            [-0.2882004417116093, 51.48348908759198],
+            [-0.28693808597483894, 51.48320832973425],
+            [-0.2857658985050193, 51.48489285095272],
+            [-0.28662249704063925, 51.485145523768466],
+            [-0.28892178784687417, 51.48531397153445],
+            [-0.2900939753167222, 51.48511744908032],
+            [-0.29086040558544823, 51.486043904663205],
+            [-0.29077023731855434, 51.4860158305282]
+          ]
       }
     ];
 
@@ -2342,8 +2610,34 @@
       return pendingClaims.find(claim => claim.id === id);
     }
 
+    function isClaimInsideBoundary(claim, boundary) {
+      const lng = Number(claim.lng);
+      const lat = Number(claim.lat);
+      if (!Number.isFinite(lng) || !Number.isFinite(lat) || !boundary) return false;
+
+      try {
+        return turf.booleanPointInPolygon(
+          turf.point([lng, lat]),
+          turf.polygon([boundary.polygon])
+        );
+      } catch (error) {
+        console.warn("判断 claim 是否在边界内失败：", claim.id, boundary.id, error);
+        return false;
+      }
+    }
+
+    function getClaimsInsideBoundary(boundary) {
+      return pendingClaims.filter(claim => isClaimInsideBoundary(claim, boundary));
+    }
+
+    function hasClaimInsideBoundary(boundary) {
+      return getClaimsInsideBoundary(boundary).length > 0;
+    }
+
     function getUnlockedBoundaries() {
-      return boundaryLibrary.filter(boundary => unlockedIds.includes(boundary.id));
+      return boundaryLibrary.filter(boundary => {
+        return unlockedIds.includes(boundary.id) || hasClaimInsideBoundary(boundary);
+      });
     }
 
     function buildUnlockedGeoJSON() {
@@ -2355,11 +2649,11 @@
 
     function buildMaskGeoJSON() {
       const outerRing = [
-        [-0.35, 51.56],
-        [0.10, 51.56],
-        [0.10, 51.44],
-        [-0.35, 51.44],
-        [-0.35, 51.56]
+        [-180, 85],
+        [180, 85],
+        [180, -85],
+        [-180, -85],
+        [-180, 85]
       ];
 
       const holes = getUnlockedBoundaries().map(boundary => {
@@ -2384,7 +2678,9 @@
     function buildPendingGeoJSON() {
       return {
         type: "FeatureCollection",
-        features: pendingClaims.map(claim => {
+        features: pendingClaims
+          .filter(claim => !boundaryLibrary.some(boundary => isClaimInsideBoundary(claim, boundary)))
+          .map(claim => {
           const circle = turf.circle(
             [claim.lng, claim.lat],
             (claim.radius_m || 80) / 1000,
@@ -2532,7 +2828,8 @@
     }
 
     function isBoundaryUnlocked(boundaryId) {
-      return unlockedIds.includes(boundaryId);
+      const boundary = getBoundaryById(boundaryId);
+      return unlockedIds.includes(boundaryId) || (boundary && hasClaimInsideBoundary(boundary));
     }
 
     async function searchPlaces(query) {
@@ -3382,8 +3679,8 @@
       setCurrentActivePlace({
         kind: "boundary",
         id: boundary.id,
-        name: boundary.fakeName || boundary.name,
-        address: boundary.name,
+        name: boundary.name,
+        address: boundary.fakeName && boundary.fakeName !== boundary.name ? `曾用领地名：${boundary.fakeName}` : boundary.name,
         type: boundary.type,
         lng: boundary.testPoint[0],
         lat: boundary.testPoint[1]
@@ -3395,9 +3692,11 @@
         name: boundary.name
       };
 
-      document.getElementById("panelName").textContent = boundary.fakeName;
+      document.getElementById("panelName").textContent = boundary.name;
       document.getElementById("panelOriginal").textContent =
-        "Formerly known as: " + boundary.name + " / " + boundary.source;
+        boundary.fakeName && boundary.fakeName !== boundary.name
+          ? "曾用领地名：" + boundary.fakeName + " / " + boundary.source
+          : boundary.source;
 
       document.getElementById("panelRating").textContent = `${boundary.rating} ★`;
       document.getElementById("panelChinese").textContent = boundary.chinesePlantPercent + "%";
@@ -3900,8 +4199,31 @@ const routeData = await fetchGoogleRoute(
       let recordOwnerIds = [];
 
       if (boundary) {
-        records = await getPlantRecords(currentOpenedBoundaryId);
-        recordOwnerIds = records.map(() => currentOpenedBoundaryId);
+        const relatedClaims = getClaimsInsideBoundary(boundary);
+        const boundaryRecords = await getPlantRecords(currentOpenedBoundaryId);
+        const claimRecordGroups = await Promise.all(
+          relatedClaims.map(async relatedClaim => {
+            try {
+              const claimRecords = await getPlantRecords(relatedClaim.id);
+              return claimRecords.map(record => ({
+                ...record,
+                __claimId: relatedClaim.id
+              }));
+            } catch (error) {
+              console.warn("读取边界内旧植物记录失败：", relatedClaim.id, error);
+              return [];
+            }
+          })
+        );
+
+        records = [
+          ...boundaryRecords,
+          ...claimRecordGroups.flat()
+        ];
+        recordOwnerIds = [
+          ...boundaryRecords.map(() => currentOpenedBoundaryId),
+          ...claimRecordGroups.flat().map(record => record.__claimId || currentOpenedBoundaryId)
+        ];
         plantListTitle.textContent = `${boundary.name} 的植物一览`;
       } else if (claim) {
         const { claimName } = getClaimDisplayInfo(claim);
