@@ -761,6 +761,197 @@
     }
 
 
+
+    .archive-number {
+      display: inline-block;
+      margin-bottom: 8px;
+      border-radius: 999px;
+      background: #e5f3ee;
+      color: #155f4f;
+      padding: 5px 10px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+
+    .passport-card {
+      background: linear-gradient(180deg, #f7fbf9 0%, #eef7f2 100%);
+      border: 1px solid #d9eee5;
+      border-radius: 18px;
+      padding: 14px;
+      margin-top: 12px;
+      font-size: 14px;
+      line-height: 1.5;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.65);
+    }
+
+    .passport-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+      color: #155f4f;
+      font-weight: 800;
+    }
+
+    .passport-stamp {
+      border: 1px solid #157a63;
+      color: #157a63;
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-size: 11px;
+      transform: rotate(-4deg);
+      white-space: nowrap;
+    }
+
+    .colonial-rank-card {
+      background: #102f29;
+      color: white;
+      border-radius: 20px;
+      padding: 15px;
+      margin-bottom: 14px;
+      box-shadow: 0 8px 22px rgba(0,0,0,0.16);
+    }
+
+    .colonial-rank-card .rank-title {
+      font-size: 12px;
+      opacity: 0.78;
+      margin-bottom: 4px;
+    }
+
+    .colonial-rank-card .rank-name {
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .colonial-rank-card .rank-note {
+      font-size: 13px;
+      opacity: 0.86;
+      line-height: 1.45;
+    }
+
+    .reward-modal {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.34);
+      z-index: 70;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      box-sizing: border-box;
+    }
+
+    .reward-card {
+      width: min(92vw, 440px);
+      background: white;
+      border-radius: 26px;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.28);
+      padding: 22px;
+      box-sizing: border-box;
+      text-align: left;
+    }
+
+    .reward-card h2 {
+      margin: 0 0 12px;
+      color: #155f4f;
+      font-size: 28px;
+    }
+
+    .reward-card p {
+      margin: 8px 0;
+      color: #273832;
+      line-height: 1.55;
+      font-size: 15px;
+    }
+
+    .reward-card .reward-place {
+      font-size: 19px;
+      font-weight: 800;
+      color: #0b7f7a;
+    }
+
+    .reward-card button {
+      width: 100%;
+      border: none;
+      border-radius: 16px;
+      background: #157a63;
+      color: white;
+      font-weight: 800;
+      padding: 12px 14px;
+      margin-top: 14px;
+      cursor: pointer;
+      font-size: 15px;
+    }
+
+    .nearby-plant-card {
+      background: #f6faf8;
+      border-radius: 16px;
+      padding: 13px;
+      margin-top: 10px;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .similar-pill.is-disabled,
+    .similar-pill:disabled {
+      background: rgba(238,238,238,0.96);
+      color: #9a9a9a;
+      cursor: not-allowed;
+    }
+
+    .nearby-toast {
+      position: absolute;
+      inset: 0;
+      z-index: 75;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.10);
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .nearby-toast-card {
+      background: rgba(255,255,255,0.98);
+      border-radius: 26px;
+      box-shadow: 0 14px 42px rgba(0,0,0,0.26);
+      padding: 22px 24px;
+      max-width: 360px;
+      text-align: center;
+      color: #155f4f;
+      font-weight: 800;
+      font-size: 21px;
+      line-height: 1.35;
+    }
+
+    .rank-guide-btn {
+      border: none;
+      background: rgba(255,255,255,0.14);
+      color: white;
+      border-radius: 999px;
+      padding: 8px 11px;
+      font-weight: 800;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+
+    .rank-level-card {
+      background: #f6faf8;
+      border-radius: 16px;
+      padding: 13px;
+      margin-top: 10px;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .rank-level-card.is-current {
+      background: #e5f3ee;
+      border: 1px solid #157a63;
+    }
+
     @media (max-width: 700px) {
       .search-results {
         top: 112px;
@@ -808,7 +999,7 @@
   </div>
   <div id="searchResults" class="search-results"></div>
 
-  <button class="similar-pill">查看相似地点</button>
+  <button id="nearbyPlantsBtn" class="similar-pill">附近有新的植物可收录</button>
   <button id="locateBtn" class="layer-btn locate-btn" title="定位 / 指南针模式">➤</button>
 
   <div id="infoPanel" class="info-panel">
@@ -907,6 +1098,22 @@
       </div>
       <div id="bottomSheetContent"></div>
     </div>
+  </div>
+
+  <div id="rewardModal" class="reward-modal">
+    <div class="reward-card">
+      <h2>开荒成功</h2>
+      <p>你点亮了</p>
+      <div id="rewardPlaceName" class="reward-place">Unknown Place</div>
+      <p>此地已进入植物档案。</p>
+      <p><strong id="rewardArchiveNo">收录编号 No.001</strong></p>
+      <p><strong>命名权已解锁</strong><br>你现在可以为此地提交一个植物领地名。</p>
+      <button id="closeRewardBtn" type="button">进入地图</button>
+    </div>
+  </div>
+
+  <div id="nearbyToast" class="nearby-toast">
+    <div class="nearby-toast-card">发现未收录的新植物！</div>
   </div>
 
   <div id="cameraModal" class="modal">
@@ -1076,6 +1283,168 @@
       writeLocalList(STORAGE_KEYS.contributions, contributions.slice(0, 80));
     }
 
+
+
+    function formatArchiveNumber(value) {
+      return `No.${String(Number(value || 1)).padStart(3, "0")}`;
+    }
+
+    function getRecordTimeValue(record) {
+      const rawTime = record?.time || record?.created_at || record?.createdAt || record?.uploaded_at || record?.date;
+      const parsed = rawTime ? new Date(rawTime).getTime() : NaN;
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
+
+    function sortPlantRecordsByUploadTime(records) {
+      return [...records].sort((a, b) => {
+        const timeDiff = getRecordTimeValue(a) - getRecordTimeValue(b);
+        if (timeDiff !== 0) return timeDiff;
+        return String(a.id || "").localeCompare(String(b.id || ""));
+      });
+    }
+
+    function getMyPassportPlantKeys() {
+      return readLocalList(STORAGE_KEYS.contributions)
+        .filter(item => item.passport || item.type === "植物护照")
+        .map(item => String(item.scientificName || item.commonName || "").toLowerCase().trim())
+        .filter(Boolean);
+    }
+
+    function getPlantIdentityLabel(plant) {
+      const family = String(plant.family || "").toLowerCase();
+      const genus = String(plant.genus || "").toLowerCase();
+      if (family.includes("unknown") && genus.includes("unknown")) {
+        return "未确认迁移者 / 待归档者";
+      }
+      return "迁移者 / 被收录者 / 领地通行证";
+    }
+
+    function getUserRankLevels() {
+      return [
+        { min: 0, name: "Unlicensed Wanderer / 无证游荡者", description: "尚未完成植物归档。你还只是路过这片被系统假装为空白的地图。" },
+        { min: 10, name: "Plant Scout / 植物侦察员", description: "完成 10 次植物归档后解锁。你开始替植物系统寻找可被收录的线索。" },
+        { min: 30, name: "Botanical Clerk / 植物书记员", description: "完成 30 次植物归档后解锁。你开始像档案员一样，把植物转化成编号、地点和记录。" },
+        { min: 70, name: "Claim Agent / 领地代理人", description: "完成 70 次植物归档后解锁。你已经能把植物、地点和命名权串成一套开荒机器。" },
+        { min: 150, name: "Amateur Coloniser / 业余殖民者", description: "完成 150 次植物归档后解锁。这个头衔很可疑，也很诚实：你已经被系统训练成了热衷归档、命名和占领的玩家。" }
+      ];
+    }
+
+    function getUserArchiveCount(contributions = readLocalList(STORAGE_KEYS.contributions)) {
+      return contributions.filter(item => item.passport || item.type === "植物护照" || item.type === "上传植物").length;
+    }
+
+    function getUserRankInfo(contributions = readLocalList(STORAGE_KEYS.contributions)) {
+      const archiveCount = getUserArchiveCount(contributions);
+      const lightCount = contributions.filter(item => item.type === "点亮地图").length;
+      const commentCount = contributions.filter(item => item.type === "评论").length;
+      const levels = getUserRankLevels();
+
+      let current = levels[0];
+      let next = null;
+
+      for (let index = 0; index < levels.length; index += 1) {
+        if (archiveCount >= levels[index].min) {
+          current = levels[index];
+          next = levels[index + 1] || null;
+        }
+      }
+
+      const nextNote = next
+        ? `距离下一头衔还需要 ${Math.max(next.min - archiveCount, 0)} 次植物归档。`
+        : "你已经抵达当前系统里最可疑的头衔。";
+
+      return {
+        name: current.name,
+        note: `你已完成 ${archiveCount} 次植物归档，点亮 ${lightCount} 个地点，提交 ${commentCount} 条评论。${nextNote}`,
+        archiveCount,
+        lightCount,
+        commentCount,
+        current,
+        next
+      };
+    }
+
+    function showRankGuide() {
+      const contributions = readLocalList(STORAGE_KEYS.contributions);
+      const rank = getUserRankInfo(contributions);
+      const levels = getUserRankLevels();
+
+      const html = `
+        <div class="colonial-rank-card">
+          <div class="rank-title">当前开荒身份</div>
+          <div class="rank-name">${escapeHtml(rank.name)}</div>
+          <div class="rank-note">${escapeHtml(rank.note)}</div>
+        </div>
+
+        ${levels.map(level => {
+          const isUnlocked = rank.archiveCount >= level.min;
+          const isCurrent = level.name === rank.current.name;
+          const descriptionHtml = isUnlocked
+            ? escapeHtml(level.description)
+            : `<span class="muted">🔒 权限不足，档案暂不可见。</span>`;
+
+          return `
+            <div class="rank-level-card ${isCurrent ? "is-current" : ""}">
+              <strong>${escapeHtml(level.name)}</strong><br>
+              <span class="muted">解锁条件：${level.min} 次植物归档</span><br>
+              ${descriptionHtml}
+            </div>
+          `;
+        }).join("")}
+      `;
+
+      openBottomSheet("开荒身份等级", html);
+    }
+
+    function getPlantPassportHtml(item) {
+      const archiveLabel = item.archiveLabel || formatArchiveNumber(item.archiveNumber || 1);
+      return `
+        <div class="passport-card">
+          <div class="passport-title">
+            <span>Plant Passport / 植物护照</span>
+            <span class="passport-stamp">ARCHIVED</span>
+          </div>
+          <span class="archive-number">收录编号 ${escapeHtml(archiveLabel)}</span><br>
+          <strong>${escapeHtml(item.commonName || item.plantName || "Unknown plant")}</strong><br>
+          学名：<i>${escapeHtml(item.scientificName || "Unknown species")}</i><br>
+          归档地点：${escapeHtml(item.placeName || "未知地点")}<br>
+          归档时间：${new Date(item.time).toLocaleString()}<br>
+          归档者身份：${escapeHtml(getUserRankInfo().name)}<br>
+          植物身份：${escapeHtml(item.plantIdentity || "迁移者 / 被收录者 / 领地通行证")}
+        </div>
+      `;
+    }
+
+    function addPlantPassportContribution({ placeKey, placeName, plantResult, archiveNumber }) {
+      const archiveLabel = formatArchiveNumber(archiveNumber);
+      addContribution("植物护照", {
+        passport: true,
+        placeKey,
+        placeName,
+        archiveNumber,
+        archiveLabel,
+        commonName: plantResult.commonName || "Unknown plant",
+        scientificName: plantResult.scientificName || "Unknown species",
+        genus: plantResult.genus || "Unknown",
+        family: plantResult.family || "Unknown",
+        plantIdentity: getPlantIdentityLabel(plantResult),
+        summary: `收录编号 ${archiveLabel}：${plantResult.commonName || "Unknown plant"}`
+      });
+    }
+
+    function showRewardModal(placeName, archiveNumber) {
+      if (!rewardModal) return;
+      rewardPlaceName.textContent = placeName || "Unknown Place";
+      rewardArchiveNo.textContent = `收录编号 ${formatArchiveNumber(archiveNumber)}`;
+      rewardModal.style.display = "flex";
+    }
+
+    function closeRewardModal() {
+      if (rewardModal) {
+        rewardModal.style.display = "none";
+      }
+    }
+
     function getReviews() {
       return readLocalList(STORAGE_KEYS.reviews);
     }
@@ -1227,21 +1596,211 @@
 
     function showContributionsPanel() {
       const contributions = readLocalList(STORAGE_KEYS.contributions);
-      const html = contributions.length ? contributions.map(item => `
-        <div class="contribution-card">
-          <strong>${escapeHtml(item.type || "贡献")}</strong> · ${escapeHtml(item.placeName || "未知地点")}<br>
-          <span class="muted">${new Date(item.time).toLocaleString()}</span><br>
-          ${escapeHtml(item.summary || "已记录一次贡献。")}
+      const rank = getUserRankInfo(contributions);
+      const passportCount = rank.archiveCount;
+      const lightCount = rank.lightCount;
+      const commentCount = rank.commentCount;
+
+      const rankHtml = `
+        <div class="colonial-rank-card" onclick="showRankGuide()" role="button" tabindex="0">
+          <div class="rank-title">你的开荒身份</div>
+          <div class="rank-name">${escapeHtml(rank.name)}</div>
+          <div class="rank-note">${escapeHtml(rank.note)}<br>归档植物 ${passportCount} · 点亮地点 ${lightCount} · 评论 ${commentCount}</div>
+          <button class="rank-guide-btn" type="button">查看头衔档次</button>
         </div>
-      `).join("") : `
-        <div class="empty-state">这里会记录你上传的植物图片、发布的评论、点亮过的地图区域。</div>
       `;
 
-      openBottomSheet("贡献", html);
+      const html = contributions.length ? contributions.map(item => {
+        if (item.passport || item.type === "植物护照") {
+          return getPlantPassportHtml(item);
+        }
+
+        return `
+          <div class="contribution-card">
+            <strong>${escapeHtml(item.type || "贡献")}</strong> · ${escapeHtml(item.placeName || "未知地点")}<br>
+            <span class="muted">${new Date(item.time).toLocaleString()}</span><br>
+            ${escapeHtml(item.summary || "已记录一次贡献。")}
+          </div>
+        `;
+      }).join("") : `
+        <div class="empty-state">这里会记录你上传的植物图片、发布的评论、点亮过的地图区域。第一份植物归档会在这里生成一张 Plant Passport。</div>
+      `;
+
+      openBottomSheet("贡献", rankHtml + html);
+    }
+
+    function getNearbyPlacesToCheck() {
+      return [
+        ...pendingClaims.map(claim => ({
+          kind: "claim",
+          id: claim.id,
+          name: getClaimDisplayInfo(claim).claimName,
+          lng: Number(claim.lng),
+          lat: Number(claim.lat)
+        })),
+        ...boundaryLibrary
+          .filter(boundary => unlockedIds.includes(boundary.id))
+          .map(boundary => ({
+            kind: "boundary",
+            id: boundary.id,
+            name: boundary.name,
+            lng: Number(boundary.testPoint[0]),
+            lat: Number(boundary.testPoint[1])
+          }))
+      ];
+    }
+
+    function getDistanceMetersBetween(origin, place) {
+      if (!origin || !Number.isFinite(Number(place.lng)) || !Number.isFinite(Number(place.lat))) {
+        return Infinity;
+      }
+
+      return turf.distance(
+        turf.point([Number(origin.lng), Number(origin.lat)]),
+        turf.point([Number(place.lng), Number(place.lat)]),
+        { units: "kilometers" }
+      ) * 1000;
+    }
+
+    async function collectNearbyPlantCandidates(origin) {
+      const myPassports = getMyPassportPlantKeys();
+      const candidates = [];
+
+      const placesToCheck = getNearbyPlacesToCheck()
+        .map(place => ({
+          ...place,
+          distanceMeters: getDistanceMetersBetween(origin, place)
+        }))
+        .filter(place => place.distanceMeters <= NEARBY_PLANT_RADIUS_M)
+        .sort((a, b) => a.distanceMeters - b.distanceMeters);
+
+      for (const place of placesToCheck) {
+        try {
+          const records = sortPlantRecordsByUploadTime(await getPlantRecords(place.id));
+
+          records.forEach((plant, index) => {
+            const plantKey = String(plant.scientificName || plant.commonName || "").toLowerCase().trim();
+            const alreadyMine = plantKey && myPassports.includes(plantKey);
+            const uploadedByMe = plant.userId === CURRENT_USER_ID;
+
+            if (!alreadyMine && !uploadedByMe) {
+              candidates.push({
+                place,
+                plant,
+                archiveNumber: index + 1,
+                distanceMeters: place.distanceMeters
+              });
+            }
+          });
+        } catch (error) {
+          console.warn("附近植物读取失败：", place.id, error);
+        }
+      }
+
+      return candidates;
+    }
+
+    function showNearbyPlantToast() {
+      if (!nearbyToast || nearbyPlantPopupDismissed) return;
+      nearbyToast.style.display = "flex";
+    }
+
+    function closeNearbyPlantToast() {
+      if (!nearbyToast) return;
+      nearbyToast.style.display = "none";
+      nearbyPlantPopupDismissed = true;
+    }
+
+    function setNearbyButtonState(count) {
+      nearbyPlantCandidateCount = count;
+
+      if (!nearbyPlantsBtn) return;
+
+      if (count > 0) {
+        nearbyPlantsBtn.disabled = false;
+        nearbyPlantsBtn.classList.remove("is-disabled");
+        nearbyPlantsBtn.textContent = `附近有 ${count} 个新植物可收录`;
+      } else {
+        nearbyPlantsBtn.disabled = true;
+        nearbyPlantsBtn.classList.add("is-disabled");
+        nearbyPlantsBtn.textContent = "附近暂无新植物";
+      }
+    }
+
+    async function updateNearbyPlantState(origin = currentUserLocation, options = {}) {
+      const { showToast = true } = options;
+
+      try {
+        let actualOrigin = origin;
+
+        if (!actualOrigin) {
+          actualOrigin = await getCurrentPositionPromise();
+        }
+
+        currentUserLocation = actualOrigin;
+        const candidates = await collectNearbyPlantCandidates(actualOrigin);
+        setNearbyButtonState(candidates.length);
+
+        if (candidates.length > 0 && showToast && !nearbyPlantPopupDismissed) {
+          showNearbyPlantToast();
+        }
+
+        if (candidates.length === 0) {
+          nearbyPlantPopupDismissed = false;
+        }
+
+        return candidates;
+      } catch (error) {
+        console.warn("附近植物状态更新失败：", error);
+        setNearbyButtonState(0);
+        return [];
+      }
+    }
+
+    function scheduleNearbyPlantScan(origin) {
+      currentUserLocation = origin;
+
+      if (nearbyScanTimer) {
+        return;
+      }
+
+      nearbyScanTimer = setTimeout(() => {
+        nearbyScanTimer = null;
+        updateNearbyPlantState(currentUserLocation, { showToast: true });
+      }, 1800);
+    }
+
+    async function showNearbyPlantActivity() {
+      if (nearbyPlantsBtn.disabled) {
+        return;
+      }
+
+      openBottomSheet("附近植物活动", `
+        <div class="empty-state">正在扫描 100 米内可收录的植物档案……</div>
+      `);
+
+      const candidates = await updateNearbyPlantState(currentUserLocation, { showToast: false });
+
+      const content = candidates.length ? candidates.slice(0, 8).map(item => `
+        <div class="nearby-plant-card">
+          <span class="archive-number">收录编号 ${formatArchiveNumber(item.archiveNumber)}</span><br>
+          <strong>${escapeHtml(item.plant.commonName || "Unknown plant")}</strong><br>
+          学名：<i>${escapeHtml(item.plant.scientificName || "Unknown species")}</i><br>
+          地点：${escapeHtml(item.place.name)}<br>
+          距离：约 ${Math.max(1, Math.round(item.distanceMeters))} 米<br>
+          <span class="muted">状态：尚未进入你的个人植物护照库。</span>
+        </div>
+      `).join("") : `
+        <div class="empty-state">100 米内暂时没有新的植物可收录。地图很安静，但这不代表它真的空白。</div>
+      `;
+
+      openBottomSheet("附近有新的植物可收录", content);
     }
 
     window.submitCurrentPlaceReview = submitCurrentPlaceReview;
     window.openSavedPlaceByKey = openSavedPlaceByKey;
+    window.closeRewardModal = closeRewardModal;
+    window.showRankGuide = showRankGuide;
 
 
     const boundaryLibrary = [
@@ -2117,6 +2676,31 @@
       return await response.json();
     }
 
+    async function getNextArchiveNumberForPlace(placeId, claim = null) {
+      try {
+        if (claim) {
+          const relatedClaims = findRelatedClaimsForClaim(claim);
+          const groups = await Promise.all(
+            relatedClaims.map(async relatedClaim => {
+              try {
+                return await getPlantRecords(relatedClaim.id);
+              } catch (error) {
+                console.warn("计算植物档案编号失败：", relatedClaim.id, error);
+                return [];
+              }
+            })
+          );
+          return groups.flat().length + 1;
+        }
+
+        const records = await getPlantRecords(placeId);
+        return records.length + 1;
+      } catch (error) {
+        console.warn("计算植物档案编号失败：", error);
+        return 1;
+      }
+    }
+
     async function addPlantRecord(boundaryId, plantResult) {
       const plant = {
         commonName: plantResult.commonName || "Unknown plant",
@@ -2559,11 +3143,16 @@
 
           const heading = gpsHeading ?? userHeading;
 
+          const liveLocation = { lng, lat };
+          currentUserLocation = liveLocation;
+
           updateUserLocationMarker(
             lng,
             lat,
             followUserHeading ? 0 : heading
           );
+
+          scheduleNearbyPlantScan(liveLocation);
         },
         error => {
           console.warn("实时定位失败：", error);
@@ -2792,10 +3381,36 @@ const routeData = await fetchGoogleRoute(
         plantListTitle.textContent = `未知区域的植物一览`;
       }
 
+      if (records.length > 0) {
+        const recordPairsByArchiveOrder = records.map((record, index) => ({
+          record,
+          ownerId: recordOwnerIds[index] || currentOpenedBoundaryId
+        })).sort((a, b) => {
+          const timeDiff = getRecordTimeValue(a.record) - getRecordTimeValue(b.record);
+          if (timeDiff !== 0) return timeDiff;
+          return String(a.record.id || "").localeCompare(String(b.record.id || ""));
+        }).map((pair, index) => ({
+          ...pair,
+          archiveNumber: index + 1
+        }));
+
+        const recordPairsByDisplayOrder = [...recordPairsByArchiveOrder].sort((a, b) => {
+          const timeDiff = getRecordTimeValue(b.record) - getRecordTimeValue(a.record);
+          if (timeDiff !== 0) return timeDiff;
+          return String(b.record.id || "").localeCompare(String(a.record.id || ""));
+        });
+
+        records = recordPairsByDisplayOrder.map(pair => ({
+          ...pair.record,
+          __archiveNumber: pair.archiveNumber
+        }));
+        recordOwnerIds = recordPairsByDisplayOrder.map(pair => pair.ownerId);
+      }
+
       if (records.length === 0) {
         plantListBox.innerHTML = `
-          <strong>暂无植物记录。</strong><br>
-          请点击搜索框右侧的相机按钮，上传或拍摄一张植物照片。
+          <strong>暂无植物档案。</strong><br>
+          请点击搜索框右侧的相机按钮，上传或拍摄一张植物照片。第一株植物会成为收录编号 No.001。
         `;
       } else {
         plantListBox.innerHTML = records.map((plant, index) => {
@@ -2820,7 +3435,8 @@ const routeData = await fetchGoogleRoute(
                 >
               ` : ""}
 
-              <strong>${index + 1}. ${plant.commonName}</strong><br>
+              <span class="archive-number">收录编号 ${formatArchiveNumber(plant.__archiveNumber || index + 1)}</span><br>
+              <strong>${plant.commonName}</strong><br>
               学名：<i>${plant.scientificName}</i><br>
               属：${plant.genus}<br>
               科：${plant.family}<br>
@@ -2841,6 +3457,7 @@ const routeData = await fetchGoogleRoute(
     const searchInput = document.getElementById("searchInput");
     const searchResults = document.getElementById("searchResults");
     const cameraBtn = document.getElementById("cameraBtn");
+    const nearbyPlantsBtn = document.getElementById("nearbyPlantsBtn");
     const cameraModal = document.getElementById("cameraModal");
     const closeCameraBtn = document.getElementById("closeCameraBtn");
     const plantCameraInput = document.getElementById("plantCameraInput");
@@ -2873,6 +3490,11 @@ const routeData = await fetchGoogleRoute(
     const bottomSheetTitle = document.getElementById("bottomSheetTitle");
     const bottomSheetContent = document.getElementById("bottomSheetContent");
     const closeBottomSheetBtn = document.getElementById("closeBottomSheetBtn");
+    const rewardModal = document.getElementById("rewardModal");
+    const rewardPlaceName = document.getElementById("rewardPlaceName");
+    const rewardArchiveNo = document.getElementById("rewardArchiveNo");
+    const closeRewardBtn = document.getElementById("closeRewardBtn");
+    const nearbyToast = document.getElementById("nearbyToast");
 
     map.on("load", async () => {
       try {
@@ -3131,11 +3753,15 @@ const routeData = await fetchGoogleRoute(
       try {
         const location = await getCurrentPositionPromise();
 
+        currentUserLocation = { lng: location.lng, lat: location.lat };
+
         updateUserLocationMarker(
           location.lng,
           location.lat,
           followUserHeading ? 0 : userHeading
         );
+
+        updateNearbyPlantState(currentUserLocation, { showToast: true });
 
         if (followUserHeading) {
           map.easeTo({
@@ -3232,6 +3858,17 @@ const routeData = await fetchGoogleRoute(
 
       toggleSaveCurrentPlace();
     });
+
+    nearbyPlantsBtn.addEventListener("click", showNearbyPlantActivity);
+
+    closeRewardBtn.addEventListener("click", closeRewardModal);
+
+    if (nearbyToast) {
+      nearbyToast.addEventListener("click", closeNearbyPlantToast);
+    }
+
+    setNearbyButtonState(0);
+    updateNearbyPlantState(null, { showToast: true });
 
     closePlantListBtn.addEventListener("click", () => {
       plantListModal.style.display = "none";
@@ -3380,6 +4017,8 @@ const routeData = await fetchGoogleRoute(
         };
 
        const pendingClaim = await createPendingClaim(lng, lat, placeForClaim);
+       const pendingClaimInfo = getClaimDisplayInfo(pendingClaim);
+       const archiveNumber = await getNextArchiveNumberForPlace(pendingClaim.id, pendingClaim);
 
        await addPlantRecord(pendingClaim.id, plantResult);
 
@@ -3389,26 +4028,30 @@ const routeData = await fetchGoogleRoute(
           searchInput.placeholder = "搜索地点或区域 / Search places or areas...";
           hideSearchResults();
           openPendingClaimPanel(pendingClaim);
-          addContribution("上传植物", {
+          addPlantPassportContribution({
             placeKey: `claim:${pendingClaim.id}`,
-            placeName: getClaimDisplayInfo(pendingClaim).claimName,
-            summary: `识别植物：${plantResult.commonName || "Unknown plant"}`
+            placeName: pendingClaimInfo.claimName,
+            plantResult,
+            archiveNumber
           });
           addContribution("点亮地图", {
             placeKey: `claim:${pendingClaim.id}`,
-            placeName: getClaimDisplayInfo(pendingClaim).claimName,
-            summary: "通过植物识别点亮了一个 Google Places 地点。"
+            placeName: pendingClaimInfo.claimName,
+            summary: `你点亮了 ${pendingClaimInfo.claimName}，此地已进入植物档案。命名权已解锁。`
           });
+          showRewardModal(pendingClaimInfo.claimName, archiveNumber);
 
           resultBox.innerHTML = `
-            <strong>点亮成功，已解锁此地。</strong><br><br>
+            <strong>开荒成功。</strong><br><br>
+            你点亮了 <b>${pendingClaimInfo.claimName}</b><br>
+            此地已进入植物档案。<br>
+            <b>收录编号 ${formatArchiveNumber(archiveNumber)}</b><br><br>
             识别结果：<b>${plantResult.commonName}</b><br>
             学名：<i>${plantResult.scientificName}</i><br>
             属：${plantResult.genus || "Unknown"}<br>
             科：${plantResult.family || "Unknown"}<br>
             置信度：${Math.round(plantResult.score * 100)}%<br><br>
-
-            该区域已生成临时植物领地。你可以关闭此窗口，在地图详情页查看植物记录。
+            命名权已解锁，你现在可以为此地提交一个植物领地名。
           `;
 
           identifyBtn.disabled = true;
@@ -3427,31 +4070,33 @@ const routeData = await fetchGoogleRoute(
         searchInput.placeholder = "搜索地点或区域 / Search places or areas...";
         hideSearchResults();
         openPanelFromBoundary(matchedBoundary);
+        const archiveNumber = await getNextArchiveNumberForPlace(matchedBoundary.id);
         await addPlantRecord(matchedBoundary.id, plantResult);
-        addContribution("上传植物", {
+        const boundaryPlaceName = matchedBoundary.name;
+        addPlantPassportContribution({
           placeKey: `boundary:${matchedBoundary.id}`,
-          placeName: matchedBoundary.fakeName || matchedBoundary.name,
-          summary: `识别植物：${plantResult.commonName || "Unknown plant"}`
+          placeName: boundaryPlaceName,
+          plantResult,
+          archiveNumber
         });
         addContribution("点亮地图", {
           placeKey: `boundary:${matchedBoundary.id}`,
-          placeName: matchedBoundary.fakeName || matchedBoundary.name,
-          summary: "通过植物识别点亮了本地边界区域。"
+          placeName: boundaryPlaceName,
+          summary: `你点亮了 ${boundaryPlaceName}，此地已进入植物档案。命名权已解锁。`
         });
+        showRewardModal(boundaryPlaceName, archiveNumber);
 
         resultBox.innerHTML = `
-          <strong>点亮成功，已解锁此地。</strong><br><br>
+          <strong>开荒成功。</strong><br><br>
+          你点亮了 <b>${boundaryPlaceName}</b><br>
+          此地已进入植物档案。<br>
+          <b>收录编号 ${formatArchiveNumber(archiveNumber)}</b><br><br>
           识别结果：<b>${plantResult.commonName}</b><br>
           学名：<i>${plantResult.scientificName}</i><br>
           属：${plantResult.genus || "Unknown"}<br>
           科：${plantResult.family || "Unknown"}<br>
           置信度：${Math.round(plantResult.score * 100)}%<br><br>
-
-          匹配区域：<b>${matchedBoundary.name}</b><br>
-          盗版命名：<b>${matchedBoundary.fakeName}</b><br>
-          边界来源：${matchedBoundary.source}<br><br>
-
-          这条植物记录已作为点亮该区域的证据。你可以关闭此窗口，在植物一览中查看。
+          命名权已解锁，你现在可以为此地提交一个植物领地名。
         `;
 
         identifyBtn.disabled = true;
