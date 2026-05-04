@@ -262,7 +262,17 @@ app.get("/plant-records/:boundaryId", async (req, res) => {
     family: record.family,
     score: Number(record.score || 0),
     imageUrl: record.image_url || "",
-    time: new Date(record.created_at).toLocaleString()
+    time: new Date(record.created_at).toLocaleString(),
+
+    isChinese: record.is_chinese,
+    isAsian: record.is_asian,
+    isUkNative: record.is_uk_native,
+    isNonUkNative: record.is_non_uk_native,
+    colonisationEffective: record.colonisation_effective,
+    originConfidence: record.origin_confidence,
+    originSource: record.origin_source,
+    originRegions: record.origin_regions || [],
+    originTaxonRemarks: record.origin_taxon_remarks || ""
   }));
 
   res.json(records);
@@ -280,15 +290,26 @@ app.post("/plant-records", async (req, res) => {
   const { data, error } = await supabase
     .from("plant_records")
     .insert({
-      boundary_id: boundaryId,
-      user_id: userId,
-      common_name: plant.commonName,
-      scientific_name: plant.scientificName,
-      genus: plant.genus,
-      family: plant.family,
-      score: plant.score,
-      image_url: plant.imageUrl || null
-    })
+  boundary_id: boundaryId,
+  user_id: userId,
+  common_name: plant.commonName,
+  scientific_name: plant.scientificName,
+  genus: plant.genus,
+  family: plant.family,
+  score: plant.score,
+  image_url: plant.imageUrl || null,
+
+  is_chinese: plant.isChinese ?? plant.origin?.isChinese ?? null,
+  is_asian: plant.isAsian ?? plant.origin?.isAsian ?? null,
+  is_uk_native: plant.isUkNative ?? plant.origin?.isUkNative ?? null,
+  is_non_uk_native: plant.isNonUkNative ?? plant.origin?.isNonUkNative ?? null,
+  colonisation_effective:
+    plant.colonisationEffective ?? plant.origin?.colonisationEffective ?? null,
+  origin_confidence: plant.origin?.confidence || null,
+  origin_source: plant.origin?.source || null,
+  origin_regions: plant.origin?.locations || [],
+  origin_taxon_remarks: plant.origin?.taxonRemarks || ""
+})
     .select()
     .single();
 
@@ -297,16 +318,26 @@ app.post("/plant-records", async (req, res) => {
   }
 
   res.json({
-    id: data.id,
-    userId: data.user_id,
-    commonName: data.common_name,
-    scientificName: data.scientific_name,
-    genus: data.genus,
-    family: data.family,
-    score: Number(data.score || 0),
-    imageUrl: data.image_url || "",
-    time: new Date(data.created_at).toLocaleString()
-  });
+  id: data.id,
+  userId: data.user_id,
+  commonName: data.common_name,
+  scientificName: data.scientific_name,
+  genus: data.genus,
+  family: data.family,
+  score: Number(data.score || 0),
+  imageUrl: data.image_url || "",
+  time: new Date(data.created_at).toLocaleString(),
+
+  isChinese: data.is_chinese,
+  isAsian: data.is_asian,
+  isUkNative: data.is_uk_native,
+  isNonUkNative: data.is_non_uk_native,
+  colonisationEffective: data.colonisation_effective,
+  originConfidence: data.origin_confidence,
+  originSource: data.origin_source,
+  originRegions: data.origin_regions || [],
+  originTaxonRemarks: data.origin_taxon_remarks || ""
+});
 });
 
 // 只能删除自己上传的植物
@@ -597,6 +628,68 @@ function classifyPowoOrigin(lookupData) {
   };
 }
 
+async function getPlantOriginFromPowo(scientificName) {
+  if (!scientificName || scientificName === "Unknown species") {
+    return {
+      isChinese: false,
+      isAsian: false,
+      isUkNative: null,
+      isNonUkNative: null,
+      colonisationEffective: null,
+      confidence: "unknown",
+      source: "POWO",
+      locations: [],
+      taxonRemarks: ""
+    };
+  }
+
+  const searchUrl = `https://powo.science.kew.org/api/2/search?q=${encodeURIComponent(scientificName)}`;
+  const searchResponse = await fetch(searchUrl);
+
+  if (!searchResponse.ok) {
+    throw new Error(`POWO search failed: ${searchResponse.status}`);
+  }
+
+  const searchData = await searchResponse.json();
+
+  const firstAccepted =
+    searchData.results?.find(item => item.accepted === true) ||
+    searchData.results?.[0];
+
+  if (!firstAccepted?.fqId) {
+    return {
+      isChinese: false,
+      isAsian: false,
+      isUkNative: null,
+      isNonUkNative: null,
+      colonisationEffective: null,
+      confidence: "not-found",
+      source: "POWO",
+      locations: [],
+      taxonRemarks: ""
+    };
+  }
+
+  const lookupUrl = `https://powo.science.kew.org/api/2/taxon/${encodeURIComponent(firstAccepted.fqId)}`;
+  const lookupResponse = await fetch(lookupUrl);
+
+  if (!lookupResponse.ok) {
+    throw new Error(`POWO lookup failed: ${lookupResponse.status}`);
+  }
+
+  const lookupData = await lookupResponse.json();
+  const classification = classifyPowoOrigin(lookupData);
+
+  return {
+    ...classification,
+    matchedName: firstAccepted.name,
+    family: lookupData.family || firstAccepted.family || "",
+    genus: lookupData.genus || "",
+    locations: lookupData.locations || [],
+    taxonRemarks: lookupData.taxonRemarks || ""
+  };
+}
+
 app.get("/classify-plant-origin", async (req, res) => {
   try {
     const scientificName = req.query.name;
@@ -833,27 +926,57 @@ app.post("/identify-plant", upload.single("image"), async (req, res) => {
       });
     }
 
-    res.json({
-      commonName:
-        best.species?.commonNames?.[0] ||
-        best.species?.scientificNameWithoutAuthor ||
-        "Unknown plant",
+    const commonName =
+  best.species?.commonNames?.[0] ||
+  best.species?.scientificNameWithoutAuthor ||
+  "Unknown plant";
 
-      scientificName:
-        best.species?.scientificNameWithoutAuthor ||
-        "Unknown species",
+const scientificName =
+  best.species?.scientificNameWithoutAuthor ||
+  "Unknown species";
 
-      score: best.score || 0,
+const family =
+  best.species?.family?.scientificNameWithoutAuthor || "";
 
-      family:
-        best.species?.family?.scientificNameWithoutAuthor || "",
+const genus =
+  best.species?.genus?.scientificNameWithoutAuthor || "";
 
-      genus:
-        best.species?.genus?.scientificNameWithoutAuthor || "",
+let origin = {
+  isChinese: false,
+  isAsian: false,
+  isUkNative: null,
+  isNonUkNative: null,
+  colonisationEffective: null,
+  confidence: "unknown",
+  source: "POWO",
+  locations: [],
+  taxonRemarks: ""
+};
 
-      imageUrl,
-      raw: data
-    });
+try {
+  origin = await getPlantOriginFromPowo(scientificName);
+} catch (originError) {
+  console.error("POWO origin lookup failed:", originError.message);
+}
+
+res.json({
+  commonName,
+  scientificName,
+  score: best.score || 0,
+  family,
+  genus,
+  imageUrl,
+
+  origin,
+
+  isChinese: origin.isChinese,
+  isAsian: origin.isAsian,
+  isUkNative: origin.isUkNative,
+  isNonUkNative: origin.isNonUkNative,
+  colonisationEffective: origin.colonisationEffective,
+
+  raw: data
+});
 
   } catch (error) {
     console.error(error);
