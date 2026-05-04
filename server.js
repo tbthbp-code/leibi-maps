@@ -465,6 +465,83 @@ app.get("/test-powo-origin", async (req, res) => {
   }
 });
 
+app.get("/test-powo-lookup", async (req, res) => {
+  try {
+    const scientificName = req.query.name;
+
+    if (!scientificName) {
+      return res.status(400).json({
+        error: "Missing plant scientific name"
+      });
+    }
+
+    const searchUrl = `https://powo.science.kew.org/api/2/search?q=${encodeURIComponent(scientificName)}`;
+
+    const searchResponse = await fetch(searchUrl);
+
+    if (!searchResponse.ok) {
+      const errorText = await searchResponse.text();
+
+      return res.status(searchResponse.status).json({
+        error: "POWO search API error",
+        detail: errorText
+      });
+    }
+
+    const searchData = await searchResponse.json();
+
+    const firstAccepted =
+      searchData.results?.find(item => item.accepted === true) ||
+      searchData.results?.[0];
+
+    if (!firstAccepted) {
+      return res.status(404).json({
+        error: "No POWO result found",
+        searchData
+      });
+    }
+
+    const fqId = firstAccepted.fqId;
+
+    if (!fqId) {
+      return res.status(404).json({
+        error: "POWO result has no fqId",
+        firstAccepted
+      });
+    }
+
+    const lookupUrl = `https://powo.science.kew.org/api/2/taxon/${encodeURIComponent(fqId)}`;
+
+    const lookupResponse = await fetch(lookupUrl);
+
+    if (!lookupResponse.ok) {
+      const errorText = await lookupResponse.text();
+
+      return res.status(lookupResponse.status).json({
+        error: "POWO lookup API error",
+        lookupUrl,
+        detail: errorText
+      });
+    }
+
+    const lookupData = await lookupResponse.json();
+
+    res.json({
+      scientificName,
+      matchedName: firstAccepted.name,
+      fqId,
+      lookupData
+    });
+  } catch (error) {
+    console.error("POWO lookup test error:", error);
+
+    res.status(500).json({
+      error: "POWO lookup test failed",
+      detail: error.message
+    });
+  }
+});
+
 app.get("/google-place-nearby", async (req, res) => {
   try {
     const lat = Number(req.query.lat);
