@@ -394,6 +394,35 @@ app.get("/google-places", async (req, res) => {
       })
     });
 
+    app.get("/test-powo-origin", async (req, res) => {
+  try {
+    const scientificName = req.query.name;
+
+    if (!scientificName) {
+      return res.status(400).json({
+        error: "Missing plant scientific name"
+      });
+    }
+
+    // 先用 POWO search API 搜索植物名
+    const searchUrl = `https://powo.science.kew.org/api/2/search?q=${encodeURIComponent(scientificName)}`;
+
+    const searchResponse = await fetch(searchUrl);
+    const searchData = await searchResponse.json();
+
+    res.json({
+      scientificName,
+      powoSearchResult: searchData
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      error: "POWO test failed",
+      detail: error.message
+    });
+  }
+});
+
 app.get("/google-route", async (req, res) => {
   try {
     const apiKey = process.env.GOOGLE_PLACES_API_KEY;
