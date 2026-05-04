@@ -560,6 +560,22 @@
       display: none;
     }
 
+    #cameraModal {
+      overflow-y: auto;
+      align-items: flex-start;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    #cameraModal .modal-card {
+      max-height: calc(100dvh - 32px);
+      overflow-y: auto;
+      margin: 16px 0;
+    }
+
+    .reward-unlock-message {
+      margin-top: 8px;
+    }
+
     .plant-record-card {
       position: relative;
       background: #f5f5f5;
@@ -1154,7 +1170,7 @@
       <div id="rewardPlaceName" class="reward-place">Unknown Place</div>
       <p>此地已进入植物档案。</p>
       <p><strong id="rewardArchiveNo">收录编号 No.001</strong></p>
-      <p><strong>命名权已解锁</strong><br>你现在可以为此地提交一个植物领地名。</p>
+      <div id="rewardUnlockMessage"></div>
       <button id="closeRewardBtn" type="button">进入地图</button>
     </div>
   </div>
@@ -1167,7 +1183,7 @@
     <div class="modal-card">
       <h2>植物识别 / Plant Scan</h2>
       <p>
-        上传或拍摄植物照片后，系统会优先读取照片拍摄位置；如果照片没有 GPS 信息，你可以使用当前位置或手动选择地点来生成植物认领区域。
+        拍摄植物照片时，系统会直接使用你的当前位置；从相册选择照片时，系统会优先读取照片 GPS，如果没有 GPS 信息，再让你选择地点。
       </p>
 
       <label class="upload-btn" for="plantCameraInput">拍摄植物照片</label>
@@ -1545,10 +1561,57 @@
       });
     }
 
-    function showRewardModal(placeName, archiveNumber) {
+    function getUnlockMilestoneMessage(archiveCount) {
+      const milestones = {
+        5: {
+          title: "评分评论功能已解锁",
+          body: "你现在可以为此地提交评价了。"
+        },
+        10: {
+          title: "命名权已解锁",
+          body: "你现在可以为此地提交一个植物领地名。"
+        },
+        30: {
+          title: "正式改名功能已解锁",
+          body: "你现在可以把新的名字提交进入正式改名流程。"
+        },
+        70: {
+          title: "全部功能已解锁",
+          body: "评分、评论、命名提案与正式改名现在全部开放。"
+        },
+        200: {
+          title: "完整头衔档案已解锁",
+          body: "你现在可以查看完整头衔档案。"
+        }
+      };
+
+      return milestones[Number(archiveCount)] || null;
+    }
+
+    function getUnlockMessageHtml(archiveCount) {
+      const unlockMessage = getUnlockMilestoneMessage(archiveCount);
+
+      if (!unlockMessage) {
+        return "";
+      }
+
+      return `
+        <p class="reward-unlock-message">
+          <strong>${escapeHtml(unlockMessage.title)}</strong><br>
+          ${escapeHtml(unlockMessage.body)}
+        </p>
+      `;
+    }
+
+    function showRewardModal(placeName, archiveNumber, totalArchiveCount = null) {
       if (!rewardModal) return;
+      const displayArchiveCount = totalArchiveCount || getUserArchiveCount();
       rewardPlaceName.textContent = placeName || "Unknown Place";
       rewardArchiveNo.textContent = `收录编号 ${formatArchiveNumber(archiveNumber)}`;
+      const rewardUnlockMessage = document.getElementById("rewardUnlockMessage");
+      if (rewardUnlockMessage) {
+        rewardUnlockMessage.innerHTML = getUnlockMessageHtml(displayArchiveCount);
+      }
       rewardModal.style.display = "flex";
     }
 
@@ -4263,6 +4326,43 @@ const routeData = await fetchGoogleRoute(
       reader.readAsDataURL(file);
       resultBox.style.display = "none";
 
+      const isCameraCapture = event.target.id === "plantCameraInput";
+
+      if (isCameraCapture) {
+        photoGpsBox.innerHTML = "正在获取你当前所在位置...";
+
+        if (locationChoiceBox) {
+          locationChoiceBox.style.display = "none";
+        }
+
+        try {
+          const currentLocation = await getCurrentPositionPromise();
+          photoGpsLocation = {
+            ...currentLocation,
+            source: "camera-current-location"
+          };
+
+          photoGpsBox.innerHTML = `
+            <strong>已使用当前位置作为植物拍摄地点。</strong><br>
+            实时拍摄默认视为植物与用户处于同一位置。
+          `;
+
+          map.flyTo({
+            center: [photoGpsLocation.lng, photoGpsLocation.lat],
+            zoom: 16.8,
+            duration: 900
+          });
+        } catch (error) {
+          photoGpsLocation = null;
+          photoGpsBox.innerHTML = `
+            <strong>无法获取当前位置。</strong><br>
+            请允许浏览器定位权限，或改用“从相册选择照片”。
+          `;
+        }
+
+        return;
+      }
+
       photoGpsBox.innerHTML = "正在读取照片 GPS 信息...";
 
       const gpsLocation = await readPhotoGpsLocation(file);
@@ -4348,12 +4448,15 @@ const routeData = await fetchGoogleRoute(
             plantResult,
             archiveNumber
           });
+          const totalArchiveCountAfterClaim = getUserArchiveCount();
+          const unlockHtmlForClaim = getUnlockMessageHtml(totalArchiveCountAfterClaim);
+          const unlockMessageForClaim = getUnlockMilestoneMessage(totalArchiveCountAfterClaim);
           addContribution("点亮地图", {
             placeKey: `claim:${pendingClaim.id}`,
             placeName: pendingClaimInfo.claimName,
-            summary: `你点亮了 ${pendingClaimInfo.claimName}，此地已进入植物档案。命名权已解锁。`
+            summary: `你点亮了 ${pendingClaimInfo.claimName}，此地已进入植物档案。${unlockMessageForClaim ? unlockMessageForClaim.title + "。" : ""}`
           });
-          showRewardModal(pendingClaimInfo.claimName, archiveNumber);
+          showRewardModal(pendingClaimInfo.claimName, archiveNumber, totalArchiveCountAfterClaim);
 
           resultBox.innerHTML = `
             <strong>开荒成功。</strong><br><br>
@@ -4364,8 +4467,8 @@ const routeData = await fetchGoogleRoute(
             学名：<i>${plantResult.scientificName}</i><br>
             属：${plantResult.genus || "Unknown"}<br>
             科：${plantResult.family || "Unknown"}<br>
-            置信度：${Math.round(plantResult.score * 100)}%<br><br>
-            命名权已解锁，你现在可以为此地提交一个植物领地名。
+            置信度：${Math.round(plantResult.score * 100)}%<br>
+            ${unlockHtmlForClaim ? `<br>${unlockHtmlForClaim}` : ""}
           `;
 
           identifyBtn.disabled = true;
@@ -4393,12 +4496,15 @@ const routeData = await fetchGoogleRoute(
           plantResult,
           archiveNumber
         });
+        const totalArchiveCountAfterBoundary = getUserArchiveCount();
+        const unlockHtmlForBoundary = getUnlockMessageHtml(totalArchiveCountAfterBoundary);
+        const unlockMessageForBoundary = getUnlockMilestoneMessage(totalArchiveCountAfterBoundary);
         addContribution("点亮地图", {
           placeKey: `boundary:${matchedBoundary.id}`,
           placeName: boundaryPlaceName,
-          summary: `你点亮了 ${boundaryPlaceName}，此地已进入植物档案。命名权已解锁。`
+          summary: `你点亮了 ${boundaryPlaceName}，此地已进入植物档案。${unlockMessageForBoundary ? unlockMessageForBoundary.title + "。" : ""}`
         });
-        showRewardModal(boundaryPlaceName, archiveNumber);
+        showRewardModal(boundaryPlaceName, archiveNumber, totalArchiveCountAfterBoundary);
 
         resultBox.innerHTML = `
           <strong>开荒成功。</strong><br><br>
@@ -4409,8 +4515,8 @@ const routeData = await fetchGoogleRoute(
           学名：<i>${plantResult.scientificName}</i><br>
           属：${plantResult.genus || "Unknown"}<br>
           科：${plantResult.family || "Unknown"}<br>
-          置信度：${Math.round(plantResult.score * 100)}%<br><br>
-          命名权已解锁，你现在可以为此地提交一个植物领地名。
+          置信度：${Math.round(plantResult.score * 100)}%<br>
+          ${unlockHtmlForBoundary ? `<br>${unlockHtmlForBoundary}` : ""}
         `;
 
         identifyBtn.disabled = true;
