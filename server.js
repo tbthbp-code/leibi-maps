@@ -965,6 +965,170 @@ app.post("/identify-plant", upload.single("image"), async (req, res) => {
   }
 });
 
+// ---------- Backfill：给旧植物记录补 POWO 来源 ----------
+
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function shouldBackfillRecord(record) {
+  const scientificName = String(record.scientific_name || "").trim();
+
+  if (!scientificName || scientificName === "Unknown species") {
+    return false;
+  }
+
+  return (
+    record.origin_source === null ||
+    record.origin_source === "" ||
+    record.is_chinese === null ||
+    record.is_asian === null ||
+    record.is_uk_native === null ||
+    record.is_non_uk_native === null ||
+    record.colonisation_effective === null
+  );
+}
+
+app.get("/backfill-plant-origins", async (req, res) => {
+  try {
+    const secret = req.query.secret;
+    const expectedSecret = process.env.BACKFILL_SECRET;
+
+    if (!expectedSecret) {
+      return res.status(500).json({
+        error: "Missing BACKFILL_SECRET in Render environment variables"
+      });
+    }
+
+    if (secret !== expectedSecret) {
+      return res.status(401).json({
+        error: "Unauthorized backfill request"
+      });
+    }
+
+    const limit = Math.min(Number(req.query.limit || 10), 30);
+
+    const { data: rawRecords, error: fetchError } = await supabase
+      .from("plant_records")
+      .select(`
+        id,
+        boundary_id,
+        common_name,
+        scientific_name,
+        is_chinese,
+        is_asian,
+        is_uk_native,
+        is_non_uk_native,
+        colonisation_effective,
+        origin_source,
+        created_at
+      `)
+      .not("scientific_name", "is", null)
+      .neq("scientific_name", "")
+      .neq("scientific_name", "Unknown species")
+      .order("created_at", { ascending: true })
+      .limit(200);
+
+    if (fetchError) {
+      return res.status(500).json({
+        error: "Failed to fetch plant records",
+        detail: fetchError.message
+      });
+    }
+
+    const records = (rawRecords || [])
+      .filter(shouldBackfillRecord)
+      .slice(0, limit);
+
+    if (!records.length) {
+      return res.json({
+        done: true,
+        message: "No records need origin backfill.",
+        processed: 0,
+        results: []
+      });
+    }
+
+    const results = [];
+
+    for (const record of records) {
+      try {
+        const origin = await getPlantOriginFromPowo(record.scientific_name);
+
+        const { error: updateError } = await supabase
+          .from("plant_records")
+          .update({
+            is_chinese: origin.isChinese ?? null,
+            is_asian: origin.isAsian ?? null,
+            is_uk_native: origin.isUkNative ?? null,
+            is_non_uk_native: origin.isNonUkNative ?? null,
+            colonisation_effective: origin.colonisationEffective ?? null,
+            origin_confidence: origin.confidence || null,
+            origin_source: origin.source || "POWO",
+            origin_regions: origin.locations || [],
+            origin_taxon_remarks: origin.taxonRemarks || ""
+          })
+          .eq("id", record.id);
+
+        if (updateError) {
+          results.push({
+            id: record.id,
+            boundaryId: record.boundary_id,
+            commonName: record.common_name,
+            scientificName: record.scientific_name,
+            status: "update_failed",
+            error: updateError.message
+          });
+        } else {
+          results.push({
+            id: record.id,
+            boundaryId: record.boundary_id,
+            commonName: record.common_name,
+            scientificName: record.scientific_name,
+            status: "updated",
+            origin: {
+              isChinese: origin.isChinese,
+              isAsian: origin.isAsian,
+              isUkNative: origin.isUkNative,
+              isNonUkNative: origin.isNonUkNative,
+              colonisationEffective: origin.colonisationEffective,
+              source: origin.source,
+              confidence: origin.confidence,
+              matchedName: origin.matchedName
+            }
+          });
+        }
+
+        await delay(300);
+      } catch (itemError) {
+        results.push({
+          id: record.id,
+          boundaryId: record.boundary_id,
+          commonName: record.common_name,
+          scientificName: record.scientific_name,
+          status: "lookup_failed",
+          error: itemError.message
+        });
+      }
+    }
+
+    res.json({
+      done: false,
+      processed: results.length,
+      remainingHint:
+        "Run this endpoint again until it returns: No records need origin backfill.",
+      results
+    });
+  } catch (error) {
+    console.error("Backfill plant origins error:", error);
+
+    res.status(500).json({
+      error: "Backfill failed",
+      detail: error.message
+    });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Plant identification server running on port ${PORT}`);
 });
