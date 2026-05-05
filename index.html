@@ -1122,7 +1122,7 @@
 
       <div class="rating-line">
         <span id="panelRating" class="rating-big">4.8 ★</span>
-        <span class="rating-sub">殖民植物评分</span>
+        <span class="rating-sub">殖民评分</span>
       </div>
 
       <div class="map-action-btns">
@@ -1737,17 +1737,13 @@ async function hydratePassportOriginFromServer(item) {
           title: "评分评论功能已解锁",
           body: "你现在可以为此地提交评价了。"
         },
-        10: {
-          title: "命名权已解锁",
-          body: "你现在可以为此地提交一个植物领地名。"
-        },
         30: {
-          title: "正式改名功能已解锁",
-          body: "你现在可以把新的名字提交进入正式改名流程。"
+          title: "命名提案已解锁",
+          body: "你现在可以为此地提交命名提案，其他用户可以点赞。"
         },
         70: {
-          title: "全部功能已解锁",
-          body: "评分、评论、命名提案与正式改名现在全部开放。"
+          title: "正式改名功能已解锁",
+          body: "你现在可以把新的名字提交进入正式改名流程，等待后台审核。"
         },
         200: {
           title: "完整头衔档案已解锁",
@@ -2142,7 +2138,7 @@ async function hydratePassportOriginFromServer(item) {
       const averageText = average ? average.toFixed(1) : "--";
       const activeTab = currentPlacePanelTab === "naming" ? "naming" : "reviews";
 
-      const matchedBoundary = Array.isArray(boundaries) ? boundaries.find(boundary => {
+      const matchedBoundary = Array.isArray(boundaryLibrary) ? boundaryLibrary.find(boundary => {
         return getPlaceKey({
           kind: "boundary",
           id: boundary.id
