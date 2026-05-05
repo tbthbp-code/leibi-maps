@@ -1945,6 +1945,50 @@
       return currentLang === "zh" ? "迁移者 / 被收录者 / 领地通行证" : "Migrant / Archived / Territory Pass Holder";
     }
 
+    function getDisplayPlantIdentity(plant) {
+  const raw = String(plant.plantIdentity || "").trim();
+
+  if (!raw) {
+    return getPlantIdentityLabel(plant);
+  }
+
+  if (currentLang === "en") {
+    if (
+      raw.includes("迁移者") ||
+      raw.includes("被收录者") ||
+      raw.includes("领地通行证")
+    ) {
+      return "Migrant / Archived / Territory Pass Holder";
+    }
+
+    if (
+      raw.includes("未确认迁移者") ||
+      raw.includes("待归档者")
+    ) {
+      return "Unconfirmed Migrant / Pending Archive";
+    }
+  }
+
+  if (currentLang === "zh") {
+    if (
+      raw.includes("Migrant") ||
+      raw.includes("Archived") ||
+      raw.includes("Territory Pass Holder")
+    ) {
+      return "迁移者 / 被收录者 / 领地通行证";
+    }
+
+    if (
+      raw.includes("Unconfirmed Migrant") ||
+      raw.includes("Pending Archive")
+    ) {
+      return "未确认迁移者 / 待归档者";
+    }
+  }
+
+  return raw;
+}
+
     function normalizeOriginText(value) {
       return String(value || "").toLowerCase();
     }
@@ -2153,7 +2197,7 @@
       ${escapeHtml(t("archiveLocation"))}: ${escapeHtml(item.placeName || t("unknownPlace"))}<br>
       ${escapeHtml(t("archiveTime"))}: ${new Date(item.time).toLocaleString()}<br>
       ${escapeHtml(t("archivistStatus"))}: ${escapeHtml(rankName)}<br>
-      ${escapeHtml(t("plantStatus"))}: ${escapeHtml(item.plantIdentity || getPlantIdentityLabel(item))}<br>
+      ${escapeHtml(t("plantStatus"))}: ${escapeHtml(getDisplayPlantIdentity(item))}<br>
       <span class="muted">${escapeHtml(t("tapCard"))}</span>
     </div>
   `;
