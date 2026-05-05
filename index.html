@@ -1989,6 +1989,73 @@
   return raw;
 }
 
+
+function getDisplayArchivistStatus(item) {
+  const raw = String(item.rankName || item.archivistStatus || "").trim();
+
+  if (!raw) {
+    return currentLang === "zh" ? "植物书记员" : "Botanical Clerk";
+  }
+
+  if (currentLang === "zh") {
+    if (raw.includes("Botanical Clerk")) {
+      return "植物书记员";
+    }
+
+    if (raw.includes("Unlicensed Wanderer")) {
+      return "无证游荡者";
+    }
+
+    if (raw.includes("Archive Registrar")) {
+      return "档案登记员";
+    }
+
+    if (raw.includes("The Scrivener")) {
+      return "抄写员";
+    }
+
+    if (raw.includes("Plant Hunter")) {
+      return "植物猎人";
+    }
+
+    if (raw.includes("Licensed Witness")) {
+      return "持证见证者";
+    }
+
+    return raw;
+  }
+
+  if (currentLang === "en") {
+    if (raw.includes("植物书记员")) {
+      return "Botanical Clerk";
+    }
+
+    if (raw.includes("无证游荡者")) {
+      return "Unlicensed Wanderer";
+    }
+
+    if (raw.includes("档案登记员")) {
+      return "Archive Registrar";
+    }
+
+    if (raw.includes("抄写员")) {
+      return "The Scrivener";
+    }
+
+    if (raw.includes("植物猎人")) {
+      return "Plant Hunter";
+    }
+
+    if (raw.includes("持证见证者")) {
+      return "Licensed Witness";
+    }
+
+    return raw;
+  }
+
+  return raw;
+}
+
     function normalizeOriginText(value) {
       return String(value || "").toLowerCase();
     }
@@ -2196,7 +2263,7 @@
       ${escapeHtml(t("origin"))}: ${escapeHtml(originText)}<br>
       ${escapeHtml(t("archiveLocation"))}: ${escapeHtml(item.placeName || t("unknownPlace"))}<br>
       ${escapeHtml(t("archiveTime"))}: ${new Date(item.time).toLocaleString()}<br>
-      ${escapeHtml(t("archivistStatus"))}: ${escapeHtml(rankName)}<br>
+      ${escapeHtml(t("archivistStatus"))}: ${escapeHtml(getDisplayArchivistStatus(item))}<br>
       ${escapeHtml(t("plantStatus"))}: ${escapeHtml(getDisplayPlantIdentity(item))}<br>
       <span class="muted">${escapeHtml(t("tapCard"))}</span>
     </div>
