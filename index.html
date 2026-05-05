@@ -1127,7 +1127,7 @@
       </div>
 
       <div class="score-row">
-        <strong>Asian Botanical Presence</strong>
+        <strong>Colonisation Effectiveness</strong>
         <span id="panelAsian">--%</span>
       </div>
 
@@ -3331,7 +3331,7 @@ async function hydratePassportOriginFromServer(item) {
           await addPlantRecord(matchedBoundary.id, plantResult);
 
           fitToBoundary(matchedBoundary);
-          openPanelFromBoundary(matchedBoundary);
+          await openPanelFromBoundary(matchedBoundary);
 
           alert("已成功点亮该区域。");
           return;
@@ -3576,6 +3576,80 @@ async function hydratePassportOriginFromServer(item) {
         return 1;
       }
     }
+
+    function calculateBotanicalScoresFromRecords(records) {
+  const safeRecords = Array.isArray(records) ? records : [];
+  const total = safeRecords.length;
+
+  if (!total) {
+    return {
+      chinesePlantDensity: "--",
+      colonisationEffectiveness: "--"
+    };
+  }
+
+  const chineseCount = safeRecords.filter(record =>
+    record.isChinese === true ||
+    record.is_chinese === true
+  ).length;
+
+  const colonisationCount = safeRecords.filter(record =>
+    record.colonisationEffective === true ||
+    record.colonisation_effective === true ||
+    record.isNonUkNative === true ||
+    record.is_non_uk_native === true
+  ).length;
+
+  return {
+    chinesePlantDensity: Math.round((chineseCount / total) * 100),
+    colonisationEffectiveness: Math.round((colonisationCount / total) * 100)
+  };
+}
+
+function formatScorePercent(value) {
+  return value === "--" ? "--%" : `${value}%`;
+}
+
+async function getScoreRecordsForBoundary(boundary) {
+  if (!boundary || !boundary.id) {
+    return [];
+  }
+
+  try {
+    const boundaryRecords = await getPlantRecords(boundary.id);
+    const relatedClaims = getClaimsInsideBoundary(boundary);
+
+    const claimRecordGroups = await Promise.all(
+      relatedClaims.map(async relatedClaim => {
+        try {
+          return await getPlantRecords(relatedClaim.id);
+        } catch (error) {
+          console.warn("读取边界内 pending 植物记录失败：", relatedClaim.id, error);
+          return [];
+        }
+      })
+    );
+
+    const allRecords = [
+      ...boundaryRecords,
+      ...claimRecordGroups.flat()
+    ];
+
+    const seen = new Set();
+
+    return allRecords.filter(record => {
+      const key = record.id || `${record.scientificName}-${record.commonName}-${record.time}`;
+      if (seen.has(key)) {
+        return false;
+      }
+      seen.add(key);
+      return true;
+    });
+  } catch (error) {
+    console.warn("详情页植物评分记录读取失败：", error);
+    return [];
+  }
+}
 
     async function addPlantRecord(boundaryId, plantResult) {
       const plant = {
@@ -3844,15 +3918,18 @@ async function hydratePassportOriginFromServer(item) {
       throw new Error("没有可用的植物地点。");
     }
 
-    function openPanelFromBoundary(boundary) {
+    async function openPanelFromBoundary(boundary) {
       currentOpenedBoundaryId = boundary.id;
       document.getElementById("infoPanel").style.display = "block";
       expandInfoPanel();
+
       setCurrentActivePlace({
         kind: "boundary",
         id: boundary.id,
         name: boundary.name,
-        address: boundary.fakeName && boundary.fakeName !== boundary.name ? `曾用领地名：${boundary.fakeName}` : boundary.name,
+        address: boundary.fakeName && boundary.fakeName !== boundary.name
+          ? `曾用领地名：${boundary.fakeName}`
+          : boundary.name,
         type: boundary.type,
         lng: boundary.testPoint[0],
         lat: boundary.testPoint[1]
@@ -3871,21 +3948,45 @@ async function hydratePassportOriginFromServer(item) {
           : boundary.source;
 
       document.getElementById("panelRating").textContent = `${boundary.rating} ★`;
-      document.getElementById("panelChinese").textContent = boundary.chinesePlantPercent + "%";
-      document.getElementById("panelAsian").textContent = boundary.asianPlantPercent + "%";
+
+      document.getElementById("panelChinese").textContent =
+        boundary.chinesePlantPercent !== undefined
+          ? `${boundary.chinesePlantPercent}%`
+          : "--%";
+
+      document.getElementById("panelAsian").textContent =
+        boundary.asianPlantPercent !== undefined
+          ? `${boundary.asianPlantPercent}%`
+          : "--%";
+
       document.getElementById("panelSource").textContent = boundary.source;
 
       const tagsBox = document.getElementById("panelTags");
       tagsBox.innerHTML = "";
 
       boundary.tags.forEach(tag => {
-        tagsBox.innerHTML += `<span class="tag">${tag}</span>`;
+        tagsBox.innerHTML += `<span class="tag">${escapeHtml(tag)}</span>`;
       });
 
-      const introHtml = boundary.comments.map(comment => `<div class="review">“${escapeHtml(comment)}”</div>`).join("");
-      renderReviewsForCurrentPlace(introHtml);
+      const introHtml = boundary.comments
+        .map(comment => `<div class="review">“${escapeHtml(comment)}”</div>`)
+        .join("");
 
+      renderReviewsForCurrentPlace(introHtml);
       setActionButtonsForUnlocked();
+
+      try {
+        const records = await getScoreRecordsForBoundary(boundary);
+        const scores = calculateBotanicalScoresFromRecords(records);
+
+        document.getElementById("panelChinese").textContent =
+          formatScorePercent(scores.chinesePlantDensity);
+
+        document.getElementById("panelAsian").textContent =
+          formatScorePercent(scores.colonisationEffectiveness);
+      } catch (error) {
+        console.warn("详情页实时植物评分更新失败：", error);
+      }
     }
 
     function openPanelFromPendingClaim(claim) {
@@ -5176,9 +5277,9 @@ const routeData = await fetchGoogleRoute(
         searchInput.value = "";
         searchInput.placeholder = "搜索地点或区域 / Search places or areas...";
         hideSearchResults();
-        openPanelFromBoundary(matchedBoundary);
         const archiveNumber = await getNextArchiveNumberForPlace(matchedBoundary.id);
         await addPlantRecord(matchedBoundary.id, plantResult);
+        await openPanelFromBoundary(matchedBoundary);
         const boundaryPlaceName = matchedBoundary.name;
         addPlantPassportContribution({
           placeKey: `boundary:${matchedBoundary.id}`,
