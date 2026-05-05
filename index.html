@@ -786,6 +786,36 @@
       color: #155f4f;
     }
 
+
+    .rename-meta-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .rename-like-btn {
+      border: 1px solid #b8ded5;
+      background: #eef9f6;
+      color: #0b7f7a;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .rename-like-btn.is-liked {
+      background: #0b7f7a;
+      color: white;
+      border-color: #0b7f7a;
+    }
+
+    .review-fallback-block {
+      margin-bottom: 12px;
+    }
+
     .place-meta-tabs {
       display: flex;
       gap: 24px;
@@ -1339,12 +1369,18 @@
       const existingIndex = savedPlaces.findIndex(place => place.key === currentActivePlace.key);
 
       if (existingIndex >= 0) {
+        const shouldRemove = confirm("确定要取消保存这个地点吗？");
+        if (!shouldRemove) return;
+
         savedPlaces.splice(existingIndex, 1);
         writeLocalList(STORAGE_KEYS.savedPlaces, savedPlaces);
         savePlaceBtn.textContent = "保存";
         alert("已从保存中移除。");
         return;
       }
+
+      const shouldSave = confirm("确定要保存这个地点吗？");
+      if (!shouldSave) return;
 
       savedPlaces.unshift({
         ...currentActivePlace,
@@ -1460,19 +1496,19 @@
         {
           min: 10,
           name: "Botanical Clerk / 植物书记员",
-          permissions: "评分与评论、命名提案",
+          permissions: "评分与评论",
           description: "植物不相同，但收录的流程是相同的。"
         },
         {
           min: 30,
           name: "Assistant Claim Officer / 助理领地官",
-          permissions: "评分与评论、正式改名",
-          description: "你终于可以让名字进入正式流程了。一个被点亮的地点，若没有新的名字，总是不体面的。"
+          permissions: "评分与评论、命名提案",
+          description: "你终于可以提交命名提案了。提出名字是一回事，让地图承认又是另外一回事。"
         },
         {
           min: 70,
           name: "Territory Officer / 领地官",
-          permissions: "全部功能",
+          permissions: "评分与评论、命名提案、正式改名",
           description: "没错，你想要的不是那株植物。你想要的是它头上的编号，是地图里的秩序，秩序！"
         },
         {
@@ -1495,8 +1531,8 @@
       return {
         archiveCount,
         canReview: archiveCount >= 5,
-        canProposeName: archiveCount >= 10,
-        canApplyRename: archiveCount >= 30
+        canProposeName: archiveCount >= 30,
+        canApplyRename: archiveCount >= 70
       };
     }
 
@@ -1755,6 +1791,49 @@ async function hydratePassportOriginFromServer(item) {
       }
     }
 
+
+    async function fetchJsonSafe(url, options = null, fallback = null) {
+      try {
+        const response = await fetch(url, options || undefined);
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        return await response.json();
+      } catch (error) {
+        console.warn("API 请求失败：", url, error);
+        return fallback;
+      }
+    }
+
+    function getCurrentPlacePayload() {
+      if (!currentActivePlace) return null;
+      return {
+        placeKey: currentActivePlace.key,
+        placeId: currentActivePlace.id || "",
+        placeKind: currentActivePlace.kind || "place",
+        placeName: currentActivePlace.name || "未知地点",
+        placeAddress: currentActivePlace.address || currentActivePlace.type || ""
+      };
+    }
+
+    async function fetchRemoteReviewsForCurrentPlace() {
+      if (!currentActivePlace) return null;
+      return await fetchJsonSafe(
+        `${API_BASE_URL}/place-reviews?placeKey=${encodeURIComponent(currentActivePlace.key)}`,
+        null,
+        null
+      );
+    }
+
+    async function fetchRemoteNamingForCurrentPlace() {
+      if (!currentActivePlace) return null;
+      return await fetchJsonSafe(
+        `${API_BASE_URL}/rename-entries?placeKey=${encodeURIComponent(currentActivePlace.key)}&userId=${encodeURIComponent(CURRENT_USER_ID)}`,
+        null,
+        null
+      );
+    }
+
     function getRenameProposals() {
       return readLocalList(STORAGE_KEYS.renameProposals);
     }
@@ -1771,63 +1850,107 @@ async function hydratePassportOriginFromServer(item) {
       return getRenameApplications().filter(item => item.placeKey === placeKey);
     }
 
-    function renderNamingSectionForCurrentPlace() {
+    async function renderNamingSectionForCurrentPlace() {
       if (!currentActivePlace) {
         return "";
       }
 
       const permissions = getPermissionState();
-      const proposals = getRenameProposalsForPlace(currentActivePlace.key).map(item => ({ ...item, entryType: "proposal" }));
-      const applications = getRenameApplicationsForPlace(currentActivePlace.key).map(item => ({ ...item, entryType: "application" }));
-      const allNameEntries = [...applications, ...proposals].sort((a, b) => new Date(b.time) - new Date(a.time));
+      const remoteNaming = await fetchRemoteNamingForCurrentPlace();
+      const remoteProposals = Array.isArray(remoteNaming?.proposals) ? remoteNaming.proposals : null;
+      const remoteApplications = Array.isArray(remoteNaming?.applications) ? remoteNaming.applications : null;
+
+      const localProposals = getRenameProposalsForPlace(currentActivePlace.key);
+      const localApplications = getRenameApplicationsForPlace(currentActivePlace.key);
+
+      const proposals = (remoteProposals || localProposals).map(item => ({
+        ...item,
+        entryType: "proposal",
+        proposedName: item.proposedName || item.proposed_name,
+        likeCount: Number(item.likeCount ?? item.like_count ?? 0),
+        likedByCurrentUser: Boolean(item.likedByCurrentUser ?? item.liked_by_current_user)
+      }));
+
+      const applications = (remoteApplications || localApplications).map(item => ({
+        ...item,
+        entryType: "application",
+        proposedName: item.proposedName || item.proposed_name,
+        status: item.status || "pending"
+      }));
 
       let formHtml = "";
       if (permissions.canApplyRename) {
         formHtml = `
           <div class="review-form naming-form">
+            <strong>正式改名申请</strong><br>
+            <span class="muted">你已达到 70 次植物归档。提交后会进入后台等待审核。</span>
             <label for="formalRenameInput">新的名字</label>
             <input id="formalRenameInput" type="text" placeholder="例如：秋园 / Southern Archive / Xiang-bao Territory">
 
             <label for="formalRenameReasonInput">命名理由</label>
             <textarea id="formalRenameReasonInput" placeholder="请说明为什么这个名字应该被地图承认。"></textarea>
 
-            <button class="review-submit-btn" type="button" onclick="submitFormalRenameApplication()">提交名字</button>
+            <button class="review-submit-btn" type="button" onclick="submitFormalRenameApplication()">提交正式改名申请</button>
           </div>
         `;
       } else if (permissions.canProposeName) {
         formHtml = `
           <div class="review-form naming-form">
+            <strong>命名提案</strong><br>
+            <span class="muted">你已达到 30 次植物归档。提案会公开显示，其他用户可以点赞。</span>
             <label for="renameProposalInput">新的名字</label>
             <input id="renameProposalInput" type="text" placeholder="例如：秋园 / Southern Archive / Xiang-bao Territory">
 
             <label for="renameProposalReasonInput">命名理由</label>
             <textarea id="renameProposalReasonInput" placeholder="为什么这个地方应该获得这个名字？"></textarea>
 
-            <button class="review-submit-btn" type="button" onclick="submitRenameProposal()">提交名字</button>
+            <button class="review-submit-btn" type="button" onclick="submitRenameProposal()">提交命名提案</button>
           </div>
         `;
       } else {
         formHtml = renderLockedFeature(
           "命名提案尚未开放",
-          "完成 10 次植物归档后可使用。"
+          "完成 30 次植物归档后可提交命名提案；完成 70 次植物归档后可提交正式改名申请。"
         );
       }
 
-      const listHtml = allNameEntries.length ? allNameEntries.map(item => `
-        <div class="place-review-card rename-card">
-          <strong>${escapeHtml(item.proposedName)}</strong>
-          <span class="muted"> · ${new Date(item.time).toLocaleString()}</span><br>
-          ${escapeHtml(item.reason || "这个用户提交了名字，但没有写理由。")}
-        </div>
-      `).join("") : `<div class="empty-state">这里还没有新的名字。</div>`;
+      const proposalListHtml = proposals.length ? proposals
+        .sort((a, b) => Number(b.likeCount || 0) - Number(a.likeCount || 0) || new Date(b.time || b.createdAt || b.created_at) - new Date(a.time || a.createdAt || a.created_at))
+        .map(item => `
+          <div class="place-review-card rename-card">
+            <strong>${escapeHtml(item.proposedName || "未命名提案")}</strong>
+            <span class="muted"> · ${new Date(item.time || item.createdAt || item.created_at || Date.now()).toLocaleString()}</span><br>
+            ${escapeHtml(item.reason || "这个用户提交了名字，但没有写理由。")}
+            <div class="rename-meta-row">
+              <span class="muted">提案者：${escapeHtml(item.userRank || item.user_rank || "匿名归档者")}</span>
+              <button class="rename-like-btn ${item.likedByCurrentUser ? "is-liked" : ""}" type="button" onclick="likeRenameProposal('${escapeHtml(item.id)}')">
+                ${item.likedByCurrentUser ? "已赞" : "点赞"} · ${Number(item.likeCount || 0)}
+              </button>
+            </div>
+          </div>
+        `).join("") : `<div class="empty-state">这里还没有命名提案。</div>`;
+
+      const applicationListHtml = applications.length ? `
+        <div class="section-title">正式改名申请</div>
+        ${applications.map(item => `
+          <div class="place-review-card rename-card">
+            <strong>${escapeHtml(item.proposedName || "未命名申请")}</strong>
+            <span class="muted"> · ${new Date(item.time || item.createdAt || item.created_at || Date.now()).toLocaleString()}</span><br>
+            ${escapeHtml(item.reason || "没有填写理由。")}<br>
+            <span class="muted">状态：${escapeHtml(item.status === "approved" ? "已通过" : item.status === "rejected" ? "已驳回" : "等待审核")}</span>
+          </div>
+        `).join("")}
+      ` : "";
 
       return `
         ${formHtml}
-        ${listHtml}
+        <div class="section-title">命名提案</div>
+        ${proposalListHtml}
+        ${applicationListHtml}
       `;
     }
 
-    function submitRenameProposal() {
+    async function submitRenameProposal() {
       if (!currentActivePlace) {
         alert("请先打开一个已点亮地点。");
         return;
@@ -1835,7 +1958,7 @@ async function hydratePassportOriginFromServer(item) {
 
       const permissions = getPermissionState();
       if (!permissions.canProposeName) {
-        alert("完成 10 次植物归档后可使用。")
+        alert("完成 30 次植物归档后可提交命名提案。");
         return;
       }
 
@@ -1849,18 +1972,35 @@ async function hydratePassportOriginFromServer(item) {
         return;
       }
 
-      const proposals = getRenameProposals();
-      proposals.unshift({
-        id: `rename-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        placeKey: currentActivePlace.key,
-        placeName: currentActivePlace.name,
-        proposedName,
-        reason,
-        userId: CURRENT_USER_ID,
-        userRank: getUserRankInfo().name,
-        time: new Date().toISOString()
-      });
-      writeLocalList(STORAGE_KEYS.renameProposals, proposals);
+      const placePayload = getCurrentPlacePayload();
+      const saved = await fetchJsonSafe(`${API_BASE_URL}/rename-proposals`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...placePayload,
+          proposedName,
+          reason,
+          userId: CURRENT_USER_ID,
+          userRank: getUserRankInfo().name
+        })
+      }, null);
+
+      if (!saved) {
+        const proposals = getRenameProposals();
+        proposals.unshift({
+          id: `rename-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          placeKey: currentActivePlace.key,
+          placeName: currentActivePlace.name,
+          proposedName,
+          reason,
+          userId: CURRENT_USER_ID,
+          userRank: getUserRankInfo().name,
+          likeCount: 0,
+          likedByCurrentUser: false,
+          time: new Date().toISOString()
+        });
+        writeLocalList(STORAGE_KEYS.renameProposals, proposals);
+      }
 
       addContribution("命名提案", {
         placeKey: currentActivePlace.key,
@@ -1868,10 +2008,12 @@ async function hydratePassportOriginFromServer(item) {
         summary: `${proposedName}：${reason || "未填写理由"}`
       });
 
-      renderReviewsForCurrentPlace();
+      if (nameInput) nameInput.value = "";
+      if (reasonInput) reasonInput.value = "";
+      await renderReviewsForCurrentPlace();
     }
 
-    function submitFormalRenameApplication() {
+    async function submitFormalRenameApplication() {
       if (!currentActivePlace) {
         alert("请先打开一个已点亮地点。");
         return;
@@ -1879,7 +2021,7 @@ async function hydratePassportOriginFromServer(item) {
 
       const permissions = getPermissionState();
       if (!permissions.canApplyRename) {
-        alert("完成 30 次植物归档后可使用。")
+        alert("完成 70 次植物归档后可提交正式改名申请。");
         return;
       }
 
@@ -1893,19 +2035,34 @@ async function hydratePassportOriginFromServer(item) {
         return;
       }
 
-      const applications = getRenameApplications();
-      applications.unshift({
-        id: `formal-rename-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        placeKey: currentActivePlace.key,
-        placeName: currentActivePlace.name,
-        proposedName,
-        reason,
-        status: "pending",
-        userId: CURRENT_USER_ID,
-        userRank: getUserRankInfo().name,
-        time: new Date().toISOString()
-      });
-      writeLocalList(STORAGE_KEYS.renameApplications, applications);
+      const placePayload = getCurrentPlacePayload();
+      const saved = await fetchJsonSafe(`${API_BASE_URL}/rename-applications`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...placePayload,
+          proposedName,
+          reason,
+          userId: CURRENT_USER_ID,
+          userRank: getUserRankInfo().name
+        })
+      }, null);
+
+      if (!saved) {
+        const applications = getRenameApplications();
+        applications.unshift({
+          id: `formal-rename-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          placeKey: currentActivePlace.key,
+          placeName: currentActivePlace.name,
+          proposedName,
+          reason,
+          status: "pending",
+          userId: CURRENT_USER_ID,
+          userRank: getUserRankInfo().name,
+          time: new Date().toISOString()
+        });
+        writeLocalList(STORAGE_KEYS.renameApplications, applications);
+      }
 
       addContribution("正式改名申请", {
         placeKey: currentActivePlace.key,
@@ -1913,8 +2070,27 @@ async function hydratePassportOriginFromServer(item) {
         summary: `${proposedName}：${reason}`
       });
 
-      alert("新的名字已提交。")
-      renderReviewsForCurrentPlace();
+      if (nameInput) nameInput.value = "";
+      if (reasonInput) reasonInput.value = "";
+      alert("新的名字已提交后台，等待审核。");
+      await renderReviewsForCurrentPlace();
+    }
+
+    async function likeRenameProposal(proposalId) {
+      if (!proposalId) return;
+
+      const result = await fetchJsonSafe(`${API_BASE_URL}/rename-proposals/${encodeURIComponent(proposalId)}/like`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: CURRENT_USER_ID })
+      }, null);
+
+      if (!result) {
+        alert("点赞暂时失败。请稍后再试。");
+        return;
+      }
+
+      await renderReviewsForCurrentPlace();
     }
 
     function getReviews() {
@@ -1931,12 +2107,12 @@ async function hydratePassportOriginFromServer(item) {
       return total / reviews.length;
     }
 
-    function switchPlacePanelTab(tab) {
+    async function switchPlacePanelTab(tab) {
       currentPlacePanelTab = tab === "naming" ? "naming" : "reviews";
-      renderReviewsForCurrentPlace();
+      await renderReviewsForCurrentPlace();
     }
 
-    function renderReviewsForCurrentPlace(introHtml = "") {
+    async function renderReviewsForCurrentPlace(introHtml = "") {
       const reviewsBox = document.getElementById("panelReviews");
 
       if (!currentActivePlace) {
@@ -1945,17 +2121,45 @@ async function hydratePassportOriginFromServer(item) {
       }
 
       const permissions = getPermissionState();
-      const placeReviews = getReviewsForPlace(currentActivePlace.key);
+      const remoteReviews = await fetchRemoteReviewsForCurrentPlace();
+      const localReviews = getReviewsForPlace(currentActivePlace.key);
+      const placeReviews = Array.isArray(remoteReviews) ? remoteReviews.map(review => ({
+        id: review.id,
+        placeKey: review.placeKey || review.place_key,
+        placeName: review.placeName || review.place_name,
+        rating: Number(review.rating || 0),
+        text: review.text || "",
+        userId: review.userId || review.user_id || "",
+        time: review.time || review.createdAt || review.created_at
+      })) : localReviews;
+
+      const latestReviews = placeReviews
+        .slice()
+        .sort((a, b) => new Date(b.time || 0) - new Date(a.time || 0))
+        .slice(0, 3);
+
       const average = getAverageRating(placeReviews);
       const averageText = average ? average.toFixed(1) : "--";
       const activeTab = currentPlacePanelTab === "naming" ? "naming" : "reviews";
+
+      const fallbackReviewsHtml = introHtml
+        ? `<div class="review-fallback-block">${introHtml}</div>`
+        : `<div class="empty-state">这里还没有用户评论。地图暂时保留它原来的体面。</div>`;
+
+      const realReviewsHtml = latestReviews.length ? latestReviews.map(review => `
+        <div class="place-review-card">
+          <strong>${"★".repeat(Number(review.rating || 0))}${"☆".repeat(5 - Number(review.rating || 0))}</strong>
+          <span class="muted"> · ${new Date(review.time || Date.now()).toLocaleString()}</span><br>
+          ${escapeHtml(review.text || "这个用户只留下了评分，没有写评论。")}
+        </div>
+      `).join("") : fallbackReviewsHtml;
 
       const reviewHtml = permissions.canReview ? `
         <div class="review-summary">
           <span class="review-score-big">${averageText}</span>
           <span>殖民植物用户评分</span><br>
           <span class="muted">评分标准：这里的殖民植物越多，评分越高。</span><br>
-          <span class="muted">${placeReviews.length ? `${placeReviews.length} 条评论` : "暂无评论，成为第一个评分的人。"}</span>
+          <span class="muted">${placeReviews.length ? `显示最新 ${Math.min(3, placeReviews.length)} / ${placeReviews.length} 条用户评论` : "暂无用户评论，暂时显示系统预写评论。"}</span>
         </div>
 
         <div class="review-form">
@@ -1973,13 +2177,7 @@ async function hydratePassportOriginFromServer(item) {
           <button class="review-submit-btn" type="button" onclick="submitCurrentPlaceReview()">发布评论</button>
         </div>
 
-        ${placeReviews.map(review => `
-          <div class="place-review-card">
-            <strong>${"★".repeat(Number(review.rating || 0))}${"☆".repeat(5 - Number(review.rating || 0))}</strong>
-            <span class="muted"> · ${new Date(review.time).toLocaleString()}</span><br>
-            ${escapeHtml(review.text || "这个用户只留下了评分，没有写评论。")}
-          </div>
-        `).join("")}
+        ${realReviewsHtml}
       ` : renderLockedFeature(
         "评分和评论尚未开放",
         "完成 5 次植物归档后可使用。"
@@ -1987,10 +2185,9 @@ async function hydratePassportOriginFromServer(item) {
 
       const contentHtml = activeTab === "reviews"
         ? reviewHtml
-        : renderNamingSectionForCurrentPlace();
+        : await renderNamingSectionForCurrentPlace();
 
       reviewsBox.innerHTML = `
-        ${introHtml}
         <div class="place-meta-tabs">
           <button class="place-meta-tab ${activeTab === "reviews" ? "is-active" : ""}" type="button" onclick="switchPlacePanelTab('reviews')">评论</button>
           <button class="place-meta-tab ${activeTab === "naming" ? "is-active" : ""}" type="button" onclick="switchPlacePanelTab('naming')">命名提案</button>
@@ -2001,7 +2198,7 @@ async function hydratePassportOriginFromServer(item) {
       `;
     }
 
-    function submitCurrentPlaceReview() {
+    async function submitCurrentPlaceReview() {
       if (!currentActivePlace) {
         alert("请先打开一个已点亮地点。");
         return;
@@ -2009,7 +2206,7 @@ async function hydratePassportOriginFromServer(item) {
 
       const permissions = getPermissionState();
       if (!permissions.canReview) {
-        alert("完成 5 次植物归档后，可解锁评分与评论。");
+        alert("完成 5 次植物归档后，可解锁评分与评论。")
         return;
       }
 
@@ -2017,27 +2214,42 @@ async function hydratePassportOriginFromServer(item) {
       const textInput = document.getElementById("reviewTextInput");
       const rating = Number(ratingInput?.value || 5);
       const text = (textInput?.value || "").trim();
+      const placePayload = getCurrentPlacePayload();
 
-      const reviews = getReviews();
-      const newReview = {
-        id: `review-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        placeKey: currentActivePlace.key,
-        placeName: currentActivePlace.name,
-        rating,
-        text,
-        userId: CURRENT_USER_ID,
-        time: new Date().toISOString()
-      };
+      const saved = await fetchJsonSafe(`${API_BASE_URL}/place-reviews`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...placePayload,
+          rating,
+          text,
+          userId: CURRENT_USER_ID,
+          userRank: getUserRankInfo().name
+        })
+      }, null);
 
-      reviews.unshift(newReview);
-      writeLocalList(STORAGE_KEYS.reviews, reviews);
+      if (!saved) {
+        const reviews = getReviews();
+        reviews.unshift({
+          id: `review-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          placeKey: currentActivePlace.key,
+          placeName: currentActivePlace.name,
+          rating,
+          text,
+          userId: CURRENT_USER_ID,
+          time: new Date().toISOString()
+        });
+        writeLocalList(STORAGE_KEYS.reviews, reviews);
+      }
+
       addContribution("评论", {
         placeKey: currentActivePlace.key,
         placeName: currentActivePlace.name,
         summary: `${rating} 星：${text || "未填写文字评论"}`
       });
 
-      renderReviewsForCurrentPlace();
+      if (textInput) textInput.value = "";
+      await renderReviewsForCurrentPlace();
     }
 
     function setActiveBottomTab(activeButton) {
