@@ -1584,57 +1584,116 @@
     }
 
     function getPlantPassportHtml(item) {
-      const archiveLabel = item.archiveLabel || formatArchiveNumber(item.archiveNumber || 1);
-      const placeKey = item.placeKey || "";
-      return `
-        <div
-          class="passport-card"
-          role="button"
-          tabindex="0"
-          title="点击跳转到植物所在地"
-          onclick='openContributionPlace(${JSON.stringify(placeKey)})'
-        >
-          <div class="passport-title">
-            <span>Plant Passport / 植物护照</span>
-            <span class="passport-stamp">ARCHIVED</span>
-          </div>
-          <span class="archive-number">收录编号 ${escapeHtml(archiveLabel)}</span><br>
-          <strong>${escapeHtml(item.commonName || item.plantName || "Unknown plant")}</strong><br>
-          学名：<i>${escapeHtml(item.scientificName || "Unknown species")}</i><br>
-          归档地点：${escapeHtml(item.placeName || "未知地点")}<br>
-          归档时间：${new Date(item.time).toLocaleString()}<br>
-          归档者身份：${escapeHtml(getUserRankInfo().name)}<br>
-          植物身份：${escapeHtml(item.plantIdentity || "迁移者 / 被收录者 / 领地通行证")}<br>
-          ${getPlantOriginLineHtml(item)}<br>
-          <span class="muted">点击这张名片可跳转到植物所在地。</span>
-        </div>
-      `;
-    }
+  const archiveLabel = item.archiveLabel || formatArchiveNumber(item.archiveNumber || 1);
+  const placeKey = item.placeKey || "";
+  const originText = getPlantOriginLabel(item);
+
+  return `
+    <div
+      class="passport-card"
+      role="button"
+      tabindex="0"
+      title="点击跳转到植物所在地"
+      onclick='openContributionPlace(${JSON.stringify(placeKey)})'
+    >
+      <div class="passport-title">
+        <span>Plant Passport / 植物护照</span>
+        <span class="passport-stamp">ARCHIVED</span>
+      </div>
+      <span class="archive-number">收录编号 ${escapeHtml(archiveLabel)}</span><br>
+      <strong>${escapeHtml(item.commonName || item.plantName || "Unknown plant")}</strong><br>
+      学名：<i>${escapeHtml(item.scientificName || "Unknown species")}</i><br>
+      来源：${escapeHtml(originText)}<br>
+      归档地点：${escapeHtml(item.placeName || "未知地点")}<br>
+      归档时间：${new Date(item.time).toLocaleString()}<br>
+      归档者身份：${escapeHtml(getUserRankInfo().name)}<br>
+      植物身份：${escapeHtml(item.plantIdentity || "迁移者 / 被收录者 / 领地通行证")}<br>
+      <span class="muted">点击这张名片可跳转到植物所在地。</span>
+    </div>
+  `;
+}
 
     function addPlantPassportContribution({ placeKey, placeName, plantResult, archiveNumber }) {
-      const archiveLabel = formatArchiveNumber(archiveNumber);
-      addContribution("植物护照", {
-        passport: true,
-        placeKey,
-        placeName,
-        archiveNumber,
-        archiveLabel,
-        commonName: plantResult.commonName || "Unknown plant",
-        scientificName: plantResult.scientificName || "Unknown species",
-        genus: plantResult.genus || "Unknown",
-        family: plantResult.family || "Unknown",
-        origin: plantResult.origin || null,
-        isChinese: plantResult.isChinese ?? plantResult.origin?.isChinese ?? null,
-        isAsian: plantResult.isAsian ?? plantResult.origin?.isAsian ?? null,
-        isUkNative: plantResult.isUkNative ?? plantResult.origin?.isUkNative ?? null,
-        isNonUkNative: plantResult.isNonUkNative ?? plantResult.origin?.isNonUkNative ?? null,
-        colonisationEffective: plantResult.colonisationEffective ?? plantResult.origin?.colonisationEffective ?? null,
-        originRegions: plantResult.origin?.locations || plantResult.originRegions || [],
-        originTaxonRemarks: plantResult.origin?.taxonRemarks || plantResult.originTaxonRemarks || "",
-        plantIdentity: getPlantIdentityLabel(plantResult),
-        summary: `收录编号 ${archiveLabel}：${plantResult.commonName || "Unknown plant"} · 来自：${getPlantOriginLabel(plantResult)}`
-      });
-    }
+  const archiveLabel = formatArchiveNumber(archiveNumber);
+  const originText = getPlantOriginLabel(plantResult);
+
+  addContribution("植物护照", {
+    passport: true,
+    placeKey,
+    placeName,
+    archiveNumber,
+    archiveLabel,
+    commonName: plantResult.commonName || "Unknown plant",
+    scientificName: plantResult.scientificName || "Unknown species",
+    genus: plantResult.genus || "Unknown",
+    family: plantResult.family || "Unknown",
+
+    origin: plantResult.origin || null,
+    isChinese: plantResult.isChinese ?? plantResult.origin?.isChinese ?? null,
+    isAsian: plantResult.isAsian ?? plantResult.origin?.isAsian ?? null,
+    isUkNative: plantResult.isUkNative ?? plantResult.origin?.isUkNative ?? null,
+    isNonUkNative: plantResult.isNonUkNative ?? plantResult.origin?.isNonUkNative ?? null,
+    colonisationEffective: plantResult.colonisationEffective ?? plantResult.origin?.colonisationEffective ?? null,
+    originRegions: plantResult.originRegions || plantResult.origin?.locations || [],
+    originTaxonRemarks: plantResult.originTaxonRemarks || plantResult.origin?.taxonRemarks || "",
+
+    plantIdentity: getPlantIdentityLabel(plantResult),
+    summary: `收录编号 ${archiveLabel}：${plantResult.commonName || "Unknown plant"} · 来自：${originText}`
+  });
+}
+
+function getPlaceIdFromPassportKey(placeKey) {
+  if (!placeKey) return "";
+  if (placeKey.startsWith("boundary:")) return placeKey.replace("boundary:", "");
+  if (placeKey.startsWith("claim:")) return placeKey.replace("claim:", "");
+  return placeKey;
+}
+
+async function hydratePassportOriginFromServer(item) {
+  if (!(item.passport || item.type === "植物护照")) return item;
+
+  const currentOrigin = getPlantOriginLabel(item);
+  if (currentOrigin && currentOrigin !== "来源待审") {
+    return item;
+  }
+
+  const placeId = getPlaceIdFromPassportKey(item.placeKey || "");
+  if (!placeId) return item;
+
+  try {
+    const records = await getPlantRecords(placeId);
+
+    const targetScientific = String(item.scientificName || "").toLowerCase().trim();
+    const targetCommon = String(item.commonName || item.plantName || "").toLowerCase().trim();
+
+    const matchedRecord = records.find(record => {
+      const recordScientific = String(record.scientificName || "").toLowerCase().trim();
+      const recordCommon = String(record.commonName || "").toLowerCase().trim();
+
+      return (
+        (targetScientific && recordScientific && targetScientific === recordScientific) ||
+        (targetCommon && recordCommon && targetCommon === recordCommon)
+      );
+    });
+
+    if (!matchedRecord) return item;
+
+    return {
+      ...item,
+      origin: matchedRecord.origin || item.origin || null,
+      isChinese: matchedRecord.isChinese ?? item.isChinese ?? null,
+      isAsian: matchedRecord.isAsian ?? item.isAsian ?? null,
+      isUkNative: matchedRecord.isUkNative ?? item.isUkNative ?? null,
+      isNonUkNative: matchedRecord.isNonUkNative ?? item.isNonUkNative ?? null,
+      colonisationEffective: matchedRecord.colonisationEffective ?? item.colonisationEffective ?? null,
+      originRegions: matchedRecord.originRegions || item.originRegions || [],
+      originTaxonRemarks: matchedRecord.originTaxonRemarks || item.originTaxonRemarks || ""
+    };
+  } catch (error) {
+    console.warn("植物护照来源同步失败：", error);
+    return item;
+  }
+}
 
     function getUnlockMilestoneMessage(archiveCount) {
       const milestones = {
@@ -2147,39 +2206,39 @@
     }
 
     async function showContributionsPanel() {
-      const contributions = readLocalList(STORAGE_KEYS.contributions);
-      const rank = getUserRankInfo(contributions);
-      const passportCount = rank.archiveCount;
-      const lightCount = rank.lightCount;
-      const commentCount = rank.commentCount;
+  const contributions = readLocalList(STORAGE_KEYS.contributions);
+  const rank = getUserRankInfo(contributions);
+  const passportCount = rank.archiveCount;
+  const lightCount = rank.lightCount;
+  const commentCount = rank.commentCount;
 
-      let hydratedContributions = contributions;
+  let hydratedContributions = contributions;
 
-      if (contributions.some(item => item.passport || item.type === "植物护照")) {
-        hydratedContributions = await Promise.all(
-          contributions.map(item => hydratePassportOriginFromServer(item))
-        );
-        writeLocalList(STORAGE_KEYS.contributions, hydratedContributions.slice(0, 80));
-      }
+  if (contributions.some(item => item.passport || item.type === "植物护照")) {
+    hydratedContributions = await Promise.all(
+      contributions.map(item => hydratePassportOriginFromServer(item))
+    );
+    writeLocalList(STORAGE_KEYS.contributions, hydratedContributions.slice(0, 80));
+  }
 
-      const html = hydratedContributions.length ? hydratedContributions.map(item => {
-        if (item.passport || item.type === "植物护照") {
-          return getPlantPassportHtml(item);
-        }
-
-        return `
-          <div class="contribution-card">
-            <strong>${escapeHtml(item.type || "贡献")}</strong> · ${escapeHtml(item.placeName || "未知地点")}<br>
-            <span class="muted">${new Date(item.time).toLocaleString()}</span><br>
-            ${escapeHtml(item.summary || "已记录一次贡献。")}
-          </div>
-        `;
-      }).join("") : `
-        <div class="empty-state">这里会记录你上传的植物图片、发布的评论、点亮过的地图区域。第一份植物归档会在这里生成一张 Plant Passport。</div>
-      `;
-
-      openBottomSheet("贡献", html);
+  const html = hydratedContributions.length ? hydratedContributions.map(item => {
+    if (item.passport || item.type === "植物护照") {
+      return getPlantPassportHtml(item);
     }
+
+    return `
+      <div class="contribution-card">
+        <strong>${escapeHtml(item.type || "贡献")}</strong> · ${escapeHtml(item.placeName || "未知地点")}<br>
+        <span class="muted">${new Date(item.time).toLocaleString()}</span><br>
+        ${escapeHtml(item.summary || "已记录一次贡献。")}
+      </div>
+    `;
+  }).join("") : `
+    <div class="empty-state">这里会记录你上传的植物图片、发布的评论、点亮过的地图区域。第一份植物归档会在这里生成一张 Plant Passport。</div>
+  `;
+
+  openBottomSheet("贡献", html);
+}
 
     function getNearbyPlacesToCheck() {
       return [
