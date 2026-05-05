@@ -1024,6 +1024,14 @@
       box-shadow: 0 4px 14px rgba(21, 122, 99, 0.16);
     }
 
+    .plant-origin-line {
+      display: inline-block;
+      margin-top: 4px;
+      color: #176b57;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
     @media (max-width: 700px) {
       .search-results {
         top: 112px;
@@ -1394,6 +1402,41 @@
       return "迁移者 / 被收录者 / 领地通行证";
     }
 
+    function normalizeOriginText(value) {
+      return String(value || "").toLowerCase();
+    }
+
+    function getPlantOriginLabel(plant) {
+      if (!plant) return "来源待审";
+
+      const origin = plant.origin || {};
+      const regions = plant.originRegions || plant.origin_regions || origin.locations || [];
+      const remarks = plant.originTaxonRemarks || plant.origin_taxon_remarks || origin.taxonRemarks || "";
+      const combinedText = normalizeOriginText(JSON.stringify(regions)) + " " + normalizeOriginText(remarks);
+
+      const isChinese = plant.isChinese === true || plant.is_chinese === true || origin.isChinese === true;
+      const isAsian = plant.isAsian === true || plant.is_asian === true || origin.isAsian === true;
+      const isUkNative = plant.isUkNative === true || plant.is_uk_native === true || origin.isUkNative === true;
+      const isNonUkNative = plant.isNonUkNative === true || plant.is_non_uk_native === true || origin.isNonUkNative === true;
+
+      if (isChinese || combinedText.includes("china") || combinedText.includes("chinese")) return "中国";
+      if (combinedText.includes("japan") || combinedText.includes("jap_")) return "日本";
+      if (combinedText.includes("korea") || combinedText.includes("kor_")) return "朝鲜半岛";
+      if (combinedText.includes("taiwan")) return "台湾";
+      if (combinedText.includes("india")) return "印度";
+      if (combinedText.includes("vietnam")) return "越南";
+      if (combinedText.includes("thailand")) return "泰国";
+      if (isAsian || combinedText.includes("asia") || combinedText.includes("malesia") || combinedText.includes("indochina")) return "亚洲";
+      if (isNonUkNative) return "非英国本土";
+      if (isUkNative) return "英国本土";
+
+      return "来源待审";
+    }
+
+    function getPlantOriginLineHtml(plant) {
+      return `<span class="plant-origin-line">来自：${escapeHtml(getPlantOriginLabel(plant))}</span>`;
+    }
+
     function getUserRankLevels() {
       return [
         {
@@ -1562,6 +1605,7 @@
           归档时间：${new Date(item.time).toLocaleString()}<br>
           归档者身份：${escapeHtml(getUserRankInfo().name)}<br>
           植物身份：${escapeHtml(item.plantIdentity || "迁移者 / 被收录者 / 领地通行证")}<br>
+          ${getPlantOriginLineHtml(item)}<br>
           <span class="muted">点击这张名片可跳转到植物所在地。</span>
         </div>
       `;
@@ -1579,8 +1623,16 @@
         scientificName: plantResult.scientificName || "Unknown species",
         genus: plantResult.genus || "Unknown",
         family: plantResult.family || "Unknown",
+        origin: plantResult.origin || null,
+        isChinese: plantResult.isChinese ?? plantResult.origin?.isChinese ?? null,
+        isAsian: plantResult.isAsian ?? plantResult.origin?.isAsian ?? null,
+        isUkNative: plantResult.isUkNative ?? plantResult.origin?.isUkNative ?? null,
+        isNonUkNative: plantResult.isNonUkNative ?? plantResult.origin?.isNonUkNative ?? null,
+        colonisationEffective: plantResult.colonisationEffective ?? plantResult.origin?.colonisationEffective ?? null,
+        originRegions: plantResult.origin?.locations || plantResult.originRegions || [],
+        originTaxonRemarks: plantResult.origin?.taxonRemarks || plantResult.originTaxonRemarks || "",
         plantIdentity: getPlantIdentityLabel(plantResult),
-        summary: `收录编号 ${archiveLabel}：${plantResult.commonName || "Unknown plant"}`
+        summary: `收录编号 ${archiveLabel}：${plantResult.commonName || "Unknown plant"} · 来自：${getPlantOriginLabel(plantResult)}`
       });
     }
 
@@ -2049,14 +2101,68 @@
       openBottomSheet("我", rankHtml + savedHtml);
     }
 
-    function showContributionsPanel() {
+    function getPlaceIdFromPassportKey(placeKey) {
+      if (!placeKey) return "";
+      if (placeKey.startsWith("boundary:")) return placeKey.replace("boundary:", "");
+      if (placeKey.startsWith("claim:")) return placeKey.replace("claim:", "");
+      return "";
+    }
+
+    async function hydratePassportOriginFromServer(item) {
+      if (!(item.passport || item.type === "植物护照")) return item;
+      if (getPlantOriginLabel(item) !== "来源待审") return item;
+
+      const placeId = getPlaceIdFromPassportKey(item.placeKey || "");
+      if (!placeId) return item;
+
+      try {
+        const records = await getPlantRecords(placeId);
+        const targetScientific = String(item.scientificName || "").toLowerCase().trim();
+        const targetCommon = String(item.commonName || item.plantName || "").toLowerCase().trim();
+
+        const matchedRecord = records.find(record => {
+          const recordScientific = String(record.scientificName || "").toLowerCase().trim();
+          const recordCommon = String(record.commonName || "").toLowerCase().trim();
+          return (targetScientific && recordScientific && targetScientific === recordScientific) ||
+            (targetCommon && recordCommon && targetCommon === recordCommon);
+        });
+
+        if (!matchedRecord) return item;
+
+        return {
+          ...item,
+          origin: matchedRecord.origin || item.origin || null,
+          isChinese: matchedRecord.isChinese ?? item.isChinese ?? null,
+          isAsian: matchedRecord.isAsian ?? item.isAsian ?? null,
+          isUkNative: matchedRecord.isUkNative ?? item.isUkNative ?? null,
+          isNonUkNative: matchedRecord.isNonUkNative ?? item.isNonUkNative ?? null,
+          colonisationEffective: matchedRecord.colonisationEffective ?? item.colonisationEffective ?? null,
+          originRegions: matchedRecord.originRegions || item.originRegions || [],
+          originTaxonRemarks: matchedRecord.originTaxonRemarks || item.originTaxonRemarks || ""
+        };
+      } catch (error) {
+        console.warn("植物护照来源同步失败：", error);
+        return item;
+      }
+    }
+
+    async function showContributionsPanel() {
       const contributions = readLocalList(STORAGE_KEYS.contributions);
       const rank = getUserRankInfo(contributions);
       const passportCount = rank.archiveCount;
       const lightCount = rank.lightCount;
       const commentCount = rank.commentCount;
 
-      const html = contributions.length ? contributions.map(item => {
+      let hydratedContributions = contributions;
+
+      if (contributions.some(item => item.passport || item.type === "植物护照")) {
+        hydratedContributions = await Promise.all(
+          contributions.map(item => hydratePassportOriginFromServer(item))
+        );
+        writeLocalList(STORAGE_KEYS.contributions, hydratedContributions.slice(0, 80));
+      }
+
+      const html = hydratedContributions.length ? hydratedContributions.map(item => {
         if (item.passport || item.type === "植物护照") {
           return getPlantPassportHtml(item);
         }
@@ -3414,12 +3520,19 @@
 
     async function addPlantRecord(boundaryId, plantResult) {
       const plant = {
+        ...plantResult,
         commonName: plantResult.commonName || "Unknown plant",
         scientificName: plantResult.scientificName || "Unknown species",
         genus: plantResult.genus || "Unknown",
         family: plantResult.family || "Unknown",
         score: plantResult.score || 0,
-        imageUrl: plantResult.imageUrl || ""
+        imageUrl: plantResult.imageUrl || "",
+        origin: plantResult.origin || null,
+        isChinese: plantResult.isChinese ?? plantResult.origin?.isChinese ?? null,
+        isAsian: plantResult.isAsian ?? plantResult.origin?.isAsian ?? null,
+        isUkNative: plantResult.isUkNative ?? plantResult.origin?.isUkNative ?? null,
+        isNonUkNative: plantResult.isNonUkNative ?? plantResult.origin?.isNonUkNative ?? null,
+        colonisationEffective: plantResult.colonisationEffective ?? plantResult.origin?.colonisationEffective ?? null
       };
 
       const response = await fetch(`${API_BASE_URL}/plant-records`, {
@@ -4319,6 +4432,7 @@ const routeData = await fetchGoogleRoute(
               学名：<i>${plant.scientificName}</i><br>
               属：${plant.genus}<br>
               科：${plant.family}<br>
+              ${getPlantOriginLineHtml(plant)}<br>
               置信度：${Math.round(plant.score * 100)}%<br>
               记录时间：${plant.time}<br>
               ${canDelete
@@ -4983,6 +5097,7 @@ const routeData = await fetchGoogleRoute(
             学名：<i>${plantResult.scientificName}</i><br>
             属：${plantResult.genus || "Unknown"}<br>
             科：${plantResult.family || "Unknown"}<br>
+            ${getPlantOriginLineHtml(plantResult)}<br>
             置信度：${Math.round(plantResult.score * 100)}%<br>
             ${unlockHtmlForClaim ? `<br>${unlockHtmlForClaim}` : ""}
           `;
@@ -5031,6 +5146,7 @@ const routeData = await fetchGoogleRoute(
           学名：<i>${plantResult.scientificName}</i><br>
           属：${plantResult.genus || "Unknown"}<br>
           科：${plantResult.family || "Unknown"}<br>
+          ${getPlantOriginLineHtml(plantResult)}<br>
           置信度：${Math.round(plantResult.score * 100)}%<br>
           ${unlockHtmlForBoundary ? `<br>${unlockHtmlForBoundary}` : ""}
         `;
