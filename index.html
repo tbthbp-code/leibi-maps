@@ -2058,7 +2058,9 @@
 
     function getUserRankInfo(contributions = readLocalList(STORAGE_KEYS.contributions)) {
       const archiveCount = getUserArchiveCount(contributions);
-      const lightCount = contributions.filter(item => item.type === "点亮地图").length;
+      const lightCount = contributions.filter(item =>
+       item.type === "点亮地图" || item.type === "claim" || item.contributionKind === "claim"
+      ).length;
       const commentCount = contributions.filter(item => item.type === "评论").length;
       const levels = getUserRankLevels();
 
@@ -2151,7 +2153,7 @@
       ${escapeHtml(t("archiveLocation"))}: ${escapeHtml(item.placeName || t("unknownPlace"))}<br>
       ${escapeHtml(t("archiveTime"))}: ${new Date(item.time).toLocaleString()}<br>
       ${escapeHtml(t("archivistStatus"))}: ${escapeHtml(rankName)}<br>
-      ${escapeHtml(t("plantStatus"))}: ${escapeHtml(item.plantIdentity || (currentLang === "zh" ? "迁移者 / 被收录者 / 领地通行证" : "Migrant / Archived / Territory Pass Holder"))}<br>
+      ${escapeHtml(t("plantStatus"))}: ${escapeHtml(item.plantIdentity || getPlantIdentityLabel(item))}<br>
       <span class="muted">${escapeHtml(t("tapCard"))}</span>
     </div>
   `;
@@ -2960,6 +2962,44 @@ async function hydratePassportOriginFromServer(item) {
       }
     }
 
+    function getContributionTypeLabel(item) {
+  if (item.contributionKind === "claim" || item.type === "claim" || item.type === "点亮地图") {
+    return currentLang === "en" ? "Claimed Place" : "点亮地图";
+  }
+
+  if (item.type === "评论") {
+    return currentLang === "en" ? "Review" : "评论";
+  }
+
+  if (item.type === "植物护照" || item.type === "上传植物") {
+    return currentLang === "en" ? "Plant Passport" : "植物护照";
+  }
+
+  return item.type || t("contribute");
+}
+
+function getContributionSummary(item) {
+  if (item.contributionKind === "claim" || item.type === "claim" || item.type === "点亮地图") {
+    const placeName = item.placeName || item.name || t("unknownPlace");
+
+    const base = currentLang === "en"
+      ? `${placeName} has been claimed. This place has entered the botanical archive.`
+      : `你点亮了 ${placeName}，此地已进入植物档案。`;
+
+    if (item.unlockTitle) {
+      return `${base} ${item.unlockTitle}${currentLang === "en" ? "." : "。"}`;
+    }
+
+    return base;
+  }
+
+  if (item.summary) {
+    return item.summary;
+  }
+
+  return currentLang === "en" ? "One contribution recorded." : "已记录一次贡献。";
+}
+
     async function showContributionsPanel() {
   const contributions = readLocalList(STORAGE_KEYS.contributions);
   const rank = getUserRankInfo(contributions);
@@ -2982,12 +3022,13 @@ async function hydratePassportOriginFromServer(item) {
     }
 
     return `
-      <div class="contribution-card">
-        <strong>${escapeHtml(item.type || t("contribute"))}</strong> · ${escapeHtml(item.placeName || t("unknownPlace"))}<br>
-        <span class="muted">${new Date(item.time).toLocaleString()}</span><br>
-        ${escapeHtml(item.summary || (currentLang === "zh" ? "已记录一次贡献。" : "One contribution recorded."))}
-      </div>
-    `;
+  <div class="contribution-card">
+    <strong>${escapeHtml(getContributionTypeLabel(item))}</strong> · ${escapeHtml(item.placeName || t("unknownPlace"))}<br>
+    <span class="muted">${new Date(item.time).toLocaleString()}</span><br>
+    ${escapeHtml(getContributionSummary(item))}
+  </div>
+`;
+
   }).join("") : `
     <div class="empty-state">${escapeHtml(currentLang === "zh" ? "这里会记录你上传的植物图片、发布的评论、点亮过的地图区域。第一份植物归档会在这里生成一张植物护照。" : "This area records your uploaded plant photos, posted reviews, and claimed map areas. Your first plant archive will generate a Plant Passport.")}</div>
   `;
@@ -6003,11 +6044,12 @@ const routeData = await fetchGoogleRoute(
           const totalArchiveCountAfterClaim = getUserArchiveCount();
           const unlockHtmlForClaim = getUnlockMessageHtml(totalArchiveCountAfterClaim);
           const unlockMessageForClaim = getUnlockMilestoneMessage(totalArchiveCountAfterClaim);
-          addContribution("点亮地图", {
-            placeKey: `claim:${pendingClaim.id}`,
-            placeName: pendingClaimInfo.claimName,
-            summary: `你点亮了 ${pendingClaimInfo.claimName}，此地已进入植物档案。${unlockMessageForClaim ? unlockMessageForClaim.title + "。" : ""}`
-          });
+          addContribution("claim", {
+  placeKey: `claim:${pendingClaim.id}`,
+  placeName: pendingClaimInfo.claimName,
+  contributionKind: "claim",
+  unlockTitle: unlockMessageForClaim ? unlockMessageForClaim.title : ""
+});
           showRewardModal(pendingClaimInfo.claimName, archiveNumber, totalArchiveCountAfterClaim);
 
           resultBox.innerHTML = `
@@ -6052,11 +6094,12 @@ const routeData = await fetchGoogleRoute(
         const totalArchiveCountAfterBoundary = getUserArchiveCount();
         const unlockHtmlForBoundary = getUnlockMessageHtml(totalArchiveCountAfterBoundary);
         const unlockMessageForBoundary = getUnlockMilestoneMessage(totalArchiveCountAfterBoundary);
-        addContribution("点亮地图", {
-          placeKey: `boundary:${matchedBoundary.id}`,
-          placeName: boundaryPlaceName,
-          summary: `你点亮了 ${boundaryPlaceName}，此地已进入植物档案。${unlockMessageForBoundary ? unlockMessageForBoundary.title + "。" : ""}`
-        });
+        addContribution("claim", {
+  placeKey: `boundary:${matchedBoundary.id}`,
+  placeName: boundaryPlaceName,
+  contributionKind: "claim",
+  unlockTitle: unlockMessageForBoundary ? unlockMessageForBoundary.title : ""
+});
         showRewardModal(boundaryPlaceName, archiveNumber, totalArchiveCountAfterBoundary);
 
         resultBox.innerHTML = `
