@@ -978,15 +978,15 @@ function shouldBackfillRecord(record) {
     return false;
   }
 
-  return (
-    record.origin_source === null ||
-    record.origin_source === "" ||
-    record.is_chinese === null ||
-    record.is_asian === null ||
-    record.is_uk_native === null ||
-    record.is_non_uk_native === null ||
-    record.colonisation_effective === null
-  );
+  const originSource = String(record.origin_source || "").trim();
+  const originConfidence = String(record.origin_confidence || "").trim();
+
+  // 已经查过 POWO 的，不管结果是 prototype-estimate、not-found、未找到，都不要反复查
+  if (originSource || originConfidence) {
+    return false;
+  }
+
+  return true;
 }
 
 app.get("/backfill-plant-origins", async (req, res) => {
@@ -1021,6 +1021,7 @@ app.get("/backfill-plant-origins", async (req, res) => {
         is_non_uk_native,
         colonisation_effective,
         origin_source,
+        origin_confidence,
         created_at
       `)
       .not("scientific_name", "is", null)
