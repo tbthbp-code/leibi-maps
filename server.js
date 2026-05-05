@@ -19,16 +19,116 @@ const upload = multer({ storage: multer.memoryStorage() });
 app.use(cors());
 app.use(express.json());
 
-const PORT = process.env.PORT || 3000;
-
-// ---------- 测试接口 ----------
-
+// ---------- 测试 ----------
 app.get("/test-route", (req, res) => {
   res.json({ ok: true, message: "test route works" });
 });
 
-// ---------- 已点亮正式区域 ----------
+// ---------- Google Routes：路线 ----------
+app.get("/google-route", async (req, res) => {
+  try {
+    const apiKey = process.env.GOOGLE_PLACES_API_KEY;
 
+    if (!apiKey) {
+      return res.status(500).json({
+        error: ".env 文件中缺少 GOOGLE_PLACES_API_KEY"
+      });
+    }
+
+    const { fromLat, fromLng, toLat, toLng, mode = "WALK" } = req.query;
+
+    if (!fromLat || !fromLng || !toLat || !toLng) {
+      return res.status(400).json({ error: "缺少路线坐标参数" });
+    }
+
+    const travelModeMap = {
+      WALK: "WALK",
+      WALKING: "WALK",
+      步行: "WALK",
+      BICYCLE: "BICYCLE",
+      BICYCLING: "BICYCLE",
+      骑行: "BICYCLE",
+      自行车: "BICYCLE",
+      DRIVE: "DRIVE",
+      DRIVING: "DRIVE",
+      自驾: "DRIVE",
+      开车: "DRIVE",
+      TRANSIT: "TRANSIT",
+      公交: "TRANSIT",
+      公共交通: "TRANSIT"
+    };
+
+    const travelMode = travelModeMap[mode] || "WALK";
+
+    const body = {
+      origin: {
+        location: {
+          latLng: {
+            latitude: Number(fromLat),
+            longitude: Number(fromLng)
+          }
+        }
+      },
+      destination: {
+        location: {
+          latLng: {
+            latitude: Number(toLat),
+            longitude: Number(toLng)
+          }
+        }
+      },
+      travelMode,
+      computeAlternativeRoutes: false,
+      languageCode: "zh-CN",
+      units: "METRIC"
+    };
+
+    if (travelMode === "DRIVE") {
+      body.routingPreference = "TRAFFIC_AWARE";
+    }
+
+    const response = await fetch(
+      "https://routes.googleapis.com/directions/v2:computeRoutes",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-Api-Key": apiKey,
+          "X-Goog-FieldMask":
+            "routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline"
+        },
+        body: JSON.stringify(body)
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return res.status(response.status).json({
+        error: "Google Routes API error",
+        detail: data
+      });
+    }
+
+    const route = data.routes?.[0];
+
+    if (!route) {
+      return res.status(404).json({ error: "没有找到路线" });
+    }
+
+    res.json({
+      mode: travelMode,
+      duration: route.duration,
+      distanceMeters: route.distanceMeters,
+      encodedPolyline: route.polyline?.encodedPolyline
+    });
+  } catch (error) {
+    console.error("Google route error:", error);
+    res.status(500).json({ error: error.message || "路线接口失败" });
+  }
+});
+
+// ---------- 已点亮正式区域 ----------
 app.get("/unlocked-boundaries", async (req, res) => {
   const { data, error } = await supabase
     .from("unlocked_boundaries")
@@ -51,10 +151,7 @@ app.post("/unlocked-boundaries", async (req, res) => {
 
   const { data, error } = await supabase
     .from("unlocked_boundaries")
-    .upsert(
-      { boundary_id: boundaryId },
-      { onConflict: "boundary_id" }
-    )
+    .upsert({ boundary_id: boundaryId }, { onConflict: "boundary_id" })
     .select()
     .single();
 
@@ -62,14 +159,10 @@ app.post("/unlocked-boundaries", async (req, res) => {
     return res.status(500).json({ error: error.message });
   }
 
-  res.json({
-    boundaryId: data.boundary_id,
-    unlockedAt: data.unlocked_at
-  });
+  res.json({ boundaryId: data.boundary_id, unlockedAt: data.unlocked_at });
 });
 
 // ---------- Pending claims：未知区域临时点亮 ----------
-
 app.get("/pending-claims", async (req, res) => {
   const { data, error } = await supabase
     .from("pending_claims")
@@ -125,7 +218,6 @@ app.post("/pending-claims", async (req, res) => {
 });
 
 // ---------- 植物记录 ----------
-
 app.get("/plant-records/:boundaryId", async (req, res) => {
   const { boundaryId } = req.params;
 
@@ -244,7 +336,6 @@ app.post("/plant-records", async (req, res) => {
 });
 
 // 只能删除自己上传的植物
-
 app.delete("/plant-records/:boundaryId/:recordId", async (req, res) => {
   const { boundaryId, recordId } = req.params;
   const { userId } = req.query;
@@ -267,8 +358,7 @@ app.delete("/plant-records/:boundaryId/:recordId", async (req, res) => {
   res.json({ success: true });
 });
 
-// ---------- 图片上传 ----------
-
+// ---------- 植物识别 + 图片上传 ----------
 async function uploadPlantPhotoToSupabase(file) {
   const fileExt = file.originalname?.split(".").pop() || "jpg";
   const fileName = `plant-${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
@@ -292,129 +382,7 @@ async function uploadPlantPhotoToSupabase(file) {
   return data.publicUrl;
 }
 
-// ---------- Google Routes ----------
-
-app.get("/google-route", async (req, res) => {
-  try {
-    const apiKey = process.env.GOOGLE_PLACES_API_KEY;
-
-    if (!apiKey) {
-      return res.status(500).json({
-        error: ".env 文件中缺少 GOOGLE_PLACES_API_KEY"
-      });
-    }
-
-    const {
-      fromLat,
-      fromLng,
-      toLat,
-      toLng,
-      mode = "WALK"
-    } = req.query;
-
-    if (!fromLat || !fromLng || !toLat || !toLng) {
-      return res.status(400).json({
-        error: "缺少路线坐标参数"
-      });
-    }
-
-    const travelModeMap = {
-      WALK: "WALK",
-      WALKING: "WALK",
-      步行: "WALK",
-
-      BICYCLE: "BICYCLE",
-      BICYCLING: "BICYCLE",
-      骑行: "BICYCLE",
-      自行车: "BICYCLE",
-
-      DRIVE: "DRIVE",
-      DRIVING: "DRIVE",
-      自驾: "DRIVE",
-      开车: "DRIVE",
-
-      TRANSIT: "TRANSIT",
-      公交: "TRANSIT",
-      公共交通: "TRANSIT"
-    };
-
-    const travelMode = travelModeMap[mode] || "WALK";
-
-    const body = {
-      origin: {
-        location: {
-          latLng: {
-            latitude: Number(fromLat),
-            longitude: Number(fromLng)
-          }
-        }
-      },
-      destination: {
-        location: {
-          latLng: {
-            latitude: Number(toLat),
-            longitude: Number(toLng)
-          }
-        }
-      },
-      travelMode,
-      computeAlternativeRoutes: false,
-      languageCode: "zh-CN",
-      units: "METRIC"
-    };
-
-    if (travelMode === "DRIVE") {
-      body.routingPreference = "TRAFFIC_AWARE";
-    }
-
-    const response = await fetch(
-      "https://routes.googleapis.com/directions/v2:computeRoutes",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Goog-Api-Key": apiKey,
-          "X-Goog-FieldMask":
-            "routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline"
-        },
-        body: JSON.stringify(body)
-      }
-    );
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      return res.status(response.status).json({
-        error: "Google Routes API error",
-        detail: data
-      });
-    }
-
-    const route = data.routes?.[0];
-
-    if (!route) {
-      return res.status(404).json({
-        error: "没有找到路线"
-      });
-    }
-
-    res.json({
-      mode: travelMode,
-      duration: route.duration,
-      distanceMeters: route.distanceMeters,
-      encodedPolyline: route.polyline?.encodedPolyline
-    });
-  } catch (error) {
-    console.error("Google route error:", error);
-
-    res.status(500).json({
-      error: error.message || "路线接口失败"
-    });
-  }
-});
-
-// ---------- Google Places 文本搜索 ----------
-
+// ---------- Google Places：文字搜索 ----------
 app.get("/google-places", async (req, res) => {
   try {
     const query = req.query.q;
@@ -476,7 +444,7 @@ app.get("/google-places", async (req, res) => {
 
     res.json(places);
   } catch (error) {
-    console.error("Google Places error:", error);
+    console.error(error);
 
     res.status(500).json({
       error: "Server error",
@@ -485,8 +453,279 @@ app.get("/google-places", async (req, res) => {
   }
 });
 
-// ---------- Google Places Nearby：GPS 坐标反查附近真实地点 ----------
+// ---------- POWO：测试搜索 ----------
+app.get("/test-powo-origin", async (req, res) => {
+  try {
+    const scientificName = req.query.name;
 
+    if (!scientificName) {
+      return res.status(400).json({
+        error: "Missing plant scientific name"
+      });
+    }
+
+    const searchUrl = `https://powo.science.kew.org/api/2/search?q=${encodeURIComponent(scientificName)}`;
+    const searchResponse = await fetch(searchUrl);
+
+    if (!searchResponse.ok) {
+      const errorText = await searchResponse.text();
+
+      return res.status(searchResponse.status).json({
+        error: "POWO API error",
+        detail: errorText
+      });
+    }
+
+    const searchData = await searchResponse.json();
+
+    res.json({
+      scientificName,
+      powoSearchResult: searchData
+    });
+  } catch (error) {
+    console.error("POWO test error:", error);
+
+    res.status(500).json({
+      error: "POWO test failed",
+      detail: error.message
+    });
+  }
+});
+
+// ---------- POWO：测试详情 ----------
+app.get("/test-powo-lookup", async (req, res) => {
+  try {
+    const scientificName = req.query.name;
+
+    if (!scientificName) {
+      return res.status(400).json({
+        error: "Missing plant scientific name"
+      });
+    }
+
+    const searchUrl = `https://powo.science.kew.org/api/2/search?q=${encodeURIComponent(scientificName)}`;
+    const searchResponse = await fetch(searchUrl);
+
+    if (!searchResponse.ok) {
+      const errorText = await searchResponse.text();
+
+      return res.status(searchResponse.status).json({
+        error: "POWO search API error",
+        detail: errorText
+      });
+    }
+
+    const searchData = await searchResponse.json();
+
+    const firstAccepted =
+      searchData.results?.find(item => item.accepted === true) ||
+      searchData.results?.[0];
+
+    if (!firstAccepted) {
+      return res.status(404).json({
+        error: "No POWO result found",
+        searchData
+      });
+    }
+
+    const fqId = firstAccepted.fqId;
+
+    if (!fqId) {
+      return res.status(404).json({
+        error: "POWO result has no fqId",
+        firstAccepted
+      });
+    }
+
+    const lookupUrl = `https://powo.science.kew.org/api/2/taxon/${encodeURIComponent(fqId)}`;
+    const lookupResponse = await fetch(lookupUrl);
+
+    if (!lookupResponse.ok) {
+      const errorText = await lookupResponse.text();
+
+      return res.status(lookupResponse.status).json({
+        error: "POWO lookup API error",
+        lookupUrl,
+        detail: errorText
+      });
+    }
+
+    const lookupData = await lookupResponse.json();
+
+    res.json({
+      scientificName,
+      matchedName: firstAccepted.name,
+      fqId,
+      lookupData
+    });
+  } catch (error) {
+    console.error("POWO lookup test error:", error);
+
+    res.status(500).json({
+      error: "POWO lookup test failed",
+      detail: error.message
+    });
+  }
+});
+
+function normalisePowoText(value) {
+  return JSON.stringify(value || "").toLowerCase();
+}
+
+function classifyPowoOrigin(lookupData) {
+  const text = normalisePowoText({
+    locations: lookupData.locations || [],
+    taxonRemarks: lookupData.taxonRemarks || "",
+    native: lookupData.native || lookupData.natives || null,
+    introduced: lookupData.introduced || null
+  });
+
+  const isChinese =
+    text.includes("china") ||
+    text.includes("chinese") ||
+    text.includes("chn_") ||
+    text.includes("chs_") ||
+    text.includes("chc_");
+
+  const isAsian =
+    isChinese ||
+    text.includes("japan") ||
+    text.includes("jap_") ||
+    text.includes("korea") ||
+    text.includes("kor_") ||
+    text.includes("taiwan") ||
+    text.includes("india") ||
+    text.includes("vietnam") ||
+    text.includes("thailand") ||
+    text.includes("asia") ||
+    text.includes("eastern_asia") ||
+    text.includes("southeastern_asia") ||
+    text.includes("malesia") ||
+    text.includes("indochina");
+
+  const isUkRelated =
+    text.includes("great britain") ||
+    text.includes("united kingdom") ||
+    text.includes("britain") ||
+    text.includes("gbr") ||
+    text.includes("england") ||
+    text.includes("scotland") ||
+    text.includes("wales");
+
+  return {
+    isChinese,
+    isAsian,
+    isUkNative: isUkRelated,
+    isNonUkNative: !isUkRelated,
+    colonisationEffective: !isUkRelated,
+    confidence: "prototype-estimate",
+    source: "POWO"
+  };
+}
+
+async function getPlantOriginFromPowo(scientificName) {
+  if (!scientificName || scientificName === "Unknown species") {
+    return {
+      isChinese: false,
+      isAsian: false,
+      isUkNative: null,
+      isNonUkNative: null,
+      colonisationEffective: null,
+      confidence: "unknown",
+      source: "POWO",
+      locations: [],
+      taxonRemarks: ""
+    };
+  }
+
+  const searchUrl = `https://powo.science.kew.org/api/2/search?q=${encodeURIComponent(scientificName)}`;
+  const searchResponse = await fetch(searchUrl);
+
+  if (!searchResponse.ok) {
+    throw new Error(`POWO search failed: ${searchResponse.status}`);
+  }
+
+  const searchData = await searchResponse.json();
+
+  const firstAccepted =
+    searchData.results?.find(item => item.accepted === true) ||
+    searchData.results?.[0];
+
+  if (!firstAccepted?.fqId) {
+    return {
+      isChinese: false,
+      isAsian: false,
+      isUkNative: null,
+      isNonUkNative: null,
+      colonisationEffective: null,
+      confidence: "not-found",
+      source: "POWO",
+      locations: [],
+      taxonRemarks: ""
+    };
+  }
+
+  const lookupUrl = `https://powo.science.kew.org/api/2/taxon/${encodeURIComponent(firstAccepted.fqId)}`;
+  const lookupResponse = await fetch(lookupUrl);
+
+  if (!lookupResponse.ok) {
+    throw new Error(`POWO lookup failed: ${lookupResponse.status}`);
+  }
+
+  const lookupData = await lookupResponse.json();
+  const classification = classifyPowoOrigin(lookupData);
+
+  return {
+    ...classification,
+    matchedName: firstAccepted.name,
+    family: lookupData.family || firstAccepted.family || "",
+    genus: lookupData.genus || "",
+    locations: lookupData.locations || [],
+    taxonRemarks: lookupData.taxonRemarks || ""
+  };
+}
+
+// ---------- POWO：正式来源分类接口 ----------
+app.get("/classify-plant-origin", async (req, res) => {
+  try {
+    const scientificName = req.query.name;
+
+    if (!scientificName) {
+      return res.status(400).json({
+        error: "Missing plant scientific name"
+      });
+    }
+
+    const origin = await getPlantOriginFromPowo(scientificName);
+
+    res.json({
+      scientificName,
+      matchedName: origin.matchedName || scientificName,
+      family: origin.family || "",
+      genus: origin.genus || "",
+      taxonRemarks: origin.taxonRemarks || "",
+      locations: origin.locations || [],
+      classification: {
+        isChinese: origin.isChinese,
+        isAsian: origin.isAsian,
+        isUkNative: origin.isUkNative,
+        isNonUkNative: origin.isNonUkNative,
+        colonisationEffective: origin.colonisationEffective,
+        confidence: origin.confidence,
+        source: origin.source
+      }
+    });
+  } catch (error) {
+    console.error("Plant origin classification error:", error);
+
+    res.status(500).json({
+      error: "Plant origin classification failed",
+      detail: error.message
+    });
+  }
+});
+
+// ---------- Google Places：附近地点 ----------
 app.get("/google-place-nearby", async (req, res) => {
   try {
     const lat = Number(req.query.lat);
@@ -589,7 +828,7 @@ app.get("/google-place-nearby", async (req, res) => {
       places
     });
   } catch (error) {
-    console.error("Google nearby error:", error);
+    console.error(error);
 
     res.status(500).json({
       error: "Server error",
@@ -598,244 +837,7 @@ app.get("/google-place-nearby", async (req, res) => {
   }
 });
 
-// ---------- POWO：Kew Plants of the World Online ----------
-
-function normalisePowoText(value) {
-  return JSON.stringify(value || "").toLowerCase();
-}
-
-function classifyPowoOrigin(lookupData) {
-  const text = normalisePowoText({
-    locations: lookupData.locations || [],
-    taxonRemarks: lookupData.taxonRemarks || "",
-    native: lookupData.native || lookupData.natives || null,
-    introduced: lookupData.introduced || null
-  });
-
-  const isChinese =
-    text.includes("china") ||
-    text.includes("chinese") ||
-    text.includes("chn_") ||
-    text.includes("chs_") ||
-    text.includes("chc_");
-
-  const isAsian =
-    isChinese ||
-    text.includes("japan") ||
-    text.includes("jap_") ||
-    text.includes("korea") ||
-    text.includes("kor_") ||
-    text.includes("taiwan") ||
-    text.includes("india") ||
-    text.includes("vietnam") ||
-    text.includes("thailand") ||
-    text.includes("asia") ||
-    text.includes("eastern_asia") ||
-    text.includes("southeastern_asia") ||
-    text.includes("malesia") ||
-    text.includes("indochina");
-
-  const isUkRelated =
-    text.includes("great britain") ||
-    text.includes("united kingdom") ||
-    text.includes("britain") ||
-    text.includes("gbr") ||
-    text.includes("england") ||
-    text.includes("scotland") ||
-    text.includes("wales");
-
-  return {
-    isChinese,
-    isAsian,
-    isUkNative: isUkRelated,
-    isNonUkNative: !isUkRelated,
-    colonisationEffective: !isUkRelated,
-    confidence: "prototype-estimate",
-    source: "POWO"
-  };
-}
-
-async function searchPowo(scientificName) {
-  const searchUrl = `https://powo.science.kew.org/api/2/search?q=${encodeURIComponent(scientificName)}`;
-  const searchResponse = await fetch(searchUrl);
-
-  if (!searchResponse.ok) {
-    throw new Error(`POWO search failed: ${searchResponse.status}`);
-  }
-
-  const searchData = await searchResponse.json();
-
-  const firstAccepted =
-    searchData.results?.find(item => item.accepted === true) ||
-    searchData.results?.[0];
-
-  return {
-    searchData,
-    firstAccepted
-  };
-}
-
-async function lookupPowoTaxon(fqId) {
-  const lookupUrl = `https://powo.science.kew.org/api/2/taxon/${encodeURIComponent(fqId)}`;
-  const lookupResponse = await fetch(lookupUrl);
-
-  if (!lookupResponse.ok) {
-    throw new Error(`POWO lookup failed: ${lookupResponse.status}`);
-  }
-
-  return lookupResponse.json();
-}
-
-async function getPlantOriginFromPowo(scientificName) {
-  if (!scientificName || scientificName === "Unknown species") {
-    return {
-      isChinese: false,
-      isAsian: false,
-      isUkNative: null,
-      isNonUkNative: null,
-      colonisationEffective: null,
-      confidence: "unknown",
-      source: "POWO",
-      locations: [],
-      taxonRemarks: ""
-    };
-  }
-
-  const { firstAccepted } = await searchPowo(scientificName);
-
-  if (!firstAccepted?.fqId) {
-    return {
-      isChinese: false,
-      isAsian: false,
-      isUkNative: null,
-      isNonUkNative: null,
-      colonisationEffective: null,
-      confidence: "not-found",
-      source: "POWO",
-      locations: [],
-      taxonRemarks: ""
-    };
-  }
-
-  const lookupData = await lookupPowoTaxon(firstAccepted.fqId);
-  const classification = classifyPowoOrigin(lookupData);
-
-  return {
-    ...classification,
-    matchedName: firstAccepted.name,
-    family: lookupData.family || firstAccepted.family || "",
-    genus: lookupData.genus || "",
-    locations: lookupData.locations || [],
-    taxonRemarks: lookupData.taxonRemarks || ""
-  };
-}
-
-app.get("/test-powo-origin", async (req, res) => {
-  try {
-    const scientificName = req.query.name;
-
-    if (!scientificName) {
-      return res.status(400).json({
-        error: "Missing plant scientific name"
-      });
-    }
-
-    const { searchData } = await searchPowo(scientificName);
-
-    res.json({
-      scientificName,
-      powoSearchResult: searchData
-    });
-  } catch (error) {
-    console.error("POWO test error:", error);
-
-    res.status(500).json({
-      error: "POWO test failed",
-      detail: error.message
-    });
-  }
-});
-
-app.get("/test-powo-lookup", async (req, res) => {
-  try {
-    const scientificName = req.query.name;
-
-    if (!scientificName) {
-      return res.status(400).json({
-        error: "Missing plant scientific name"
-      });
-    }
-
-    const { searchData, firstAccepted } = await searchPowo(scientificName);
-
-    if (!firstAccepted?.fqId) {
-      return res.status(404).json({
-        error: "No POWO result found",
-        searchData
-      });
-    }
-
-    const lookupData = await lookupPowoTaxon(firstAccepted.fqId);
-
-    res.json({
-      scientificName,
-      matchedName: firstAccepted.name,
-      fqId: firstAccepted.fqId,
-      lookupData
-    });
-  } catch (error) {
-    console.error("POWO lookup test error:", error);
-
-    res.status(500).json({
-      error: "POWO lookup test failed",
-      detail: error.message
-    });
-  }
-});
-
-app.get("/classify-plant-origin", async (req, res) => {
-  try {
-    const scientificName = req.query.name;
-
-    if (!scientificName) {
-      return res.status(400).json({
-        error: "Missing plant scientific name"
-      });
-    }
-
-    const { firstAccepted } = await searchPowo(scientificName);
-
-    if (!firstAccepted?.fqId) {
-      return res.status(404).json({
-        error: "No accepted POWO result found",
-        scientificName
-      });
-    }
-
-    const lookupData = await lookupPowoTaxon(firstAccepted.fqId);
-    const classification = classifyPowoOrigin(lookupData);
-
-    res.json({
-      scientificName,
-      matchedName: firstAccepted.name,
-      family: lookupData.family || firstAccepted.family || "",
-      genus: lookupData.genus || "",
-      taxonRemarks: lookupData.taxonRemarks || "",
-      locations: lookupData.locations || [],
-      classification
-    });
-  } catch (error) {
-    console.error("Plant origin classification error:", error);
-
-    res.status(500).json({
-      error: "Plant origin classification failed",
-      detail: error.message
-    });
-  }
-});
-
-// ---------- 植物识别 + POWO 来源判断 ----------
-
+// ---------- PlantNet：植物识别 ----------
 app.post("/identify-plant", upload.single("image"), async (req, res) => {
   try {
     if (!req.file) {
@@ -871,7 +873,6 @@ app.post("/identify-plant", upload.single("image"), async (req, res) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-
       return res.status(response.status).json({
         error: "PlantNet API error",
         detail: errorText
@@ -900,6 +901,11 @@ app.post("/identify-plant", upload.single("image"), async (req, res) => {
           locations: [],
           taxonRemarks: ""
         },
+        isChinese: false,
+        isAsian: false,
+        isUkNative: null,
+        isNonUkNative: null,
+        colonisationEffective: null,
         raw: data
       });
     }
@@ -956,7 +962,7 @@ app.post("/identify-plant", upload.single("image"), async (req, res) => {
       raw: data
     });
   } catch (error) {
-    console.error("Identify plant error:", error);
+    console.error(error);
 
     res.status(500).json({
       error: "Server error",
@@ -965,171 +971,349 @@ app.post("/identify-plant", upload.single("image"), async (req, res) => {
   }
 });
 
-// ---------- Backfill：给旧植物记录补 POWO 来源 ----------
 
-function delay(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+// ---------- Public reviews + naming proposals ----------
+
+function normalisePlaceReview(row) {
+  return {
+    id: row.id,
+    placeKey: row.place_key,
+    placeId: row.place_id || "",
+    placeKind: row.place_kind || "place",
+    placeName: row.place_name || "未知地点",
+    placeAddress: row.place_address || "",
+    rating: Number(row.rating || 0),
+    text: row.text || "",
+    userId: row.user_id || "",
+    userRank: row.user_rank || "",
+    time: row.created_at
+  };
 }
 
-function shouldBackfillRecord(record) {
-  const scientificName = String(record.scientific_name || "").trim();
-
-  if (!scientificName || scientificName === "Unknown species") {
-    return false;
-  }
-
-  const originSource = String(record.origin_source || "").trim();
-  const originConfidence = String(record.origin_confidence || "").trim();
-
-  // 已经查过 POWO 的，不管结果是 prototype-estimate、not-found、未找到，都不要反复查
-  if (originSource || originConfidence) {
-    return false;
-  }
-
-  return true;
+function normaliseRenameProposal(row, likedByCurrentUser = false) {
+  return {
+    id: row.id,
+    placeKey: row.place_key,
+    placeId: row.place_id || "",
+    placeKind: row.place_kind || "place",
+    placeName: row.place_name || "未知地点",
+    placeAddress: row.place_address || "",
+    proposedName: row.proposed_name,
+    reason: row.reason || "",
+    userId: row.user_id || "",
+    userRank: row.user_rank || "",
+    likeCount: Number(row.like_count || 0),
+    likedByCurrentUser,
+    time: row.created_at
+  };
 }
 
-app.get("/backfill-plant-origins", async (req, res) => {
+function normaliseRenameApplication(row) {
+  return {
+    id: row.id,
+    placeKey: row.place_key,
+    placeId: row.place_id || "",
+    placeKind: row.place_kind || "place",
+    placeName: row.place_name || "未知地点",
+    placeAddress: row.place_address || "",
+    proposedName: row.proposed_name,
+    reason: row.reason || "",
+    status: row.status || "pending",
+    userId: row.user_id || "",
+    userRank: row.user_rank || "",
+    time: row.created_at
+  };
+}
+
+app.get("/place-reviews", async (req, res) => {
   try {
-    const secret = req.query.secret;
-    const expectedSecret = process.env.BACKFILL_SECRET;
+    const placeKey = req.query.placeKey;
 
-    if (!expectedSecret) {
-      return res.status(500).json({
-        error: "Missing BACKFILL_SECRET in Render environment variables"
-      });
+    if (!placeKey) {
+      return res.status(400).json({ error: "Missing placeKey" });
     }
 
-    if (secret !== expectedSecret) {
-      return res.status(401).json({
-        error: "Unauthorized backfill request"
-      });
+    const { data, error } = await supabase
+      .from("place_reviews")
+      .select("*")
+      .eq("place_key", placeKey)
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    if (error) {
+      return res.status(500).json({ error: error.message });
     }
 
-    const limit = Math.min(Number(req.query.limit || 10), 30);
+    res.json((data || []).map(normalisePlaceReview));
+  } catch (error) {
+    console.error("Place reviews fetch error:", error);
+    res.status(500).json({ error: "Place reviews fetch failed", detail: error.message });
+  }
+});
 
-    const { data: rawRecords, error: fetchError } = await supabase
-      .from("plant_records")
-      .select(`
-        id,
-        boundary_id,
-        common_name,
-        scientific_name,
-        is_chinese,
-        is_asian,
-        is_uk_native,
-        is_non_uk_native,
-        colonisation_effective,
-        origin_source,
-        origin_confidence,
-        created_at
-      `)
-      .not("scientific_name", "is", null)
-      .neq("scientific_name", "")
-      .neq("scientific_name", "Unknown species")
-      .order("created_at", { ascending: true })
-      .limit(200);
+app.post("/place-reviews", async (req, res) => {
+  try {
+    const {
+      placeKey,
+      placeId,
+      placeKind,
+      placeName,
+      placeAddress,
+      rating,
+      text,
+      userId,
+      userRank
+    } = req.body;
 
-    if (fetchError) {
-      return res.status(500).json({
-        error: "Failed to fetch plant records",
-        detail: fetchError.message
-      });
+    if (!placeKey || !placeName || !userId) {
+      return res.status(400).json({ error: "Missing placeKey, placeName or userId" });
     }
 
-    const records = (rawRecords || [])
-      .filter(shouldBackfillRecord)
-      .slice(0, limit);
+    const safeRating = Math.max(1, Math.min(5, Number(rating || 5)));
 
-    if (!records.length) {
-      return res.json({
-        done: true,
-        message: "No records need origin backfill.",
-        processed: 0,
-        results: []
-      });
+    const { data, error } = await supabase
+      .from("place_reviews")
+      .insert({
+        place_key: placeKey,
+        place_id: placeId || "",
+        place_kind: placeKind || "place",
+        place_name: placeName,
+        place_address: placeAddress || "",
+        rating: safeRating,
+        text: text || "",
+        user_id: userId,
+        user_rank: userRank || ""
+      })
+      .select()
+      .single();
+
+    if (error) {
+      return res.status(500).json({ error: error.message });
     }
 
-    const results = [];
+    res.json(normalisePlaceReview(data));
+  } catch (error) {
+    console.error("Place review insert error:", error);
+    res.status(500).json({ error: "Place review insert failed", detail: error.message });
+  }
+});
 
-    for (const record of records) {
-      try {
-        const origin = await getPlantOriginFromPowo(record.scientific_name);
+app.get("/rename-entries", async (req, res) => {
+  try {
+    const placeKey = req.query.placeKey;
+    const userId = req.query.userId || "";
 
-        const { error: updateError } = await supabase
-          .from("plant_records")
-          .update({
-            is_chinese: origin.isChinese ?? null,
-            is_asian: origin.isAsian ?? null,
-            is_uk_native: origin.isUkNative ?? null,
-            is_non_uk_native: origin.isNonUkNative ?? null,
-            colonisation_effective: origin.colonisationEffective ?? null,
-            origin_confidence: origin.confidence || null,
-            origin_source: origin.source || "POWO",
-            origin_regions: origin.locations || [],
-            origin_taxon_remarks: origin.taxonRemarks || ""
-          })
-          .eq("id", record.id);
+    if (!placeKey) {
+      return res.status(400).json({ error: "Missing placeKey" });
+    }
 
-        if (updateError) {
-          results.push({
-            id: record.id,
-            boundaryId: record.boundary_id,
-            commonName: record.common_name,
-            scientificName: record.scientific_name,
-            status: "update_failed",
-            error: updateError.message
-          });
-        } else {
-          results.push({
-            id: record.id,
-            boundaryId: record.boundary_id,
-            commonName: record.common_name,
-            scientificName: record.scientific_name,
-            status: "updated",
-            origin: {
-              isChinese: origin.isChinese,
-              isAsian: origin.isAsian,
-              isUkNative: origin.isUkNative,
-              isNonUkNative: origin.isNonUkNative,
-              colonisationEffective: origin.colonisationEffective,
-              source: origin.source,
-              confidence: origin.confidence,
-              matchedName: origin.matchedName
-            }
-          });
-        }
+    const [{ data: proposals, error: proposalsError }, { data: applications, error: applicationsError }] = await Promise.all([
+      supabase
+        .from("rename_proposals")
+        .select("*")
+        .eq("place_key", placeKey)
+        .order("like_count", { ascending: false })
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("rename_applications")
+        .select("*")
+        .eq("place_key", placeKey)
+        .order("created_at", { ascending: false })
+    ]);
 
-        await delay(300);
-      } catch (itemError) {
-        results.push({
-          id: record.id,
-          boundaryId: record.boundary_id,
-          commonName: record.common_name,
-          scientificName: record.scientific_name,
-          status: "lookup_failed",
-          error: itemError.message
-        });
+    if (proposalsError) {
+      return res.status(500).json({ error: proposalsError.message });
+    }
+
+    if (applicationsError) {
+      return res.status(500).json({ error: applicationsError.message });
+    }
+
+    let likedProposalIds = [];
+
+    if (userId && proposals?.length) {
+      const { data: likes, error: likesError } = await supabase
+        .from("rename_proposal_likes")
+        .select("proposal_id")
+        .eq("user_id", userId)
+        .in("proposal_id", proposals.map(item => item.id));
+
+      if (!likesError) {
+        likedProposalIds = (likes || []).map(item => item.proposal_id);
       }
     }
 
     res.json({
-      done: false,
-      processed: results.length,
-      remainingHint:
-        "Run this endpoint again until it returns: No records need origin backfill.",
-      results
+      proposals: (proposals || []).map(item => normaliseRenameProposal(item, likedProposalIds.includes(item.id))),
+      applications: (applications || []).map(normaliseRenameApplication)
     });
   } catch (error) {
-    console.error("Backfill plant origins error:", error);
-
-    res.status(500).json({
-      error: "Backfill failed",
-      detail: error.message
-    });
+    console.error("Rename entries fetch error:", error);
+    res.status(500).json({ error: "Rename entries fetch failed", detail: error.message });
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Plant identification server running on port ${PORT}`);
+app.post("/rename-proposals", async (req, res) => {
+  try {
+    const {
+      placeKey,
+      placeId,
+      placeKind,
+      placeName,
+      placeAddress,
+      proposedName,
+      reason,
+      userId,
+      userRank
+    } = req.body;
+
+    if (!placeKey || !placeName || !proposedName || !userId) {
+      return res.status(400).json({ error: "Missing required proposal fields" });
+    }
+
+    const { data, error } = await supabase
+      .from("rename_proposals")
+      .insert({
+        place_key: placeKey,
+        place_id: placeId || "",
+        place_kind: placeKind || "place",
+        place_name: placeName,
+        place_address: placeAddress || "",
+        proposed_name: proposedName,
+        reason: reason || "",
+        user_id: userId,
+        user_rank: userRank || "",
+        like_count: 0
+      })
+      .select()
+      .single();
+
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+
+    res.json(normaliseRenameProposal(data, false));
+  } catch (error) {
+    console.error("Rename proposal insert error:", error);
+    res.status(500).json({ error: "Rename proposal insert failed", detail: error.message });
+  }
+});
+
+app.post("/rename-applications", async (req, res) => {
+  try {
+    const {
+      placeKey,
+      placeId,
+      placeKind,
+      placeName,
+      placeAddress,
+      proposedName,
+      reason,
+      userId,
+      userRank
+    } = req.body;
+
+    if (!placeKey || !placeName || !proposedName || !reason || !userId) {
+      return res.status(400).json({ error: "Missing required rename application fields" });
+    }
+
+    const { data, error } = await supabase
+      .from("rename_applications")
+      .insert({
+        place_key: placeKey,
+        place_id: placeId || "",
+        place_kind: placeKind || "place",
+        place_name: placeName,
+        place_address: placeAddress || "",
+        proposed_name: proposedName,
+        reason,
+        status: "pending",
+        user_id: userId,
+        user_rank: userRank || ""
+      })
+      .select()
+      .single();
+
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+
+    res.json(normaliseRenameApplication(data));
+  } catch (error) {
+    console.error("Rename application insert error:", error);
+    res.status(500).json({ error: "Rename application insert failed", detail: error.message });
+  }
+});
+
+app.post("/rename-proposals/:proposalId/like", async (req, res) => {
+  try {
+    const { proposalId } = req.params;
+    const { userId } = req.body;
+
+    if (!proposalId || !userId) {
+      return res.status(400).json({ error: "Missing proposalId or userId" });
+    }
+
+    const { data: existingLike, error: existingError } = await supabase
+      .from("rename_proposal_likes")
+      .select("id")
+      .eq("proposal_id", proposalId)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (existingError) {
+      return res.status(500).json({ error: existingError.message });
+    }
+
+    if (existingLike) {
+      const { error: deleteError } = await supabase
+        .from("rename_proposal_likes")
+        .delete()
+        .eq("id", existingLike.id);
+
+      if (deleteError) {
+        return res.status(500).json({ error: deleteError.message });
+      }
+    } else {
+      const { error: insertError } = await supabase
+        .from("rename_proposal_likes")
+        .insert({
+          proposal_id: proposalId,
+          user_id: userId
+        });
+
+      if (insertError) {
+        return res.status(500).json({ error: insertError.message });
+      }
+    }
+
+    const { count, error: countError } = await supabase
+      .from("rename_proposal_likes")
+      .select("id", { count: "exact", head: true })
+      .eq("proposal_id", proposalId);
+
+    if (countError) {
+      return res.status(500).json({ error: countError.message });
+    }
+
+    const { data: updated, error: updateError } = await supabase
+      .from("rename_proposals")
+      .update({ like_count: count || 0 })
+      .eq("id", proposalId)
+      .select()
+      .single();
+
+    if (updateError) {
+      return res.status(500).json({ error: updateError.message });
+    }
+
+    res.json(normaliseRenameProposal(updated, !existingLike));
+  } catch (error) {
+    console.error("Rename proposal like error:", error);
+    res.status(500).json({ error: "Rename proposal like failed", detail: error.message });
+  }
+});
+
+app.listen(3000, () => {
+  console.log("Plant identification server running on http://localhost:3000");
 });

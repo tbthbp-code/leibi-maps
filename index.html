@@ -2112,11 +2112,11 @@ async function hydratePassportOriginFromServer(item) {
       await renderReviewsForCurrentPlace();
     }
 
-    async function renderReviewsForCurrentPlace(introHtml = "") {
+    async function renderReviewsForCurrentPlace() {
       const reviewsBox = document.getElementById("panelReviews");
 
       if (!currentActivePlace) {
-        reviewsBox.innerHTML = introHtml || `<div class="review">暂无可评论地点。</div>`;
+        reviewsBox.innerHTML = `<div class="review">暂无可评论地点。</div>`;
         return;
       }
 
@@ -2133,33 +2133,68 @@ async function hydratePassportOriginFromServer(item) {
         time: review.time || review.createdAt || review.created_at
       })) : localReviews;
 
-      const latestReviews = placeReviews
+      const sortedReviews = placeReviews
         .slice()
-        .sort((a, b) => new Date(b.time || 0) - new Date(a.time || 0))
-        .slice(0, 3);
+        .sort((a, b) => new Date(b.time || 0) - new Date(a.time || 0));
 
+      const latestReviews = sortedReviews.slice(0, 3);
       const average = getAverageRating(placeReviews);
       const averageText = average ? average.toFixed(1) : "--";
       const activeTab = currentPlacePanelTab === "naming" ? "naming" : "reviews";
 
-      const fallbackReviewsHtml = introHtml
-        ? `<div class="review-fallback-block">${introHtml}</div>`
-        : `<div class="empty-state">这里还没有用户评论。地图暂时保留它原来的体面。</div>`;
+      const matchedBoundary = Array.isArray(boundaries) ? boundaries.find(boundary => {
+        return getPlaceKey({
+          kind: "boundary",
+          id: boundary.id
+        }) === currentActivePlace.key;
+      }) : null;
 
-      const realReviewsHtml = latestReviews.length ? latestReviews.map(review => `
+      const fallbackComments = Array.isArray(currentActivePlace.fallbackComments) && currentActivePlace.fallbackComments.length
+        ? currentActivePlace.fallbackComments
+        : Array.isArray(matchedBoundary?.comments)
+          ? matchedBoundary.comments
+          : [];
+
+      const previewItems = latestReviews.length
+        ? latestReviews.map(review => ({
+            text: review.text || "这个用户只留下了评分，没有写评论。",
+            rating: Number(review.rating || 0),
+            time: review.time,
+            isUserReview: true
+          }))
+        : fallbackComments.slice(0, 3).map(text => ({
+            text,
+            isUserReview: false
+          }));
+
+      const previewHtml = previewItems.length ? `
+        <div class="review-preview-block">
+          ${previewItems.map(item => `
+            <div class="place-review-card">
+              ${item.isUserReview ? `
+                <strong>${"★".repeat(Number(item.rating || 0))}${"☆".repeat(5 - Number(item.rating || 0))}</strong>
+                <span class="muted"> · ${new Date(item.time || Date.now()).toLocaleString()}</span><br>
+              ` : ""}
+              “${escapeHtml(item.text)}”
+            </div>
+          `).join("")}
+        </div>
+      ` : `<div class="empty-state">这里还没有用户评论。</div>`;
+
+      const allReviewsHtml = sortedReviews.length ? sortedReviews.map(review => `
         <div class="place-review-card">
           <strong>${"★".repeat(Number(review.rating || 0))}${"☆".repeat(5 - Number(review.rating || 0))}</strong>
           <span class="muted"> · ${new Date(review.time || Date.now()).toLocaleString()}</span><br>
           ${escapeHtml(review.text || "这个用户只留下了评分，没有写评论。")}
         </div>
-      `).join("") : fallbackReviewsHtml;
+      `).join("") : `<div class="empty-state">这里还没有用户评论。</div>`;
 
       const reviewHtml = permissions.canReview ? `
         <div class="review-summary">
           <span class="review-score-big">${averageText}</span>
-          <span>殖民植物用户评分</span><br>
+          <span>殖民评分</span><br>
           <span class="muted">评分标准：这里的殖民植物越多，评分越高。</span><br>
-          <span class="muted">${placeReviews.length ? `显示最新 ${Math.min(3, placeReviews.length)} / ${placeReviews.length} 条用户评论` : "暂无用户评论，暂时显示系统预写评论。"}</span>
+          <span class="muted">${placeReviews.length ? `共 ${placeReviews.length} 条用户评论` : "暂无用户评论，顶部暂时显示系统预写评论。"}</span>
         </div>
 
         <div class="review-form">
@@ -2177,7 +2212,7 @@ async function hydratePassportOriginFromServer(item) {
           <button class="review-submit-btn" type="button" onclick="submitCurrentPlaceReview()">发布评论</button>
         </div>
 
-        ${realReviewsHtml}
+        ${allReviewsHtml}
       ` : renderLockedFeature(
         "评分和评论尚未开放",
         "完成 5 次植物归档后可使用。"
@@ -2188,6 +2223,7 @@ async function hydratePassportOriginFromServer(item) {
         : await renderNamingSectionForCurrentPlace();
 
       reviewsBox.innerHTML = `
+        ${previewHtml}
         <div class="place-meta-tabs">
           <button class="place-meta-tab ${activeTab === "reviews" ? "is-active" : ""}" type="button" onclick="switchPlacePanelTab('reviews')">评论</button>
           <button class="place-meta-tab ${activeTab === "naming" ? "is-active" : ""}" type="button" onclick="switchPlacePanelTab('naming')">命名提案</button>
@@ -3446,7 +3482,10 @@ async function hydratePassportOriginFromServer(item) {
         address: claimAddress,
         type: claimType,
         lng: claim.lng,
-        lat: claim.lat
+        lat: claim.lat,
+        fallbackComments: [
+          "该地点已通过植物识别被点亮。它目前使用 Google Places 的地点信息和临时范围显示，之后可以继续补充更精确的边界。"
+        ]
       });
 
       currentRouteDestination = {
@@ -3470,11 +3509,7 @@ async function hydratePassportOriginFromServer(item) {
         <span class="tag">Google Places claim</span>
       `;
 
-      renderReviewsForCurrentPlace(`
-        <div class="review">
-          该地点已通过植物识别被点亮。它目前使用 Google Places 的地点信息和临时范围显示，之后可以继续补充更精确的边界。
-        </div>
-      `);
+      renderReviewsForCurrentPlace();
 
       setActionButtonsForUnlocked();
     }
@@ -4144,7 +4179,8 @@ async function getScoreRecordsForBoundary(boundary) {
           : boundary.name,
         type: boundary.type,
         lng: boundary.testPoint[0],
-        lat: boundary.testPoint[1]
+        lat: boundary.testPoint[1],
+        fallbackComments: Array.isArray(boundary.comments) ? boundary.comments : []
       });
 
       currentRouteDestination = {
@@ -4180,11 +4216,7 @@ async function getScoreRecordsForBoundary(boundary) {
         tagsBox.innerHTML += `<span class="tag">${escapeHtml(tag)}</span>`;
       });
 
-      const introHtml = boundary.comments
-        .map(comment => `<div class="review">“${escapeHtml(comment)}”</div>`)
-        .join("");
-
-      renderReviewsForCurrentPlace(introHtml);
+      renderReviewsForCurrentPlace();
       setActionButtonsForUnlocked();
 
       try {
