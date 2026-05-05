@@ -386,6 +386,8 @@ async function uploadPlantPhotoToSupabase(file) {
 app.get("/google-places", async (req, res) => {
   try {
     const query = req.query.q;
+    const lang = req.query.lang === "en" ? "en" : "zh";
+    const googleLanguageCode = lang === "en" ? "en-GB" : "zh-CN";
 
     if (!query) {
       return res.status(400).json({ error: "Missing search query" });
@@ -408,7 +410,7 @@ app.get("/google-places", async (req, res) => {
       },
       body: JSON.stringify({
         textQuery: query,
-        languageCode: "zh-CN",
+        languageCode: googleLanguageCode,
         locationBias: {
           circle: {
             center: {
@@ -730,6 +732,8 @@ app.get("/google-place-nearby", async (req, res) => {
   try {
     const lat = Number(req.query.lat);
     const lng = Number(req.query.lng);
+    const lang = req.query.lang === "en" ? "en" : "zh";
+    const googleLanguageCode = lang === "en" ? "en-GB" : "zh-CN";
 
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
       return res.status(400).json({
@@ -761,7 +765,7 @@ app.get("/google-place-nearby", async (req, res) => {
         ].join(",")
       },
       body: JSON.stringify({
-        languageCode: "zh-CN",
+        languageCode: googleLanguageCode,
         locationRestriction: {
           circle: {
             center: {

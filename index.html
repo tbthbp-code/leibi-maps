@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
-  <title>开荒-Cultivating Claims / 本地边界库稳定版</title>
+  <title>开荒地图 / 本地边界库稳定版</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
   <!-- Mapbox -->
@@ -58,6 +58,18 @@
       background: transparent;
       font-size: 17px;
       color: #111;
+    }
+
+    .lang-toggle {
+      border: none;
+      border-radius: 999px;
+      padding: 8px 11px;
+      background: rgba(224, 247, 241, 0.95);
+      color: #00756a;
+      font-weight: 800;
+      font-size: 13px;
+      flex-shrink: 0;
+      cursor: pointer;
     }
 
     .search-results {
@@ -1104,13 +1116,14 @@
 
   <div class="top-search">
     <div class="search-icon">🔍</div>
-    <input id="searchInput" type="text" placeholder="搜索地点或区域 / Search places or areas...">
+    <input id="searchInput" type="text" placeholder="搜索地点或区域...">
+    <button id="langToggleBtn" class="lang-toggle" type="button">EN</button>
     <button id="cameraBtn" class="camera-btn" title="植物识别">📷</button>
   </div>
   <div id="searchResults" class="search-results"></div>
 
   <button id="nearbyPlantsBtn" class="similar-pill">附近有新的植物可收录</button>
-  <button id="locateBtn" class="layer-btn locate-btn" title="定位 / 指南针模式">➤</button>
+  <button id="locateBtn" class="layer-btn locate-btn" title="定位">➤</button>
 
   <div id="infoPanel" class="info-panel">
     <div class="bottom-handle"></div>
@@ -1118,11 +1131,11 @@
 
     <div class="info-content">
       <h1 id="panelName">Xiang-bao Gong-yuan</h1>
-      <div id="panelOriginal" class="muted">Formerly known as: Elephant Park</div>
+      <div id="panelOriginal" class="muted">曾用领地名：象堡公园</div>
 
       <div class="rating-line">
         <span id="panelRating" class="rating-big">4.8 ★</span>
-        <span class="rating-sub">殖民评分</span>
+        <span id="ratingSubText" class="rating-sub">殖民评分</span>
       </div>
 
       <div class="map-action-btns">
@@ -1149,53 +1162,53 @@
 
       <div id="panelTags" class="tag-wrap"></div>
 
-      <div class="section-title">Colonial Botanical Scores</div>
+      <div id="scoresTitle" class="section-title">殖民评分</div>
 
       <div class="score-row">
-        <strong>Chinese Plant Density</strong>
+        <strong id="chineseDensityLabel">中国植物密度</strong>
         <span id="panelChinese">--%</span>
       </div>
 
       <div class="score-row">
-        <strong>Colonisation Effectiveness</strong>
+        <strong id="colonisationLabel">殖民成效</strong>
         <span id="panelAsian">--%</span>
       </div>
 
       <div class="score-row">
-        <strong>Boundary Source</strong>
+        <strong id="boundarySourceLabel">边界来源</strong>
         <span id="panelSource">Local library</span>
       </div>
 
       <div class="score-row">
-        <strong>Unlock Method</strong>
-        <span>Plant scan + location</span>
+        <strong id="claimMethodLabel">开荒方式</strong>
+        <span id="claimMethodValue">植物识别 + 地点</span>
       </div>
 
-      <div class="section-title">Reviews</div>
+      <div id="reviewsTitle" class="section-title">评论</div>
       <div id="panelReviews"></div>
     </div>
   </div>
 
   <div class="mini-legend">
-    <strong>开荒-Cultivating Claims / Stable Boundary Library</strong>
-    绿色描边 = 已点亮边界。<br>
-    灰色区域 = 尚未通过植物拍摄点亮。<br>
-    当前版本使用本地边界库，不再实时请求 OSM，所以更稳定。
+    <strong id="legendTitle">开荒地图 / 稳定边界库</strong>
+    <span id="legendLine1">绿色描边 = 已点亮边界。</span><br>
+    <span id="legendLine2">灰色区域 = 尚未通过植物拍摄点亮。</span><br>
+    <span id="legendLine3">当前版本使用本地边界库，不再实时请求 OSM，所以更稳定。</span>
   </div>
 
 
   <div class="bottom-tabs">
     <button id="exploreTabBtn" class="bottom-tab active" type="button">
       <span class="bottom-tab-icon">📍</span>
-      <span>探索</span>
+      <span id="exploreTabText">探索</span>
     </button>
     <button id="meTabBtn" class="bottom-tab" type="button">
       <span class="bottom-tab-icon">🔖</span>
-      <span>我</span>
+      <span id="meTabText">我</span>
     </button>
     <button id="contributeTabBtn" class="bottom-tab" type="button">
       <span class="bottom-tab-icon">＋</span>
-      <span>贡献</span>
+      <span id="contributeTabText">贡献</span>
     </button>
   </div>
 
@@ -1212,10 +1225,10 @@
 
   <div id="rewardModal" class="reward-modal">
     <div class="reward-card">
-      <h2>开荒成功</h2>
-      <p>你点亮了</p>
+      <h2 id="rewardTitle">开荒成功</h2>
+      <p id="rewardClaimLine">你点亮了</p>
       <div id="rewardPlaceName" class="reward-place">Unknown Place</div>
-      <p>此地已进入植物档案。</p>
+      <p id="rewardArchiveLine">此地已进入植物档案。</p>
       <p><strong id="rewardArchiveNo">收录编号 No.001</strong></p>
       <div id="rewardUnlockMessage"></div>
       <button id="closeRewardBtn" type="button">进入地图</button>
@@ -1223,39 +1236,39 @@
   </div>
 
   <div id="nearbyToast" class="nearby-toast">
-    <div class="nearby-toast-card">发现未收录的新植物！</div>
+    <div id="nearbyToastText" class="nearby-toast-card">发现未收录的新植物！</div>
   </div>
 
   <div id="cameraModal" class="modal">
     <div class="modal-card">
-      <h2>植物识别 / Plant Scan</h2>
+      <h2 id="plantScanTitle">植物识别</h2>
       <p>
-        拍摄植物照片时，系统会直接使用你的当前位置；从相册选择照片时，系统会优先读取照片 GPS，如果没有 GPS 信息，再让你选择地点。
+        <span id="plantScanDesc">拍摄植物照片时，系统会直接使用你的当前位置；从相册选择照片时，系统会优先读取照片 GPS，如果没有 GPS 信息，再让你选择地点。</span>
       </p>
 
-      <label class="upload-btn" for="plantCameraInput">拍摄植物照片</label>
+      <label id="takePhotoLabel" class="upload-btn" for="plantCameraInput">拍摄植物照片</label>
       <input id="plantCameraInput" type="file" accept="image/*" capture="environment">
 
-      <label class="upload-btn" for="plantGalleryInput">从相册选择照片</label>
+      <label id="choosePhotoLabel" class="upload-btn" for="plantGalleryInput">从相册选择照片</label>
       <input id="plantGalleryInput" type="file" accept="image/*">
 
       <div id="previewBox" class="preview-box">尚未选择图片</div>
 
-      <div class="field-label">植物拍摄地点 / Plant location</div>
+      <div id="plantLocationLabel" class="field-label">植物拍摄地点</div>
 
       <div id="photoGpsBox" class="result-box" style="display:block; max-height:none;">
-        上传照片后，系统会优先尝试读取照片里的 GPS 拍摄位置。
+        <span id="photoGpsInitialText">上传照片后，系统会优先尝试读取照片里的 GPS 拍摄位置。</span>
       </div>
 
       <div id="locationChoiceBox" style="display:none; margin-top:10px;">
         <label style="display:block; margin:8px 0;">
           <input type="radio" name="locationMode" value="current" checked>
-          使用当前位置
+          <span id="useCurrentText">使用当前位置</span>
         </label>
 
         <label style="display:block; margin:8px 0;">
           <input type="radio" name="locationMode" value="manual">
-          手动在地图上选择地点
+          <span id="manualMapText">手动在地图上选择地点</span>
         </label>
 
         <button id="pickLocationBtn" class="ghost-btn" type="button">
@@ -1276,9 +1289,9 @@
 
   <div id="plantListModal" class="modal">
     <div class="modal-card">
-      <h2 id="plantListTitle">该区域植物 / Plants in this area</h2>
+      <h2 id="plantListTitle">该区域植物</h2>
       <p>
-        这里显示的是通过拍照识别并记录到该区域的植物。每一次识别，都会成为点亮这个区域的植物证据。
+        <span id="plantListDesc">这里显示的是通过拍照识别并记录到该区域的植物。每一次识别，都会成为点亮这个区域的植物证据。</span>
       </p>
 
       <div id="plantListBox" class="result-box" style="display: block; max-height: 300px;">
@@ -1306,6 +1319,500 @@
     }
 
     const CURRENT_USER_ID = getOrCreateUserId();
+
+
+    let currentLang = localStorage.getItem("leibiLang") || "zh";
+
+    const I18N = {
+      zh: {
+        pageTitle: "开荒地图 / 本地边界库稳定版",
+        searchPlaceholder: "搜索地点或区域...",
+        cameraTitle: "植物识别",
+        locateTitle: "定位",
+        nearbyPlants: "附近有新的植物可收录",
+        nearbyCount: "附近有 {n} 个新植物可收录",
+        noNearbyPlants: "附近暂无新植物",
+        formerlyKnownAs: "曾用领地名：",
+        colonialScore: "殖民评分",
+        route: "路线",
+        claim: "点亮",
+        claimed: "已点亮",
+        plantList: "植物一览",
+        save: "保存",
+        saved: "已保存",
+        lockedRouteHint: "该区域尚未点亮，点亮后可解锁路线。",
+        routeLoading: "路线加载中...",
+        walk: "步行",
+        cycle: "骑行",
+        drive: "自驾",
+        transit: "公交",
+        colonialScores: "殖民评分",
+        chinesePlantDensity: "中国植物密度",
+        colonisationEffectiveness: "殖民成效",
+        boundarySource: "边界来源",
+        claimMethod: "开荒方式",
+        plantScanLocation: "植物识别 + 地点",
+        reviews: "评论",
+        namingProposals: "命名提案",
+        legendTitle: "开荒地图 / 稳定边界库",
+        legendLine1: "绿色描边 = 已点亮边界。",
+        legendLine2: "灰色区域 = 尚未通过植物拍摄点亮。",
+        legendLine3: "当前版本使用本地边界库，不再实时请求 OSM，所以更稳定。",
+        explore: "探索",
+        me: "我",
+        contribute: "贡献",
+        myPlaces: "我的地点",
+        claimSuccess: "开荒成功",
+        youClaimed: "你点亮了",
+        enteredArchive: "此地已进入植物档案。",
+        archiveNo: "收录编号",
+        enterMap: "进入地图",
+        nearbyToast: "发现未收录的新植物！",
+        plantScanTitle: "植物识别",
+        plantScanDesc: "拍摄植物照片时，系统会直接使用你的当前位置；从相册选择照片时，系统会优先读取照片 GPS，如果没有 GPS 信息，再让你选择地点。",
+        takePhoto: "拍摄植物照片",
+        choosePhoto: "从相册选择照片",
+        noImageSelected: "尚未选择图片",
+        plantLocation: "植物拍摄地点",
+        photoGpsInitial: "上传照片后，系统会优先尝试读取照片里的 GPS 拍摄位置。",
+        useCurrentLocation: "使用当前位置",
+        selectOnMap: "手动在地图上选择地点",
+        searchPlantLocation: "搜索植物拍摄地点",
+        noManualLocation: "尚未手动选择地点。",
+        scanClaimArea: "识别植物并点亮区域",
+        rescanClaimArea: "重新识别植物并点亮区域",
+        close: "关闭",
+        plantsInArea: "该区域植物",
+        plantListDesc: "这里显示的是通过拍照识别并记录到该区域的植物。每一次识别，都会成为点亮这个区域的植物证据。",
+        noPlantRecords: "暂无植物记录。",
+        plantPassport: "植物护照",
+        archived: "已归档",
+        scientificName: "学名",
+        genus: "属",
+        family: "科",
+        origin: "来源",
+        from: "来自",
+        confidence: "置信度",
+        recordTime: "记录时间",
+        archiveLocation: "归档地点",
+        archiveTime: "归档时间",
+        archivistStatus: "归档者身份",
+        plantStatus: "植物身份",
+        tapCard: "点击这张名片可跳转到植物所在地。",
+        unknownPlant: "未知植物",
+        unknownSpecies: "未知物种",
+        unknownPlace: "未知地点",
+        originChina: "中国",
+        originJapan: "日本",
+        originKorea: "朝鲜半岛",
+        originTaiwan: "台湾",
+        originIndia: "印度",
+        originVietnam: "越南",
+        originThailand: "泰国",
+        originAsia: "亚洲",
+        originNonUkNative: "非英国本土",
+        originUkNative: "英国本土",
+        originPending: "来源待审",
+        currentRank: "当前开荒身份",
+        locked: "尚未解锁",
+        unlockCondition: "解锁条件：",
+        plantArchives: "次植物归档",
+        functionLimit: "功能限制：",
+        rankGuide: "开荒身份等级",
+        basicAccess: "基础功能",
+        reviewAccess: "评分与评论",
+        namingAccess: "评分与评论、命名提案",
+        officialRenameAccess: "评分与评论、命名提案、正式改名",
+        fullAccess: "全部功能",
+        fullTitleArchive: "全部功能、完整头衔档案",
+        distanceToNextTitle: "距离下一头衔还需要 {n} 次植物归档。",
+        suspiciousEnd: "你已经抵达当前系统里最可疑的头衔。",
+        rankNote: "你已完成 {archiveCount} 次植物归档，点亮 {lightCount} 个地点，提交 {commentCount} 条评论。{nextNote}",
+        title0: "无证游荡者",
+        title2: "植物目击者",
+        title5: "植物侦察员",
+        title10: "植物书记员",
+        title30: "助理领地官",
+        title70: "领地官",
+        title150: "植物专员",
+        title200: "总制图官",
+        desc0: "地图外有两株植物，一株尚未收录，另一株也尚未收录。",
+        desc2: "地图外有两株植物，一株归你，另一株也归你——至少档案上是这么写的。",
+        desc5: "档案系统是最有价值的机构，只要你懂得如何利用它。",
+        desc10: "植物不相同，但收录的流程是相同的。",
+        desc30: "你终于可以提交命名提案了。请谨慎使用这项古老的权利。",
+        desc70: "胡扯是一切生物中只有人类才享有的特权。通过胡扯，已有之地先被说成荒野，于是发现、命名和占有都显得顺理成章。",
+        desc150: "一天清晨，当你从不安的梦中醒来，发现自己已经变成了一名相当合格的归档员。",
+        desc200: "别犯傻了，伦敦从不缺雨，地图也从不缺空白。你已抵达本系统的荣耀尽头：凡你未记录之处，皆可暂称荒野。",
+        milestone5Title: "评分评论功能已解锁",
+        milestone5Body: "你现在可以为此地提交评价了。",
+        milestone30Title: "命名提案已解锁",
+        milestone30Body: "你现在可以为此地提交命名提案，其他用户可以点赞。",
+        milestone70Title: "正式改名申请已解锁",
+        milestone70Body: "你现在可以把新的名字提交进入正式改名流程，等待后台审核。一个被点亮的地点，若没有新的名字，总是不体面的。",
+        milestone200Title: "完整头衔档案已解锁",
+        milestone200Body: "你现在可以查看完整头衔档案。",
+        savePlaceQuestion: "保存此地？",
+        removeSavedQuestion: "从保存中移除此地？",
+        savedMessage: "已保存此地。你可以在底部“我”里查看。",
+        removedSavedMessage: "已从保存中移除。",
+        noActivePlace: "请先打开一个已点亮地点。",
+        reviewLockedTitle: "评分和评论尚未开放",
+        reviewLockedBody: "完成 5 次植物归档后可使用。",
+        noReviewPlace: "暂无可评论地点。",
+        noUserReviews: "这里还没有用户评论。",
+        emptyTextReview: "这个用户只留下了评分，没有写评论。",
+        reviewRule: "评分标准：这里的殖民植物越多，评分越高。",
+        reviewCount: "共 {n} 条用户评论",
+        fallbackReviewNote: "暂无用户评论，顶部暂时显示系统预写评论。",
+        reviewQuestion: "你认为这里有多少殖民植物？",
+        rating5: "5 ★ 非常多，殖民植物痕迹很强",
+        rating4: "4 ★ 较多，植物迁移线索明显",
+        rating3: "3 ★ 中等，需要进一步观察",
+        rating2: "2 ★ 较少，只有零星线索",
+        rating1: "1 ★ 很少，几乎看不到",
+        reviewFieldNote: "评论 / 观察记录",
+        reviewPlaceholder: "比如：这里哪些植物让你想到殖民、迁移、采集、命名或植物园制度？",
+        postReview: "发布评论",
+        namingLockedTitle: "命名提案尚未开放",
+        namingLockedBody: "完成 30 次植物归档后可提交命名提案；完成 70 次植物归档后可提交正式改名申请。",
+        formalRenameApplication: "正式改名申请",
+        formalRenameIntro: "你已达到 70 次植物归档。提交后会进入后台等待审核。",
+        newName: "新的名字",
+        namePlaceholder: "例如：秋园 / 南方档案 / 象堡领地",
+        namingReason: "命名理由",
+        formalReasonPlaceholder: "请说明为什么这个名字应该被地图承认。",
+        proposalReasonPlaceholder: "为什么这个地方应该获得这个名字？",
+        submitFormalRename: "提交正式改名申请",
+        submitNamingProposal: "提交命名提案",
+        proposalIntro: "你已达到 30 次植物归档。提案会公开显示，其他用户可以点赞。",
+        like: "点赞",
+        liked: "已点赞",
+        pendingReview: "等待审核",
+        submitForReview: "提交后等待审核",
+        noNamingProposals: "还没有命名提案。",
+        noOfficialApplications: "还没有正式改名申请。",
+        tagBotanicalInstitution: "植物机构",
+        tagImperialBotany: "帝国植物学",
+        tagPlantScanActivated: "植物识别已启用",
+        tagUnlockedZone: "已点亮区域",
+        tagParkBoundary: "公园边界",
+        tagResidentialBlock: "住宅街区",
+        tagLocalSurveyArea: "本地调查区",
+        tagChinaSite: "中国地点",
+        tagHistoricLaneBoundary: "历史街巷边界",
+        tagInstitutionalBoundary: "机构边界",
+        tagCampus: "校园",
+        tagEducationalTerritory: "教育领地",
+        tagBuildingBoundary: "建筑边界",
+        tagMicroTerritory: "微型领地",
+        commentKew1: "邱园在这里被视为机构边界，而不是单一地点。",
+        commentKew2: "本项目通过植物迁移、命名和植物学权威来阅读这个地点。",
+        commentKew3: "这个手工清理过的边界替代了宽泛的临时点亮范围。"
+      },
+      en: {
+        pageTitle: "Cultivating Claims / Stable Boundary Library",
+        searchPlaceholder: "Search places or areas...",
+        cameraTitle: "Plant Scan",
+        locateTitle: "Locate",
+        nearbyPlants: "New plants nearby",
+        nearbyCount: "{n} new plants nearby",
+        noNearbyPlants: "No new plants nearby",
+        formerlyKnownAs: "Formerly known as: ",
+        colonialScore: "Colonial Score",
+        route: "Route",
+        claim: "Claim",
+        claimed: "Claimed",
+        plantList: "Plant List",
+        save: "Save",
+        saved: "Saved",
+        lockedRouteHint: "This area has not been claimed yet. Claim it to unlock routes.",
+        routeLoading: "Loading route...",
+        walk: "Walk",
+        cycle: "Cycle",
+        drive: "Drive",
+        transit: "Transit",
+        colonialScores: "Colonial Score",
+        chinesePlantDensity: "Chinese Plant Density",
+        colonisationEffectiveness: "Colonisation Effectiveness",
+        boundarySource: "Boundary Source",
+        claimMethod: "Claim Method",
+        plantScanLocation: "Plant Scan + Location",
+        reviews: "Reviews",
+        namingProposals: "Naming Proposals",
+        legendTitle: "Cultivating Claims / Stable Boundary Library",
+        legendLine1: "Green outline = claimed boundary.",
+        legendLine2: "Grey area = not yet claimed through plant scanning.",
+        legendLine3: "This version uses a local boundary library instead of live OSM requests for stability.",
+        explore: "Explore",
+        me: "Me",
+        contribute: "Contribute",
+        myPlaces: "My Places",
+        claimSuccess: "Claim Registered",
+        youClaimed: "Place claimed:",
+        enteredArchive: "This place has entered the botanical archive.",
+        archiveNo: "Archive No.",
+        enterMap: "Enter Map",
+        nearbyToast: "New unarchived plant found!",
+        plantScanTitle: "Plant Scan",
+        plantScanDesc: "When you take a plant photo, the system uses your current location. When you choose a photo from your album, it first tries to read GPS data; if there is no GPS data, you will be asked to choose a location.",
+        takePhoto: "Take Plant Photo",
+        choosePhoto: "Choose from Album",
+        noImageSelected: "No image selected",
+        plantLocation: "Plant Location",
+        photoGpsInitial: "After upload, the system will try to read the GPS location from the photo.",
+        useCurrentLocation: "Use Current Location",
+        selectOnMap: "Select Location on Map",
+        searchPlantLocation: "Search Plant Location",
+        noManualLocation: "No location selected yet.",
+        scanClaimArea: "Scan Plant & Claim Area",
+        rescanClaimArea: "Rescan Plant & Claim Area",
+        close: "Close",
+        plantsInArea: "Plants in This Area",
+        plantListDesc: "This list shows plants identified by photo and recorded in this area. Every scan becomes botanical evidence for the claim.",
+        noPlantRecords: "No plant records yet.",
+        plantPassport: "Plant Passport",
+        archived: "ARCHIVED",
+        scientificName: "Scientific Name",
+        genus: "Genus",
+        family: "Family",
+        origin: "Origin",
+        from: "Origin",
+        confidence: "Confidence",
+        recordTime: "Record Time",
+        archiveLocation: "Archive Location",
+        archiveTime: "Archive Time",
+        archivistStatus: "Archivist Status",
+        plantStatus: "Plant Status",
+        tapCard: "Tap this card to locate the plant.",
+        unknownPlant: "Unknown plant",
+        unknownSpecies: "Unknown species",
+        unknownPlace: "Unknown place",
+        originChina: "China",
+        originJapan: "Japan",
+        originKorea: "Korean Peninsula",
+        originTaiwan: "Taiwan",
+        originIndia: "India",
+        originVietnam: "Vietnam",
+        originThailand: "Thailand",
+        originAsia: "Asia",
+        originNonUkNative: "Non-UK Native",
+        originUkNative: "UK Native",
+        originPending: "Origin Pending Review",
+        currentRank: "Current Claim Title",
+        locked: "Locked",
+        unlockCondition: "Requirement: ",
+        plantArchives: " plant archives",
+        functionLimit: "Access Level: ",
+        rankGuide: "Claim Title Archive",
+        basicAccess: "Basic Access",
+        reviewAccess: "Reviews & Ratings",
+        namingAccess: "Reviews, Ratings & Naming Proposals",
+        officialRenameAccess: "Reviews, Ratings, Naming Proposals & Official Renaming",
+        fullAccess: "Full Access",
+        fullTitleArchive: "Full Access & Complete Title Archive",
+        distanceToNextTitle: "{n} more plant archives required for the next title.",
+        suspiciousEnd: "You have reached the most suspicious title currently available.",
+        rankNote: "You have completed {archiveCount} plant archives, claimed {lightCount} places, and posted {commentCount} reviews. {nextNote}",
+        title0: "Unlicensed Wanderer",
+        title2: "Plant Witness",
+        title5: "Plant Scout",
+        title10: "Botanical Clerk",
+        title30: "Assistant Claim Officer",
+        title70: "Territory Officer",
+        title150: "Botanical Commissioner",
+        title200: "Chief Cartographer",
+        desc0: "Outside the map stood two plants. One was not yet archived, and the other was not yet archived either.",
+        desc2: "Outside the map stood two plants. One belonged to you, and the other belonged to you as well — at least, that is what the archive says.",
+        desc5: "The archive is a most valuable institution, if you only know how to use it.",
+        desc10: "Plants differ, but the procedure of archiving is always the same.",
+        desc30: "You may now name a place. Use this ancient right with caution.",
+        desc70: "Talking nonsense is man’s only privilege over all other organisms. It is by talking nonsense that existing land is first called wilderness; and then discovery, naming, and possession all begin to look like truth.",
+        desc150: "One morning, as you awoke from uneasy dreams, you found yourself transformed into a rather competent archivist.",
+        desc200: "Don’t be foolish. London has never lacked rain, and the map has never lacked blank spaces. You have reached the glorious end of this system: wherever you have not recorded may be declared wilderness.",
+        milestone5Title: "Reviews & Ratings Unlocked",
+        milestone5Body: "You may now submit a review for this place.",
+        milestone30Title: "Naming Proposals Unlocked",
+        milestone30Body: "You may now submit naming proposals. Other users can like them.",
+        milestone70Title: "Official Renaming Application Unlocked",
+        milestone70Body: "You may now submit a new name for official review. It is a truth universally acknowledged, that a claimed place must be in want of a new name.",
+        milestone200Title: "Complete Title Archive Unlocked",
+        milestone200Body: "You may now view the complete title archive.",
+        savePlaceQuestion: "Save this place?",
+        removeSavedQuestion: "Remove this place from saved places?",
+        savedMessage: "This place has been saved. You can find it under “Me”.",
+        removedSavedMessage: "Removed from saved places.",
+        noActivePlace: "Please open a claimed place first.",
+        reviewLockedTitle: "Reviews and ratings are not yet available",
+        reviewLockedBody: "Complete 5 plant archives to use this feature.",
+        noReviewPlace: "No reviewable place selected.",
+        noUserReviews: "No user reviews yet.",
+        emptyTextReview: "This user left a rating without a written review.",
+        reviewRule: "Rating rule: the more colonial botanical traces here, the higher the score.",
+        reviewCount: "{n} user reviews",
+        fallbackReviewNote: "No user reviews yet. System-written notes are shown above for now.",
+        reviewQuestion: "How strong is the colonial botanical presence here?",
+        rating5: "5 ★ Very strong traces of colonial botany",
+        rating4: "4 ★ Clear signs of plant migration",
+        rating3: "3 ★ Moderate, needs further observation",
+        rating2: "2 ★ Minor, only scattered traces",
+        rating1: "1 ★ Very little, almost invisible",
+        reviewFieldNote: "Review / Field Note",
+        reviewPlaceholder: "For example: which plants here make you think of colonisation, migration, collecting, naming, or botanical institutions?",
+        postReview: "Post Review",
+        namingLockedTitle: "Naming proposals are not yet available",
+        namingLockedBody: "Complete 30 plant archives to submit naming proposals; complete 70 to submit official renaming applications.",
+        formalRenameApplication: "Official Renaming Application",
+        formalRenameIntro: "You have reached 70 plant archives. Submissions will enter the review queue.",
+        newName: "New Name",
+        namePlaceholder: "e.g. Autumn Garden / Southern Archive / Xiang-bao Territory",
+        namingReason: "Reason for Proposal",
+        formalReasonPlaceholder: "Explain why this name should be recognised by the map.",
+        proposalReasonPlaceholder: "Why should this place receive this name?",
+        submitFormalRename: "Submit Application",
+        submitNamingProposal: "Submit Proposal",
+        proposalIntro: "You have reached 30 plant archives. Proposals will be public and can receive likes.",
+        like: "Like",
+        liked: "Liked",
+        pendingReview: "Pending Review",
+        submitForReview: "Submitted for Review",
+        noNamingProposals: "No naming proposals yet.",
+        noOfficialApplications: "No official renaming applications yet.",
+        tagBotanicalInstitution: "Botanical Institution",
+        tagImperialBotany: "Imperial Botany",
+        tagPlantScanActivated: "Plant-scan Activated",
+        tagUnlockedZone: "Claimed Zone",
+        tagParkBoundary: "Park Boundary",
+        tagResidentialBlock: "Residential Block",
+        tagLocalSurveyArea: "Local Survey Area",
+        tagChinaSite: "China Site",
+        tagHistoricLaneBoundary: "Historic Lane Boundary",
+        tagInstitutionalBoundary: "Institutional Boundary",
+        tagCampus: "Campus",
+        tagEducationalTerritory: "Educational Territory",
+        tagBuildingBoundary: "Building Boundary",
+        tagMicroTerritory: "Micro Territory",
+        commentKew1: "Kew is treated as an institutional boundary rather than a single point.",
+        commentKew2: "The project reads this site through plant movement, naming and botanical authority.",
+        commentKew3: "This manually cleaned boundary replaces a broad temporary unlocked area."
+      }
+    };
+
+    function t(key, values = {}) {
+      let text = I18N[currentLang]?.[key] || I18N.zh[key] || key;
+      Object.entries(values).forEach(([name, value]) => {
+        text = text.replaceAll(`{${name}}`, value);
+      });
+      return text;
+    }
+
+    function getTagLabel(tag) {
+      const map = {
+        "Botanical institution": "tagBotanicalInstitution",
+        "Imperial botany": "tagImperialBotany",
+        "Plant-scan activated": "tagPlantScanActivated",
+        "Unlocked zone": "tagUnlockedZone",
+        "Park boundary": "tagParkBoundary",
+        "Residential block": "tagResidentialBlock",
+        "Local survey area": "tagLocalSurveyArea",
+        "China site": "tagChinaSite",
+        "Historic lane boundary": "tagHistoricLaneBoundary",
+        "Institutional boundary": "tagInstitutionalBoundary",
+        "Campus": "tagCampus",
+        "Educational territory": "tagEducationalTerritory",
+        "Building boundary": "tagBuildingBoundary",
+        "Micro territory": "tagMicroTerritory"
+      };
+      return t(map[tag] || tag);
+    }
+
+    function getBoundarySourceLabel(source) {
+      if (!source) return "";
+      if (currentLang === "en") return source;
+      return String(source)
+        .replaceAll("Local boundary library", "本地边界库")
+        .replaceAll("geojson.io manually drawn", "geojson.io 手动画出")
+        .replaceAll("manually cleaned", "手动清理")
+        .replaceAll("manually drawn", "手动画出");
+    }
+
+    function getCommentLabel(comment) {
+      const map = {
+        "Kew is treated as an institutional boundary rather than a single point.": "commentKew1",
+        "The project reads this site through plant movement, naming and botanical authority.": "commentKew2",
+        "This manually cleaned boundary replaces a broad temporary unlocked area.": "commentKew3"
+      };
+      return t(map[comment] || comment);
+    }
+
+    function updateLanguageUI() {
+      document.documentElement.lang = currentLang === "zh" ? "zh-CN" : "en";
+      document.title = t("pageTitle");
+      const langToggleBtn = document.getElementById("langToggleBtn");
+      if (langToggleBtn) langToggleBtn.textContent = currentLang === "zh" ? "EN" : "中";
+      const byId = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+      const setPlaceholder = (id, text) => { const el = document.getElementById(id); if (el) el.placeholder = text; };
+      setPlaceholder("searchInput", t("searchPlaceholder"));
+      const cameraBtn = document.getElementById("cameraBtn"); if (cameraBtn) cameraBtn.title = t("cameraTitle");
+      const locateBtn = document.getElementById("locateBtn"); if (locateBtn) locateBtn.title = t("locateTitle");
+      byId("nearbyPlantsBtn", t("nearbyPlants"));
+      byId("exploreTabText", t("explore"));
+      byId("meTabText", t("me"));
+      byId("contributeTabText", t("contribute"));
+      byId("scoresTitle", t("colonialScores"));
+      byId("ratingSubText", t("colonialScore"));
+      byId("chineseDensityLabel", t("chinesePlantDensity"));
+      byId("colonisationLabel", t("colonisationEffectiveness"));
+      byId("boundarySourceLabel", t("boundarySource"));
+      byId("claimMethodLabel", t("claimMethod"));
+      byId("claimMethodValue", t("plantScanLocation"));
+      byId("reviewsTitle", t("reviews"));
+      byId("legendTitle", t("legendTitle"));
+      byId("legendLine1", t("legendLine1"));
+      byId("legendLine2", t("legendLine2"));
+      byId("legendLine3", t("legendLine3"));
+      byId("rewardTitle", t("claimSuccess"));
+      byId("rewardClaimLine", currentLang === "zh" ? t("youClaimed") : "");
+      byId("rewardArchiveLine", t("enteredArchive"));
+      byId("closeRewardBtn", t("enterMap"));
+      byId("nearbyToastText", t("nearbyToast"));
+      byId("plantScanTitle", t("plantScanTitle"));
+      byId("plantScanDesc", t("plantScanDesc"));
+      byId("takePhotoLabel", t("takePhoto"));
+      byId("choosePhotoLabel", t("choosePhoto"));
+      byId("plantLocationLabel", t("plantLocation"));
+      byId("photoGpsInitialText", t("photoGpsInitial"));
+      byId("useCurrentText", t("useCurrentLocation"));
+      byId("manualMapText", t("selectOnMap"));
+      byId("pickLocationBtn", t("searchPlantLocation"));
+      byId("manualLocationHint", t("noManualLocation"));
+      byId("identifyBtn", t("scanClaimArea"));
+      byId("closeCameraBtn", t("close"));
+      byId("plantListDesc", t("plantListDesc"));
+      const plantListBoxEl = document.getElementById("plantListBox");
+      if (plantListBoxEl && ["暂无植物记录。", "No plant records yet."].includes(plantListBoxEl.textContent.trim())) {
+        plantListBoxEl.textContent = t("noPlantRecords");
+      }
+      byId("closePlantListBtn", t("close"));
+      routeBtn && (routeBtn.textContent = t("route"));
+      plantListBtn && (plantListBtn.textContent = t("plantList"));
+      lockedRouteHint && (lockedRouteHint.textContent = t("lockedRouteHint"));
+      if (routeSummary && (routeSummary.textContent.includes("路线加载") || routeSummary.textContent.includes("Loading route"))) routeSummary.textContent = t("routeLoading");
+      document.querySelectorAll(".route-mode-btn").forEach(btn => {
+        const mode = btn.dataset.mode;
+        if (mode === "WALK") btn.textContent = t("walk");
+        if (mode === "BICYCLE") btn.textContent = t("cycle");
+        if (mode === "DRIVE") btn.textContent = t("drive");
+        if (mode === "TRANSIT") btn.textContent = t("transit");
+      });
+      updateSaveButtonState();
+      if (typeof currentOpenedBoundaryId !== "undefined" && currentOpenedBoundaryId) {
+        const boundary = getBoundaryById(currentOpenedBoundaryId);
+        if (boundary && document.getElementById("infoPanel").style.display !== "none") {
+          openPanelFromBoundary(boundary);
+        }
+      }
+    }
 
     const STORAGE_KEYS = {
       savedPlaces: "leibiSavedPlaces",
@@ -1356,12 +1863,12 @@
 
     function updateSaveButtonState() {
       if (typeof savePlaceBtn === "undefined" || !currentActivePlace || savePlaceBtn.disabled) return;
-      savePlaceBtn.textContent = isCurrentPlaceSaved() ? "已保存" : "保存";
+      savePlaceBtn.textContent = isCurrentPlaceSaved() ? t("saved") : t("save");
     }
 
     function toggleSaveCurrentPlace() {
       if (!currentActivePlace) {
-        alert("请先打开一个已点亮地点。");
+        alert(t("noActivePlace"));
         return;
       }
 
@@ -1369,17 +1876,17 @@
       const existingIndex = savedPlaces.findIndex(place => place.key === currentActivePlace.key);
 
       if (existingIndex >= 0) {
-        const shouldRemove = confirm("确定要取消保存这个地点吗？");
+        const shouldRemove = confirm(t("removeSavedQuestion"));
         if (!shouldRemove) return;
 
         savedPlaces.splice(existingIndex, 1);
         writeLocalList(STORAGE_KEYS.savedPlaces, savedPlaces);
-        savePlaceBtn.textContent = "保存";
-        alert("已从保存中移除。");
+        savePlaceBtn.textContent = t("save");
+        alert(t("removedSavedMessage"));
         return;
       }
 
-      const shouldSave = confirm("确定要保存这个地点吗？");
+      const shouldSave = confirm(t("savePlaceQuestion"));
       if (!shouldSave) return;
 
       savedPlaces.unshift({
@@ -1387,8 +1894,8 @@
         savedAt: new Date().toISOString()
       });
       writeLocalList(STORAGE_KEYS.savedPlaces, savedPlaces);
-      savePlaceBtn.textContent = "已保存";
-      alert("已保存此地。你可以在底部“我”里面查看。");
+      savePlaceBtn.textContent = t("saved");
+      alert(t("savedMessage"));
     }
 
     function addContribution(type, payload) {
@@ -1433,9 +1940,9 @@
       const family = String(plant.family || "").toLowerCase();
       const genus = String(plant.genus || "").toLowerCase();
       if (family.includes("unknown") && genus.includes("unknown")) {
-        return "未确认迁移者 / 待归档者";
+        return currentLang === "zh" ? "未确认迁移者 / 待归档者" : "Unconfirmed Migrant / Pending Archive";
       }
-      return "迁移者 / 被收录者 / 领地通行证";
+      return currentLang === "zh" ? "迁移者 / 被收录者 / 领地通行证" : "Migrant / Archived / Territory Pass Holder";
     }
 
     function normalizeOriginText(value) {
@@ -1443,7 +1950,7 @@
     }
 
     function getPlantOriginLabel(plant) {
-      if (!plant) return "来源待审";
+      if (!plant) return t("originPending");
 
       const origin = plant.origin || {};
       const regions = plant.originRegions || plant.origin_regions || origin.locations || [];
@@ -1455,73 +1962,73 @@
       const isUkNative = plant.isUkNative === true || plant.is_uk_native === true || origin.isUkNative === true;
       const isNonUkNative = plant.isNonUkNative === true || plant.is_non_uk_native === true || origin.isNonUkNative === true;
 
-      if (isChinese || combinedText.includes("china") || combinedText.includes("chinese")) return "中国";
-      if (combinedText.includes("japan") || combinedText.includes("jap_")) return "日本";
-      if (combinedText.includes("korea") || combinedText.includes("kor_")) return "朝鲜半岛";
-      if (combinedText.includes("taiwan")) return "台湾";
-      if (combinedText.includes("india")) return "印度";
-      if (combinedText.includes("vietnam")) return "越南";
-      if (combinedText.includes("thailand")) return "泰国";
-      if (isAsian || combinedText.includes("asia") || combinedText.includes("malesia") || combinedText.includes("indochina")) return "亚洲";
-      if (isNonUkNative) return "非英国本土";
-      if (isUkNative) return "英国本土";
+      if (isChinese || combinedText.includes("china") || combinedText.includes("chinese")) return t("originChina");
+      if (combinedText.includes("japan") || combinedText.includes("jap_")) return t("originJapan");
+      if (combinedText.includes("korea") || combinedText.includes("kor_")) return t("originKorea");
+      if (combinedText.includes("taiwan")) return t("originTaiwan");
+      if (combinedText.includes("india")) return t("originIndia");
+      if (combinedText.includes("vietnam")) return t("originVietnam");
+      if (combinedText.includes("thailand")) return t("originThailand");
+      if (isAsian || combinedText.includes("asia") || combinedText.includes("malesia") || combinedText.includes("indochina")) return t("originAsia");
+      if (isNonUkNative) return t("originNonUkNative");
+      if (isUkNative) return t("originUkNative");
 
-      return "来源待审";
+      return t("originPending");
     }
 
     function getPlantOriginLineHtml(plant) {
-      return `<span class="plant-origin-line">来自：${escapeHtml(getPlantOriginLabel(plant))}</span>`;
+      return `<span class="plant-origin-line">${escapeHtml(t("from"))}: ${escapeHtml(getPlantOriginLabel(plant))}</span>`;
     }
 
     function getUserRankLevels() {
       return [
         {
           min: 0,
-          name: "Unlicensed Wanderer / 无证游荡者",
-          permissions: "基础功能",
-          description: "地图外有两株植物，一株尚未收录，另一株也尚未收录。"
+          name: t("title0"),
+          permissions: t("basicAccess"),
+          description: t("desc0")
         },
         {
           min: 2,
-          name: "Plant Witness / 植物目击者",
-          permissions: "基础功能",
-          description: "地图外有两株植物，一株归你，另一株也归你——至少档案上是这么写的。"
+          name: t("title2"),
+          permissions: t("basicAccess"),
+          description: t("desc2")
         },
         {
           min: 5,
-          name: "Plant Scout / 植物侦察员",
-          permissions: "评分与评论",
-          description: "档案系统是最有价值的机构，只要你懂得如何利用它。"
+          name: t("title5"),
+          permissions: t("reviewAccess"),
+          description: t("desc5")
         },
         {
           min: 10,
-          name: "Botanical Clerk / 植物书记员",
-          permissions: "评分与评论",
-          description: "植物不相同，但收录的流程是相同的。"
+          name: t("title10"),
+          permissions: t("reviewAccess"),
+          description: t("desc10")
         },
         {
           min: 30,
-          name: "Assistant Claim Officer / 助理领地官",
-          permissions: "评分与评论、命名提案",
-          description: "你终于可以提交命名提案了。提出名字是一回事，让地图承认又是另外一回事。"
+          name: t("title30"),
+          permissions: t("namingAccess"),
+          description: t("desc30")
         },
         {
           min: 70,
-          name: "Territory Officer / 领地官",
-          permissions: "评分与评论、命名提案、正式改名",
-          description: "没错，你想要的不是那株植物。你想要的是它头上的编号，是地图里的秩序，秩序！"
+          name: t("title70"),
+          permissions: t("officialRenameAccess"),
+          description: t("desc70")
         },
         {
           min: 150,
-          name: "Botanical Commissioner / 植物专员",
-          permissions: "全部功能",
-          description: "一天清晨，当你从不安的梦中醒来，发现自己已经变成了一名相当合格的归档员。"
+          name: t("title150"),
+          permissions: t("fullAccess"),
+          description: t("desc150")
         },
         {
           min: 200,
-          name: "Chief Cartographer / 总制图官",
-          permissions: "全部功能、完整头衔档案",
-          description: "别犯傻了，伦敦从不缺雨，地图也从不缺空白。你已抵达本系统的荣耀尽头：凡你未记录之处，皆可暂称荒野。"
+          name: t("title200"),
+          permissions: t("fullTitleArchive"),
+          description: t("desc200")
         }
       ];
     }
@@ -1566,12 +2073,12 @@
       }
 
       const nextNote = next
-        ? `距离下一头衔还需要 ${Math.max(next.min - archiveCount, 0)} 次植物归档。`
-        : "你已经抵达当前系统里最可疑的头衔。";
+        ? t("distanceToNextTitle", { n: Math.max(next.min - archiveCount, 0) })
+        : t("suspiciousEnd");
 
       return {
         name: current.name,
-        note: `你已完成 ${archiveCount} 次植物归档，点亮 ${lightCount} 个地点，提交 ${commentCount} 条评论。${nextNote}`,
+        note: t("rankNote", { archiveCount, lightCount, commentCount, nextNote }),
         archiveCount,
         lightCount,
         commentCount,
@@ -1587,7 +2094,7 @@
 
       const html = `
         <div class="colonial-rank-card">
-          <div class="rank-title">当前开荒身份</div>
+          <div class="rank-title">${escapeHtml(t("currentRank"))}</div>
           <div class="rank-name">${escapeHtml(rank.name)}</div>
           <div class="rank-note">${escapeHtml(rank.note)}</div>
         </div>
@@ -1599,8 +2106,8 @@
           if (!isUnlocked) {
             return `
               <div class="rank-level-card">
-                <strong>尚未解锁</strong><br>
-                <span class="muted">解锁条件：${level.min} 次植物归档</span>
+                <strong>${escapeHtml(t("locked"))}</strong><br>
+                <span class="muted">${escapeHtml(t("unlockCondition"))}${level.min}${escapeHtml(t("plantArchives"))}</span>
               </div>
             `;
           }
@@ -1608,43 +2115,44 @@
           return `
             <div class="rank-level-card ${isCurrent ? "is-current" : ""}">
               <strong>${escapeHtml(level.name)}</strong><br>
-              <span class="muted">解锁条件：${level.min} 次植物归档</span><br>
-              <span class="muted">功能限制：${escapeHtml(level.permissions)}</span>
+              <span class="muted">${escapeHtml(t("unlockCondition"))}${level.min}${escapeHtml(t("plantArchives"))}</span><br>
+              <span class="muted">${escapeHtml(t("functionLimit"))}${escapeHtml(level.permissions)}</span>
               <div style="margin-top:6px;">${escapeHtml(level.description)}</div>
             </div>
           `;
         }).join("")}
       `;
 
-      openBottomSheet("开荒身份等级", html);
+      openBottomSheet(t("rankGuide"), html);
     }
 
     function getPlantPassportHtml(item) {
   const archiveLabel = item.archiveLabel || formatArchiveNumber(item.archiveNumber || 1);
   const placeKey = item.placeKey || "";
   const originText = getPlantOriginLabel(item);
+  const rankName = getUserRankInfo().name;
 
   return `
     <div
       class="passport-card"
       role="button"
       tabindex="0"
-      title="点击跳转到植物所在地"
+      title="${escapeHtml(t("tapCard"))}"
       onclick='openContributionPlace(${JSON.stringify(placeKey)})'
     >
       <div class="passport-title">
-        <span>Plant Passport / 植物护照</span>
-        <span class="passport-stamp">ARCHIVED</span>
+        <span>${escapeHtml(t("plantPassport"))}</span>
+        <span class="passport-stamp">${escapeHtml(t("archived"))}</span>
       </div>
-      <span class="archive-number">收录编号 ${escapeHtml(archiveLabel)}</span><br>
-      <strong>${escapeHtml(item.commonName || item.plantName || "Unknown plant")}</strong><br>
-      学名：<i>${escapeHtml(item.scientificName || "Unknown species")}</i><br>
-      来源：${escapeHtml(originText)}<br>
-      归档地点：${escapeHtml(item.placeName || "未知地点")}<br>
-      归档时间：${new Date(item.time).toLocaleString()}<br>
-      归档者身份：${escapeHtml(getUserRankInfo().name)}<br>
-      植物身份：${escapeHtml(item.plantIdentity || "迁移者 / 被收录者 / 领地通行证")}<br>
-      <span class="muted">点击这张名片可跳转到植物所在地。</span>
+      <span class="archive-number">${escapeHtml(t("archiveNo"))} ${escapeHtml(archiveLabel)}</span><br>
+      <strong>${escapeHtml(item.commonName || item.plantName || t("unknownPlant"))}</strong><br>
+      ${escapeHtml(t("scientificName"))}: <i>${escapeHtml(item.scientificName || t("unknownSpecies"))}</i><br>
+      ${escapeHtml(t("origin"))}: ${escapeHtml(originText)}<br>
+      ${escapeHtml(t("archiveLocation"))}: ${escapeHtml(item.placeName || t("unknownPlace"))}<br>
+      ${escapeHtml(t("archiveTime"))}: ${new Date(item.time).toLocaleString()}<br>
+      ${escapeHtml(t("archivistStatus"))}: ${escapeHtml(rankName)}<br>
+      ${escapeHtml(t("plantStatus"))}: ${escapeHtml(item.plantIdentity || (currentLang === "zh" ? "迁移者 / 被收录者 / 领地通行证" : "Migrant / Archived / Territory Pass Holder"))}<br>
+      <span class="muted">${escapeHtml(t("tapCard"))}</span>
     </div>
   `;
 }
@@ -1689,7 +2197,7 @@ async function hydratePassportOriginFromServer(item) {
   if (!(item.passport || item.type === "植物护照")) return item;
 
   const currentOrigin = getPlantOriginLabel(item);
-  if (currentOrigin && currentOrigin !== "来源待审") {
+  if (currentOrigin && currentOrigin !== t("originPending")) {
     return item;
   }
 
@@ -1734,20 +2242,20 @@ async function hydratePassportOriginFromServer(item) {
     function getUnlockMilestoneMessage(archiveCount) {
       const milestones = {
         5: {
-          title: "评分评论功能已解锁",
-          body: "你现在可以为此地提交评价了。"
+          title: t("milestone5Title"),
+          body: t("milestone5Body")
         },
         30: {
-          title: "命名提案已解锁",
-          body: "你现在可以为此地提交命名提案，其他用户可以点赞。"
+          title: t("milestone30Title"),
+          body: t("milestone30Body")
         },
         70: {
-          title: "正式改名功能已解锁",
-          body: "你现在可以把新的名字提交进入正式改名流程，等待后台审核。"
+          title: t("milestone70Title"),
+          body: t("milestone70Body")
         },
         200: {
-          title: "完整头衔档案已解锁",
-          body: "你现在可以查看完整头衔档案。"
+          title: t("milestone200Title"),
+          body: t("milestone200Body")
         }
       };
 
@@ -1772,8 +2280,11 @@ async function hydratePassportOriginFromServer(item) {
     function showRewardModal(placeName, archiveNumber, totalArchiveCount = null) {
       if (!rewardModal) return;
       const displayArchiveCount = totalArchiveCount || getUserArchiveCount();
-      rewardPlaceName.textContent = placeName || "Unknown Place";
-      rewardArchiveNo.textContent = `收录编号 ${formatArchiveNumber(archiveNumber)}`;
+      const safePlaceName = placeName || t("unknownPlace");
+      const rewardClaimLineEl = document.getElementById("rewardClaimLine");
+      if (rewardClaimLineEl) rewardClaimLineEl.textContent = currentLang === "zh" ? t("youClaimed") : "";
+      rewardPlaceName.textContent = currentLang === "zh" ? safePlaceName : `${safePlaceName} has been claimed.`;
+      rewardArchiveNo.textContent = `${t("archiveNo")} ${formatArchiveNumber(archiveNumber)}`;
       const rewardUnlockMessage = document.getElementById("rewardUnlockMessage");
       if (rewardUnlockMessage) {
         rewardUnlockMessage.innerHTML = getUnlockMessageHtml(displayArchiveCount);
@@ -1878,35 +2389,35 @@ async function hydratePassportOriginFromServer(item) {
       if (permissions.canApplyRename) {
         formHtml = `
           <div class="review-form naming-form">
-            <strong>正式改名申请</strong><br>
-            <span class="muted">你已达到 70 次植物归档。提交后会进入后台等待审核。</span>
-            <label for="formalRenameInput">新的名字</label>
-            <input id="formalRenameInput" type="text" placeholder="例如：秋园 / Southern Archive / Xiang-bao Territory">
+            <strong>${escapeHtml(t("formalRenameApplication"))}</strong><br>
+            <span class="muted">${escapeHtml(t("formalRenameIntro"))}</span>
+            <label for="formalRenameInput">${escapeHtml(t("newName"))}</label>
+            <input id="formalRenameInput" type="text" placeholder="${escapeHtml(t("namePlaceholder"))}">
 
-            <label for="formalRenameReasonInput">命名理由</label>
-            <textarea id="formalRenameReasonInput" placeholder="请说明为什么这个名字应该被地图承认。"></textarea>
+            <label for="formalRenameReasonInput">${escapeHtml(t("namingReason"))}</label>
+            <textarea id="formalRenameReasonInput" placeholder="${escapeHtml(t("formalReasonPlaceholder"))}"></textarea>
 
-            <button class="review-submit-btn" type="button" onclick="submitFormalRenameApplication()">提交正式改名申请</button>
+            <button class="review-submit-btn" type="button" onclick="submitFormalRenameApplication()">${escapeHtml(t("submitFormalRename"))}</button>
           </div>
         `;
       } else if (permissions.canProposeName) {
         formHtml = `
           <div class="review-form naming-form">
-            <strong>命名提案</strong><br>
-            <span class="muted">你已达到 30 次植物归档。提案会公开显示，其他用户可以点赞。</span>
-            <label for="renameProposalInput">新的名字</label>
-            <input id="renameProposalInput" type="text" placeholder="例如：秋园 / Southern Archive / Xiang-bao Territory">
+            <strong>${escapeHtml(t("namingProposals"))}</strong><br>
+            <span class="muted">${escapeHtml(t("proposalIntro"))}</span>
+            <label for="renameProposalInput">${escapeHtml(t("newName"))}</label>
+            <input id="renameProposalInput" type="text" placeholder="${escapeHtml(t("namePlaceholder"))}">
 
-            <label for="renameProposalReasonInput">命名理由</label>
-            <textarea id="renameProposalReasonInput" placeholder="为什么这个地方应该获得这个名字？"></textarea>
+            <label for="renameProposalReasonInput">${escapeHtml(t("namingReason"))}</label>
+            <textarea id="renameProposalReasonInput" placeholder="${escapeHtml(t("proposalReasonPlaceholder"))}"></textarea>
 
-            <button class="review-submit-btn" type="button" onclick="submitRenameProposal()">提交命名提案</button>
+            <button class="review-submit-btn" type="button" onclick="submitRenameProposal()">${escapeHtml(t("submitNamingProposal"))}</button>
           </div>
         `;
       } else {
         formHtml = renderLockedFeature(
-          "命名提案尚未开放",
-          "完成 30 次植物归档后可提交命名提案；完成 70 次植物归档后可提交正式改名申请。"
+          t("namingLockedTitle"),
+          t("namingLockedBody")
         );
       }
 
@@ -1914,33 +2425,33 @@ async function hydratePassportOriginFromServer(item) {
         .sort((a, b) => Number(b.likeCount || 0) - Number(a.likeCount || 0) || new Date(b.time || b.createdAt || b.created_at) - new Date(a.time || a.createdAt || a.created_at))
         .map(item => `
           <div class="place-review-card rename-card">
-            <strong>${escapeHtml(item.proposedName || "未命名提案")}</strong>
+            <strong>${escapeHtml(item.proposedName || t("namingProposals"))}</strong>
             <span class="muted"> · ${new Date(item.time || item.createdAt || item.created_at || Date.now()).toLocaleString()}</span><br>
-            ${escapeHtml(item.reason || "这个用户提交了名字，但没有写理由。")}
+            ${escapeHtml(item.reason || (currentLang === "zh" ? "这个用户提交了名字，但没有写理由。" : "This user submitted a name without a reason."))}
             <div class="rename-meta-row">
-              <span class="muted">提案者：${escapeHtml(item.userRank || item.user_rank || "匿名归档者")}</span>
+              <span class="muted">${escapeHtml(currentLang === "zh" ? "提案者：" : "Proposed by: ")}${escapeHtml(item.userRank || item.user_rank || (currentLang === "zh" ? "匿名归档者" : "Anonymous Archivist"))}</span>
               <button class="rename-like-btn ${item.likedByCurrentUser ? "is-liked" : ""}" type="button" onclick="likeRenameProposal('${escapeHtml(item.id)}')">
-                ${item.likedByCurrentUser ? "已赞" : "点赞"} · ${Number(item.likeCount || 0)}
+                ${item.likedByCurrentUser ? t("liked") : t("like")} · ${Number(item.likeCount || 0)}
               </button>
             </div>
           </div>
-        `).join("") : `<div class="empty-state">这里还没有命名提案。</div>`;
+        `).join("") : `<div class="empty-state">${escapeHtml(t("noNamingProposals"))}</div>`;
 
       const applicationListHtml = applications.length ? `
-        <div class="section-title">正式改名申请</div>
+        <div class="section-title">${escapeHtml(t("formalRenameApplication"))}</div>
         ${applications.map(item => `
           <div class="place-review-card rename-card">
-            <strong>${escapeHtml(item.proposedName || "未命名申请")}</strong>
+            <strong>${escapeHtml(item.proposedName || t("formalRenameApplication"))}</strong>
             <span class="muted"> · ${new Date(item.time || item.createdAt || item.created_at || Date.now()).toLocaleString()}</span><br>
-            ${escapeHtml(item.reason || "没有填写理由。")}<br>
-            <span class="muted">状态：${escapeHtml(item.status === "approved" ? "已通过" : item.status === "rejected" ? "已驳回" : "等待审核")}</span>
+            ${escapeHtml(item.reason || (currentLang === "zh" ? "没有填写理由。" : "No reason provided."))}<br>
+            <span class="muted">${escapeHtml(currentLang === "zh" ? "状态：" : "Status: ")}${escapeHtml(item.status === "approved" ? (currentLang === "zh" ? "已通过" : "Approved") : item.status === "rejected" ? (currentLang === "zh" ? "已驳回" : "Rejected") : t("pendingReview"))}</span>
           </div>
         `).join("")}
       ` : "";
 
       return `
         ${formHtml}
-        <div class="section-title">命名提案</div>
+        <div class="section-title">${escapeHtml(t("namingProposals"))}</div>
         ${proposalListHtml}
         ${applicationListHtml}
       `;
@@ -1948,7 +2459,7 @@ async function hydratePassportOriginFromServer(item) {
 
     async function submitRenameProposal() {
       if (!currentActivePlace) {
-        alert("请先打开一个已点亮地点。");
+        alert(t("noActivePlace"));
         return;
       }
 
@@ -2011,7 +2522,7 @@ async function hydratePassportOriginFromServer(item) {
 
     async function submitFormalRenameApplication() {
       if (!currentActivePlace) {
-        alert("请先打开一个已点亮地点。");
+        alert(t("noActivePlace"));
         return;
       }
 
@@ -2112,7 +2623,7 @@ async function hydratePassportOriginFromServer(item) {
       const reviewsBox = document.getElementById("panelReviews");
 
       if (!currentActivePlace) {
-        reviewsBox.innerHTML = `<div class="review">暂无可评论地点。</div>`;
+        reviewsBox.innerHTML = `<div class="review">${escapeHtml(t("noReviewPlace"))}</div>`;
         return;
       }
 
@@ -2153,13 +2664,13 @@ async function hydratePassportOriginFromServer(item) {
 
       const previewItems = latestReviews.length
         ? latestReviews.map(review => ({
-            text: review.text || "这个用户只留下了评分，没有写评论。",
+            text: review.text || t("emptyTextReview"),
             rating: Number(review.rating || 0),
             time: review.time,
             isUserReview: true
           }))
-        : fallbackComments.slice(0, 3).map(text => ({
-            text,
+         : fallbackComments.slice(0, 3).map(text => ({
+            text: getCommentLabel(text),
             isUserReview: false
           }));
 
@@ -2175,43 +2686,43 @@ async function hydratePassportOriginFromServer(item) {
             </div>
           `).join("")}
         </div>
-      ` : `<div class="empty-state">这里还没有用户评论。</div>`;
+      ` : `<div class="empty-state">${escapeHtml(t("noUserReviews"))}</div>`;
 
       const allReviewsHtml = sortedReviews.length ? sortedReviews.map(review => `
         <div class="place-review-card">
           <strong>${"★".repeat(Number(review.rating || 0))}${"☆".repeat(5 - Number(review.rating || 0))}</strong>
           <span class="muted"> · ${new Date(review.time || Date.now()).toLocaleString()}</span><br>
-          ${escapeHtml(review.text || "这个用户只留下了评分，没有写评论。")}
+          ${escapeHtml(review.text || t("emptyTextReview"))}
         </div>
-      `).join("") : `<div class="empty-state">这里还没有用户评论。</div>`;
+      `).join("") : `<div class="empty-state">${escapeHtml(t("noUserReviews"))}</div>`;
 
       const reviewHtml = permissions.canReview ? `
         <div class="review-summary">
           <span class="review-score-big">${averageText}</span>
-          <span>殖民评分</span><br>
-          <span class="muted">评分标准：这里的殖民植物越多，评分越高。</span><br>
-          <span class="muted">${placeReviews.length ? `共 ${placeReviews.length} 条用户评论` : "暂无用户评论，顶部暂时显示系统预写评论。"}</span>
+          <span>${escapeHtml(t("colonialScore"))}</span><br>
+          <span class="muted">${escapeHtml(t("reviewRule"))}</span><br>
+          <span class="muted">${placeReviews.length ? escapeHtml(t("reviewCount", { n: placeReviews.length })) : escapeHtml(t("fallbackReviewNote"))}</span>
         </div>
 
         <div class="review-form">
-          <label for="reviewRatingInput">你认为这里有多少殖民植物？</label>
+          <label for="reviewRatingInput">${escapeHtml(t("reviewQuestion"))}</label>
           <select id="reviewRatingInput">
-            <option value="5">5 ★ 非常多，殖民植物痕迹很强</option>
-            <option value="4">4 ★ 较多，植物迁移线索明显</option>
-            <option value="3">3 ★ 中等，需要进一步观察</option>
-            <option value="2">2 ★ 较少，只有零星线索</option>
-            <option value="1">1 ★ 很少，几乎看不到</option>
+            <option value="5">${escapeHtml(t("rating5"))}</option>
+            <option value="4">${escapeHtml(t("rating4"))}</option>
+            <option value="3">${escapeHtml(t("rating3"))}</option>
+            <option value="2">${escapeHtml(t("rating2"))}</option>
+            <option value="1">${escapeHtml(t("rating1"))}</option>
           </select>
 
-          <label for="reviewTextInput">评论 / 观察记录</label>
-          <textarea id="reviewTextInput" placeholder="比如：这里哪些植物让你想到殖民、迁移、采集、命名或植物园制度？"></textarea>
-          <button class="review-submit-btn" type="button" onclick="submitCurrentPlaceReview()">发布评论</button>
+          <label for="reviewTextInput">${escapeHtml(t("reviewFieldNote"))}</label>
+          <textarea id="reviewTextInput" placeholder="${escapeHtml(t("reviewPlaceholder"))}"></textarea>
+          <button class="review-submit-btn" type="button" onclick="submitCurrentPlaceReview()">${escapeHtml(t("postReview"))}</button>
         </div>
 
         ${allReviewsHtml}
       ` : renderLockedFeature(
-        "评分和评论尚未开放",
-        "完成 5 次植物归档后可使用。"
+        t("reviewLockedTitle"),
+        t("reviewLockedBody")
       );
 
       const contentHtml = activeTab === "reviews"
@@ -2221,8 +2732,8 @@ async function hydratePassportOriginFromServer(item) {
       reviewsBox.innerHTML = `
         ${previewHtml}
         <div class="place-meta-tabs">
-          <button class="place-meta-tab ${activeTab === "reviews" ? "is-active" : ""}" type="button" onclick="switchPlacePanelTab('reviews')">评论</button>
-          <button class="place-meta-tab ${activeTab === "naming" ? "is-active" : ""}" type="button" onclick="switchPlacePanelTab('naming')">命名提案</button>
+          <button class="place-meta-tab ${activeTab === "reviews" ? "is-active" : ""}" type="button" onclick="switchPlacePanelTab('reviews')">${escapeHtml(t("reviews"))}</button>
+          <button class="place-meta-tab ${activeTab === "naming" ? "is-active" : ""}" type="button" onclick="switchPlacePanelTab('naming')">${escapeHtml(t("namingProposals"))}</button>
         </div>
         <div class="place-meta-content">
           ${contentHtml}
@@ -2232,13 +2743,13 @@ async function hydratePassportOriginFromServer(item) {
 
     async function submitCurrentPlaceReview() {
       if (!currentActivePlace) {
-        alert("请先打开一个已点亮地点。");
+        alert(t("noActivePlace"));
         return;
       }
 
       const permissions = getPermissionState();
       if (!permissions.canReview) {
-        alert("完成 5 次植物归档后，可解锁评分与评论。")
+        alert(t("reviewLockedBody"))
         return;
       }
 
@@ -2277,7 +2788,7 @@ async function hydratePassportOriginFromServer(item) {
       addContribution("评论", {
         placeKey: currentActivePlace.key,
         placeName: currentActivePlace.name,
-        summary: `${rating} 星：${text || "未填写文字评论"}`
+        summary: currentLang === "zh" ? `${rating} 星：${text || "未填写文字评论"}` : `${rating} stars: ${text || "No written review"}`
       });
 
       if (textInput) textInput.value = "";
@@ -2371,7 +2882,7 @@ async function hydratePassportOriginFromServer(item) {
         return;
       }
 
-      alert("没有找到这张植物名片对应的地点。它可能来自旧版本临时点亮记录。");
+      alert(currentLang === "zh" ? "没有找到这张植物名片对应的地点。它可能来自旧版本临时点亮记录。" : "Could not find the place linked to this plant passport. It may come from an older temporary claim record.");
     }
 
     function showSavedPlacesPanel() {
@@ -2384,24 +2895,24 @@ async function hydratePassportOriginFromServer(item) {
 
       const rankHtml = `
         <div class="colonial-rank-card" onclick="showRankGuide()" role="button" tabindex="0">
-          <div class="rank-title">我的头衔</div>
+          <div class="rank-title">${escapeHtml(currentLang === "zh" ? "我的头衔" : "My Title")}</div>
           <div class="rank-name">${escapeHtml(rank.name)}</div>
-          <div class="rank-note">归档植物 ${passportCount} · 点亮地点 ${lightCount} · 评论 ${commentCount}<br>${escapeHtml(rank.note)}</div>
-          <button class="rank-guide-btn" type="button">查看头衔档次</button>
+          <div class="rank-note">${escapeHtml(currentLang === "zh" ? `归档植物 ${passportCount} · 点亮地点 ${lightCount} · 评论 ${commentCount}` : `${passportCount} plant archives · ${lightCount} claimed places · ${commentCount} reviews`)}<br>${escapeHtml(rank.note)}</div>
+          <button class="rank-guide-btn" type="button">${escapeHtml(currentLang === "zh" ? "查看头衔档次" : "View Title Archive")}</button>
         </div>
       `;
 
       const savedHtml = savedPlaces.length ? savedPlaces.map(place => `
         <div class="saved-card">
           <strong>${escapeHtml(place.name)}</strong><br>
-          <span class="muted">${escapeHtml(place.address || place.type || "已保存地点")}</span><br>
-          <button type="button" onclick="openSavedPlaceByKey('${escapeHtml(place.key)}')">打开地点</button>
+          <span class="muted">${escapeHtml(place.address || place.type || (currentLang === "zh" ? "已保存地点" : "Saved place"))}</span><br>
+          <button type="button" onclick="openSavedPlaceByKey('${escapeHtml(place.key)}')">${escapeHtml(currentLang === "zh" ? "打开地点" : "Open Place")}</button>
         </div>
       `).join("") : `
-        <div class="empty-state">还没有保存地点。点亮一个地点后，详情页里的“保存”按钮就会亮起来。</div>
+        <div class="empty-state">${escapeHtml(currentLang === "zh" ? "还没有保存地点。点亮一个地点后，详情页里的“保存”按钮就会亮起来。" : "No saved places yet. Claim a place, then use the Save button in its detail panel.")}</div>
       `;
 
-      openBottomSheet("我", rankHtml + savedHtml);
+      openBottomSheet(t("me"), rankHtml + savedHtml);
     }
 
     function getPlaceIdFromPassportKey(placeKey) {
@@ -2413,7 +2924,7 @@ async function hydratePassportOriginFromServer(item) {
 
     async function hydratePassportOriginFromServer(item) {
       if (!(item.passport || item.type === "植物护照")) return item;
-      if (getPlantOriginLabel(item) !== "来源待审") return item;
+      if (getPlantOriginLabel(item) !== t("originPending")) return item;
 
       const placeId = getPlaceIdFromPassportKey(item.placeKey || "");
       if (!placeId) return item;
@@ -2472,16 +2983,16 @@ async function hydratePassportOriginFromServer(item) {
 
     return `
       <div class="contribution-card">
-        <strong>${escapeHtml(item.type || "贡献")}</strong> · ${escapeHtml(item.placeName || "未知地点")}<br>
+        <strong>${escapeHtml(item.type || t("contribute"))}</strong> · ${escapeHtml(item.placeName || t("unknownPlace"))}<br>
         <span class="muted">${new Date(item.time).toLocaleString()}</span><br>
-        ${escapeHtml(item.summary || "已记录一次贡献。")}
+        ${escapeHtml(item.summary || (currentLang === "zh" ? "已记录一次贡献。" : "One contribution recorded."))}
       </div>
     `;
   }).join("") : `
-    <div class="empty-state">这里会记录你上传的植物图片、发布的评论、点亮过的地图区域。第一份植物归档会在这里生成一张 Plant Passport。</div>
+    <div class="empty-state">${escapeHtml(currentLang === "zh" ? "这里会记录你上传的植物图片、发布的评论、点亮过的地图区域。第一份植物归档会在这里生成一张植物护照。" : "This area records your uploaded plant photos, posted reviews, and claimed map areas. Your first plant archive will generate a Plant Passport.")}</div>
   `;
 
-  openBottomSheet("贡献", html);
+  openBottomSheet(t("contribute"), html);
 }
 
     function getNearbyPlacesToCheck() {
@@ -2574,11 +3085,11 @@ async function hydratePassportOriginFromServer(item) {
       if (count > 0) {
         nearbyPlantsBtn.disabled = false;
         nearbyPlantsBtn.classList.remove("is-disabled");
-        nearbyPlantsBtn.textContent = `附近有 ${count} 个新植物可收录`;
+        nearbyPlantsBtn.textContent = t("nearbyCount", { n: count });
       } else {
         nearbyPlantsBtn.disabled = true;
         nearbyPlantsBtn.classList.add("is-disabled");
-        nearbyPlantsBtn.textContent = "附近暂无新植物";
+        nearbyPlantsBtn.textContent = t("noNearbyPlants");
       }
     }
 
@@ -2649,7 +3160,7 @@ async function hydratePassportOriginFromServer(item) {
         <div class="empty-state">100 米内暂时没有新的植物可收录。地图很安静，但这不代表它真的空白。</div>
       `;
 
-      openBottomSheet("附近有新的植物可收录", content);
+      openBottomSheet(t("nearbyPlants"), content);
     }
 
     window.submitCurrentPlaceReview = submitCurrentPlaceReview;
@@ -3243,8 +3754,8 @@ async function hydratePassportOriginFromServer(item) {
 
     async function searchPlaces(query) {
       const response = await fetch(
-        `${API_BASE_URL}/google-places?q=${encodeURIComponent(query)}`
-      );
+    `${API_BASE_URL}/google-places?q=${encodeURIComponent(query)}&lang=${currentLang}`
+  );
 
       const googleResults = await response.json();
 
@@ -3266,16 +3777,16 @@ async function hydratePassportOriginFromServer(item) {
     function getPlaceTypeLabel(place) {
       const types = place.types || [];
 
-      if (types.includes("university")) return "大学 / University";
-      if (types.includes("school")) return "学校 / School";
-      if (types.includes("botanical_garden")) return "植物园 / Botanical garden";
-      if (types.includes("park")) return "公园 / Park";
-      if (types.includes("tourist_attraction")) return "景点 / Attraction";
-      if (types.includes("train_station") || types.includes("subway_station")) return "车站 / Station";
-      if (types.includes("restaurant") || types.includes("cafe")) return "餐饮 / Food";
-      if (types.includes("street_address") || types.includes("route")) return "地址或道路 / Address";
+      if (types.includes("university")) return currentLang === "zh" ? "大学" : "University";
+      if (types.includes("school")) return currentLang === "zh" ? "学校" : "School";
+      if (types.includes("botanical_garden")) return currentLang === "zh" ? "植物园" : "Botanical Garden";
+      if (types.includes("park")) return currentLang === "zh" ? "公园" : "Park";
+      if (types.includes("tourist_attraction")) return currentLang === "zh" ? "景点" : "Attraction";
+      if (types.includes("train_station") || types.includes("subway_station")) return currentLang === "zh" ? "车站" : "Station";
+      if (types.includes("restaurant") || types.includes("cafe")) return currentLang === "zh" ? "餐饮" : "Food";
+      if (types.includes("street_address") || types.includes("route")) return currentLang === "zh" ? "地址或道路" : "Address or Road";
 
-      return "Google 地点 / Google place";
+      return currentLang === "zh" ? "Google 地点" : "Google Place";
     }
 
     function showSearchResults(results) {
@@ -3321,14 +3832,14 @@ async function hydratePassportOriginFromServer(item) {
 
       unlockPlaceBtn.classList.remove("is-disabled");
       unlockPlaceBtn.disabled = false;
-      unlockPlaceBtn.textContent = "点亮";
+      unlockPlaceBtn.textContent = t("claim");
 
       plantListBtn.classList.add("is-disabled");
       plantListBtn.disabled = true;
 
       savePlaceBtn.classList.add("is-disabled");
       savePlaceBtn.disabled = true;
-      savePlaceBtn.textContent = "保存";
+      savePlaceBtn.textContent = t("save");
 
       lockedRouteHint.style.display = "block";
       routePanel.style.display = "none";
@@ -3340,7 +3851,7 @@ async function hydratePassportOriginFromServer(item) {
 
       unlockPlaceBtn.classList.add("is-disabled");
       unlockPlaceBtn.disabled = true;
-      unlockPlaceBtn.textContent = "已点亮";
+      unlockPlaceBtn.textContent = t("claimed");
 
       plantListBtn.classList.remove("is-disabled");
       plantListBtn.disabled = false;
@@ -3421,25 +3932,25 @@ async function hydratePassportOriginFromServer(item) {
       expandInfoPanel();
 
       document.getElementById("panelName").textContent =
-        place.text || "Unclaimed place";
+        place.text || (currentLang === "zh" ? "未点亮地点" : "Unclaimed place");
 
       document.getElementById("panelOriginal").textContent =
-        "尚未点亮区域 / Unclaimed botanical area";
+        currentLang === "zh" ? "尚未点亮区域" : "Unclaimed botanical area";
 
-      document.getElementById("panelRating").textContent = "Locked";
+      document.getElementById("panelRating").textContent = currentLang === "zh" ? "未点亮" : "Locked";
       document.getElementById("panelChinese").textContent = "--%";
       document.getElementById("panelAsian").textContent = "--%";
       document.getElementById("panelSource").textContent =
-        matchedBoundary ? matchedBoundary.source : "Search result / pending claim";
+        matchedBoundary ? getBoundarySourceLabel(matchedBoundary.source) : (currentLang === "zh" ? "搜索结果 / 临时领地" : "Search result / pending claim");
 
       document.getElementById("panelTags").innerHTML = `
-        <span class="tag">Unclaimed</span>
-        <span class="tag">Needs unlocking</span>
+        <span class="tag">${escapeHtml(currentLang === "zh" ? "未点亮" : "Unclaimed")}</span>
+        <span class="tag">${escapeHtml(currentLang === "zh" ? "等待开荒" : "Needs claiming")}</span>
       `;
 
       document.getElementById("panelReviews").innerHTML = `
         <div class="review">
-          该区域尚未点亮。点亮后可查看植物记录、保存此地，并解锁路线功能。
+          ${escapeHtml(currentLang === "zh" ? "该区域尚未点亮。点亮后可查看植物记录、保存此地，并解锁路线功能。" : "This area has not been claimed yet. Claim it to view plant records, save this place, and unlock routes.")}
         </div>
       `;
 
@@ -3451,18 +3962,18 @@ async function hydratePassportOriginFromServer(item) {
         claim.place_name ||
         claim.placeName ||
         claim.name ||
-        "Unnamed botanical claim";
+        (currentLang === "zh" ? "未命名植物领地" : "Unnamed botanical claim");
 
       const claimAddress =
         claim.place_address ||
         claim.placeAddress ||
         claim.address ||
-        "Google place claim / 临时植物领地";
+        (currentLang === "zh" ? "临时植物领地" : "Google place claim");
 
       const claimType =
         claim.place_type ||
         claim.placeType ||
-        "Google Places claim";
+        (currentLang === "zh" ? "Google 地点开荒" : "Google Places claim");
 
       return { claimName, claimAddress, claimType };
     }
@@ -3591,7 +4102,7 @@ async function hydratePassportOriginFromServer(item) {
         alert(error.message || "点亮失败，请再试一次。");
       } finally {
         unlockPlaceBtn.disabled = false;
-        unlockPlaceBtn.textContent = "点亮";
+        unlockPlaceBtn.textContent = t("claim");
       }
     }
 
@@ -3763,7 +4274,7 @@ async function hydratePassportOriginFromServer(item) {
       lng,
       lat,
       userId: CURRENT_USER_ID,
-      placeName: place.name || place.text || "Unnamed botanical claim",
+      placeName: place.name || place.text || (currentLang === "zh" ? "未命名植物领地" : "Unnamed botanical claim"),
       placeAddress: place.address || place.place_name || "",
       placeId: place.id || "",
       placeType: place.types?.[0] || "google_place"
@@ -3778,7 +4289,7 @@ async function hydratePassportOriginFromServer(item) {
 
   const hydratedData = {
     ...data,
-    place_name: data.place_name || place.name || place.text || "Unnamed botanical claim",
+    place_name: data.place_name || place.name || place.text || (currentLang === "zh" ? "未命名植物领地" : "Unnamed botanical claim"),
     place_address: data.place_address || place.address || place.place_name || "",
     place_id: data.place_id || place.id || "",
     place_type: data.place_type || place.types?.[0] || "google_place"
@@ -3962,7 +4473,7 @@ async function getScoreRecordsForBoundary(boundary) {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.detail || data.error || "植物识别失败");
+        throw new Error(data.detail || data.error || (currentLang === "zh" ? "植物识别失败" : "Plant scan failed"));
       }
 
       return data;
@@ -4021,7 +4532,7 @@ async function getScoreRecordsForBoundary(boundary) {
     async function getGooglePlaceInfoFromCoordinates(lng, lat) {
       try {
         const response = await fetch(
-          `${API_BASE_URL}/google-place-nearby?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`
+          `${API_BASE_URL}/google-place-nearby?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}&lang=${currentLang}`
         );
 
         if (!response.ok) {
@@ -4171,7 +4682,7 @@ async function getScoreRecordsForBoundary(boundary) {
         id: boundary.id,
         name: boundary.name,
         address: boundary.fakeName && boundary.fakeName !== boundary.name
-          ? `曾用领地名：${boundary.fakeName}`
+          ? `${t("formerlyKnownAs")}${boundary.fakeName}`
           : boundary.name,
         type: boundary.type,
         lng: boundary.testPoint[0],
@@ -4188,8 +4699,8 @@ async function getScoreRecordsForBoundary(boundary) {
       document.getElementById("panelName").textContent = boundary.name;
       document.getElementById("panelOriginal").textContent =
         boundary.fakeName && boundary.fakeName !== boundary.name
-          ? "曾用领地名：" + boundary.fakeName + " / " + boundary.source
-          : boundary.source;
+          ? t("formerlyKnownAs") + boundary.fakeName + " / " + getBoundarySourceLabel(boundary.source)
+          : getBoundarySourceLabel(boundary.source);
 
       document.getElementById("panelRating").textContent = `${boundary.rating} ★`;
 
@@ -4203,13 +4714,13 @@ async function getScoreRecordsForBoundary(boundary) {
           ? `${boundary.asianPlantPercent}%`
           : "--%";
 
-      document.getElementById("panelSource").textContent = boundary.source;
+      document.getElementById("panelSource").textContent = getBoundarySourceLabel(boundary.source);
 
       const tagsBox = document.getElementById("panelTags");
       tagsBox.innerHTML = "";
 
       boundary.tags.forEach(tag => {
-        tagsBox.innerHTML += `<span class="tag">${escapeHtml(tag)}</span>`;
+        tagsBox.innerHTML += `<span class="tag">${escapeHtml(getTagLabel(tag))}</span>`;
       });
 
       renderReviewsForCurrentPlace();
@@ -4274,7 +4785,7 @@ async function getScoreRecordsForBoundary(boundary) {
       expandInfoPanelFromRoute();
       clearActiveGoogleRoute();
       routePanel.style.display = "none";
-      routeSummary.textContent = "路线加载中...";
+      routeSummary.textContent = t("routeLoading");
     }
 
     function closePanel() {
@@ -4363,17 +4874,17 @@ async function getScoreRecordsForBoundary(boundary) {
       const minutes = Math.round(seconds / 60);
 
       if (minutes < 60) {
-        return `${minutes} 分钟`;
+        return currentLang === "zh" ? `${minutes} 分钟` : `${minutes} min`;
       }
 
       const hours = Math.floor(minutes / 60);
       const restMinutes = minutes % 60;
 
       if (restMinutes === 0) {
-        return `${hours} 小时`;
+        return currentLang === "zh" ? `${hours} 小时` : `${hours} hr`;
       }
 
-      return `${hours} 小时 ${restMinutes} 分钟`;
+      return currentLang === "zh" ? `${hours} 小时 ${restMinutes} 分钟` : `${hours} hr ${restMinutes} min`;
     }
 
     function updateUserLocationMarker(lng, lat, heading = userHeading) {
@@ -4417,11 +4928,11 @@ async function getScoreRecordsForBoundary(boundary) {
       if (followUserHeading) {
         locateBtn.classList.add("is-compass");
         locateBtn.textContent = "";
-        locateBtn.title = "退出指南针模式";
+        locateBtn.title = currentLang === "zh" ? "退出指南针模式" : "Exit compass mode";
       } else {
         locateBtn.classList.remove("is-compass");
         locateBtn.textContent = "➤";
-        locateBtn.title = "定位 / 开启指南针模式";
+        locateBtn.title = currentLang === "zh" ? "定位 / 开启指南针模式" : "Locate / Compass mode";
       }
     }
 
@@ -4702,7 +5213,7 @@ const routeData = await fetchGoogleRoute(
 
     async function openPlantList() {
       if (!currentOpenedBoundaryId) {
-        alert("请先点击或搜索一个已点亮区域。");
+        alert(t("noActivePlace"));
         return;
       }
 
@@ -4737,7 +5248,7 @@ const routeData = await fetchGoogleRoute(
           ...boundaryRecords.map(() => currentOpenedBoundaryId),
           ...claimRecordGroups.flat().map(record => record.__claimId || currentOpenedBoundaryId)
         ];
-        plantListTitle.textContent = `${boundary.name} 的植物一览`;
+        plantListTitle.textContent = currentLang === "zh" ? `${boundary.name} 的植物一览` : `${boundary.name} · ${t("plantList")}`;
       } else if (claim) {
         const { claimName } = getClaimDisplayInfo(claim);
         const relatedClaims = findRelatedClaimsForClaim(claim);
@@ -4766,11 +5277,11 @@ const routeData = await fetchGoogleRoute(
           return true;
         });
         recordOwnerIds = records.map(record => record.__claimId || currentOpenedBoundaryId);
-        plantListTitle.textContent = `${claimName} 的植物一览`;
+        plantListTitle.textContent = currentLang === "zh" ? `${claimName} 的植物一览` : `${claimName} · ${t("plantList")}`;
       } else {
         records = await getPlantRecords(currentOpenedBoundaryId);
         recordOwnerIds = records.map(() => currentOpenedBoundaryId);
-        plantListTitle.textContent = `未知区域的植物一览`;
+        plantListTitle.textContent = currentLang === "zh" ? `未知区域的植物一览` : `${t("unknownPlace")} · ${t("plantList")}`;
       }
 
       if (records.length > 0) {
@@ -4801,8 +5312,8 @@ const routeData = await fetchGoogleRoute(
 
       if (records.length === 0) {
         plantListBox.innerHTML = `
-          <strong>暂无植物档案。</strong><br>
-          请点击搜索框右侧的相机按钮，上传或拍摄一张植物照片。第一株植物会成为收录编号 No.001。
+          <strong>${escapeHtml(currentLang === "zh" ? "暂无植物档案。" : "No plant archive yet.")}</strong><br>
+          ${escapeHtml(currentLang === "zh" ? "请点击搜索框右侧的相机按钮，上传或拍摄一张植物照片。第一株植物会成为收录编号 No.001。" : "Use the camera button next to the search box to upload or take a plant photo. The first plant will become Archive No.001.")}
         `;
       } else {
         plantListBox.innerHTML = records.map((plant, index) => {
@@ -4827,17 +5338,17 @@ const routeData = await fetchGoogleRoute(
                 >
               ` : ""}
 
-              <span class="archive-number">收录编号 ${formatArchiveNumber(plant.__archiveNumber || index + 1)}</span><br>
+              <span class="archive-number">${escapeHtml(t("archiveNo"))} ${formatArchiveNumber(plant.__archiveNumber || index + 1)}</span><br>
               <strong>${plant.commonName}</strong><br>
-              学名：<i>${plant.scientificName}</i><br>
-              属：${plant.genus}<br>
-              科：${plant.family}<br>
+              ${escapeHtml(t("scientificName"))}: <i>${plant.scientificName}</i><br>
+              ${escapeHtml(t("genus"))}: ${plant.genus}<br>
+              ${escapeHtml(t("family"))}: ${plant.family}<br>
               ${getPlantOriginLineHtml(plant)}<br>
-              置信度：${Math.round(plant.score * 100)}%<br>
-              记录时间：${plant.time}<br>
+              ${escapeHtml(t("confidence"))}: ${Math.round(plant.score * 100)}%<br>
+              ${escapeHtml(t("recordTime"))}: ${plant.time}<br>
               ${canDelete
-                ? `<span style="color:#777;">你上传的，可删除</span>`
-                : `<span style="color:#777;">其他用户上传</span>`
+                ? `<span style="color:#777;">${escapeHtml(currentLang === "zh" ? "你上传的，可删除" : "Uploaded by you. You can delete it.")}</span>`
+                : `<span style="color:#777;">${escapeHtml(currentLang === "zh" ? "其他用户上传" : "Uploaded by another user")}</span>`
               }
             </div>
           `;
@@ -5115,6 +5626,15 @@ const routeData = await fetchGoogleRoute(
     plantListBtn.addEventListener("click", openPlantList);
     unlockPlaceBtn.addEventListener("click", unlockSelectedSearchPlace);
 
+    const langToggleBtn = document.getElementById("langToggleBtn");
+    if (langToggleBtn) {
+      langToggleBtn.addEventListener("click", () => {
+        currentLang = currentLang === "zh" ? "en" : "zh";
+        localStorage.setItem("leibiLang", currentLang);
+        updateLanguageUI();
+      });
+    }
+
     pickLocationBtn.addEventListener("click", () => {
       isSelectingPlantLocationBySearch = true;
       cameraModal.style.display = "none";
@@ -5245,7 +5765,7 @@ const routeData = await fetchGoogleRoute(
 
     savePlaceBtn.addEventListener("click", () => {
       if (savePlaceBtn.disabled) {
-        alert("该区域尚未点亮，点亮后可保存此地。");
+        alert(currentLang === "zh" ? "该区域尚未点亮，点亮后可保存此地。" : "This area has not been claimed yet. Claim it before saving.");
         return;
       }
 
@@ -5260,6 +5780,8 @@ const routeData = await fetchGoogleRoute(
       nearbyToast.addEventListener("click", closeNearbyPlantToast);
     }
 
+    updateLanguageUI();
+
     setNearbyButtonState(0);
     updateNearbyPlantState(null, { showToast: true });
 
@@ -5272,10 +5794,10 @@ const routeData = await fetchGoogleRoute(
       cameraModal.style.display = "flex";
 
       identifyBtn.disabled = false;
-      identifyBtn.textContent = "识别植物并点亮区域";
+      identifyBtn.textContent = t("scanClaimArea");
 
       closeCameraBtn.classList.remove("done-btn");
-      closeCameraBtn.textContent = "关闭";
+      closeCameraBtn.textContent = t("close");
     });
 
     closeCameraBtn.addEventListener("click", () => {
@@ -5289,7 +5811,7 @@ const routeData = await fetchGoogleRoute(
       plantCameraInput.value = "";
       plantGalleryInput.value = "";
       searchInput.value = "";
-      searchInput.placeholder = "搜索地点或区域 / Search places or areas...";
+      searchInput.placeholder = t("searchPlaceholder");
       hideSearchResults();
       if (locationChoiceBox) {
         locationChoiceBox.style.display = "none";
@@ -5300,10 +5822,10 @@ const routeData = await fetchGoogleRoute(
       }
 
       identifyBtn.disabled = false;
-      identifyBtn.textContent = "识别植物并点亮区域";
+      identifyBtn.textContent = t("scanClaimArea");
 
       closeCameraBtn.classList.remove("done-btn");
-      closeCameraBtn.textContent = "关闭";
+      closeCameraBtn.textContent = t("close");
     });
 
     async function handlePlantImageChange(event) {
@@ -5319,12 +5841,12 @@ const routeData = await fetchGoogleRoute(
       }
 
       if (manualLocationHint) {
-        manualLocationHint.textContent = "尚未手动选择地点。";
+        manualLocationHint.textContent = t("noManualLocation");
       }
 
       if (!file) {
-        previewBox.innerHTML = "尚未选择图片";
-        photoGpsBox.innerHTML = "上传照片后，系统会优先尝试读取照片里的 GPS 拍摄位置。";
+        previewBox.innerHTML = t("noImageSelected");
+        photoGpsBox.innerHTML = `<span id="photoGpsInitialText">${escapeHtml(t("photoGpsInitial"))}</span>`;
 
         if (locationChoiceBox) {
           locationChoiceBox.style.display = "none";
@@ -5428,7 +5950,7 @@ const routeData = await fetchGoogleRoute(
       identifyBtn.disabled = true;
       identifyBtn.textContent = "正在识别并点亮...";
       closeCameraBtn.classList.remove("done-btn");
-      closeCameraBtn.textContent = "关闭";
+      closeCameraBtn.textContent = t("close");
 
       try {
         const plantResult = await identifyPlantWithBackend(selectedImageFile);
@@ -5469,7 +5991,7 @@ const routeData = await fetchGoogleRoute(
           currentOpenedBoundaryId = pendingClaim.id;
           isSelectingPlantLocationBySearch = false;
           searchInput.value = "";
-          searchInput.placeholder = "搜索地点或区域 / Search places or areas...";
+          searchInput.placeholder = t("searchPlaceholder");
           hideSearchResults();
           openPendingClaimPanel(pendingClaim);
           addPlantPassportContribution({
@@ -5489,24 +6011,24 @@ const routeData = await fetchGoogleRoute(
           showRewardModal(pendingClaimInfo.claimName, archiveNumber, totalArchiveCountAfterClaim);
 
           resultBox.innerHTML = `
-            <strong>开荒成功。</strong><br><br>
-            你点亮了 <b>${pendingClaimInfo.claimName}</b><br>
-            此地已进入植物档案。<br>
-            <b>收录编号 ${formatArchiveNumber(archiveNumber)}</b><br><br>
-            识别结果：<b>${plantResult.commonName}</b><br>
-            学名：<i>${plantResult.scientificName}</i><br>
-            属：${plantResult.genus || "Unknown"}<br>
-            科：${plantResult.family || "Unknown"}<br>
+            <strong>${escapeHtml(t("claimSuccess"))}.</strong><br><br>
+            ${currentLang === "zh" ? `${escapeHtml(t("youClaimed"))} <b>${pendingClaimInfo.claimName}</b>` : `<b>${pendingClaimInfo.claimName}</b> has been claimed.`}<br>
+            ${escapeHtml(t("enteredArchive"))}<br>
+            <b>${escapeHtml(t("archiveNo"))} ${formatArchiveNumber(archiveNumber)}</b><br><br>
+            ${escapeHtml(currentLang === "zh" ? "识别结果" : "Scan Result")}: <b>${plantResult.commonName}</b><br>
+            ${escapeHtml(t("scientificName"))}: <i>${plantResult.scientificName}</i><br>
+            ${escapeHtml(t("genus"))}: ${plantResult.genus || "Unknown"}<br>
+            ${escapeHtml(t("family"))}: ${plantResult.family || "Unknown"}<br>
             ${getPlantOriginLineHtml(plantResult)}<br>
-            置信度：${Math.round(plantResult.score * 100)}%<br>
+            ${escapeHtml(t("confidence"))}: ${Math.round(plantResult.score * 100)}%<br>
             ${unlockHtmlForClaim ? `<br>${unlockHtmlForClaim}` : ""}
           `;
 
           identifyBtn.disabled = true;
-          identifyBtn.textContent = "已识别并点亮";
+          identifyBtn.textContent = currentLang === "zh" ? "已识别并点亮" : "Scanned & Claimed";
 
           closeCameraBtn.classList.add("done-btn");
-          closeCameraBtn.textContent = "完成并关闭";
+          closeCameraBtn.textContent = currentLang === "zh" ? "完成并关闭" : "Finish & Close";
 
           return;
         }
@@ -5515,7 +6037,7 @@ const routeData = await fetchGoogleRoute(
         fitToBoundary(matchedBoundary);
         isSelectingPlantLocationBySearch = false;
         searchInput.value = "";
-        searchInput.placeholder = "搜索地点或区域 / Search places or areas...";
+        searchInput.placeholder = t("searchPlaceholder");
         hideSearchResults();
         const archiveNumber = await getNextArchiveNumberForPlace(matchedBoundary.id);
         await addPlantRecord(matchedBoundary.id, plantResult);
@@ -5538,24 +6060,24 @@ const routeData = await fetchGoogleRoute(
         showRewardModal(boundaryPlaceName, archiveNumber, totalArchiveCountAfterBoundary);
 
         resultBox.innerHTML = `
-          <strong>开荒成功。</strong><br><br>
-          你点亮了 <b>${boundaryPlaceName}</b><br>
-          此地已进入植物档案。<br>
-          <b>收录编号 ${formatArchiveNumber(archiveNumber)}</b><br><br>
-          识别结果：<b>${plantResult.commonName}</b><br>
-          学名：<i>${plantResult.scientificName}</i><br>
-          属：${plantResult.genus || "Unknown"}<br>
-          科：${plantResult.family || "Unknown"}<br>
+          <strong>${escapeHtml(t("claimSuccess"))}.</strong><br><br>
+          ${currentLang === "zh" ? `${escapeHtml(t("youClaimed"))} <b>${boundaryPlaceName}</b>` : `<b>${boundaryPlaceName}</b> has been claimed.`}<br>
+          ${escapeHtml(t("enteredArchive"))}<br>
+          <b>${escapeHtml(t("archiveNo"))} ${formatArchiveNumber(archiveNumber)}</b><br><br>
+          ${escapeHtml(currentLang === "zh" ? "识别结果" : "Scan Result")}: <b>${plantResult.commonName}</b><br>
+          ${escapeHtml(t("scientificName"))}: <i>${plantResult.scientificName}</i><br>
+          ${escapeHtml(t("genus"))}: ${plantResult.genus || "Unknown"}<br>
+          ${escapeHtml(t("family"))}: ${plantResult.family || "Unknown"}<br>
           ${getPlantOriginLineHtml(plantResult)}<br>
-          置信度：${Math.round(plantResult.score * 100)}%<br>
+          ${escapeHtml(t("confidence"))}: ${Math.round(plantResult.score * 100)}%<br>
           ${unlockHtmlForBoundary ? `<br>${unlockHtmlForBoundary}` : ""}
         `;
 
         identifyBtn.disabled = true;
-        identifyBtn.textContent = "已识别并点亮";
+        identifyBtn.textContent = currentLang === "zh" ? "已识别并点亮" : "Scanned & Claimed";
 
         closeCameraBtn.classList.add("done-btn");
-        closeCameraBtn.textContent = "完成并关闭";
+        closeCameraBtn.textContent = currentLang === "zh" ? "完成并关闭" : "Finish & Close";
       } catch (error) {
         console.error(error);
 
@@ -5563,18 +6085,18 @@ const routeData = await fetchGoogleRoute(
         identifyBtn.textContent = "重新识别植物并点亮区域";
 
         closeCameraBtn.classList.remove("done-btn");
-        closeCameraBtn.textContent = "关闭";
+        closeCameraBtn.textContent = t("close");
 
         resultBox.innerHTML = `
-          <strong>识别失败。</strong><br>
+          <strong>${escapeHtml(currentLang === "zh" ? "识别失败。" : "Scan failed.")}</strong><br>
           ${error.message || error}<br><br>
 
-          检查：<br>
-          1. Terminal 里 <code>node server.js</code> 有没有正在运行；<br>
-          2. 页面有没有用 Go Live 打开；<br>
-          3. .env 里有没有 PLANTNET_API_KEY；<br>
-          4. 上传的图片是不是 JPG / PNG；<br>
-          5. 网络是否正常。
+          ${escapeHtml(currentLang === "zh" ? "检查：" : "Check:")}<br>
+          ${escapeHtml(currentLang === "zh" ? "1. Terminal 里" : "1. Is")} <code>node server.js</code> ${escapeHtml(currentLang === "zh" ? "有没有正在运行；" : "running in Terminal?")}<br>
+          ${escapeHtml(currentLang === "zh" ? "2. 页面有没有用 Go Live 打开；" : "2. Is the page opened with Go Live?")}<br>
+          ${escapeHtml(currentLang === "zh" ? "3. .env 里有没有 PLANTNET_API_KEY；" : "3. Does .env include PLANTNET_API_KEY?")}<br>
+          ${escapeHtml(currentLang === "zh" ? "4. 上传的图片是不是 JPG / PNG；" : "4. Is the uploaded image JPG or PNG?")}<br>
+          ${escapeHtml(currentLang === "zh" ? "5. 网络是否正常。" : "5. Is the network working?")}
         `;
       }
     });
